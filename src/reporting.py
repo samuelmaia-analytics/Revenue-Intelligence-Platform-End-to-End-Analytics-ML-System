@@ -68,3 +68,44 @@ def build_executive_report(
     with output_path.open("w", encoding="utf-8") as file:
         json.dump(report, file, indent=2, ensure_ascii=False)
     return report
+
+
+def build_executive_summary(
+    recommendations_df: pd.DataFrame,
+    scored_df: pd.DataFrame,
+    unit_economics_df: pd.DataFrame,
+    output_path: Path,
+    top_n: int = 20,
+) -> dict:
+    top_churn = (
+        recommendations_df.sort_values("churn_probability", ascending=False)
+        .head(top_n)[["customer_id", "segment", "channel", "churn_probability"]]
+        .to_dict(orient="records")
+    )
+    top_actions = (
+        recommendations_df.sort_values("strategic_score", ascending=False)
+        .head(top_n)[["customer_id", "recommended_action", "strategic_score", "ltv_cac_ratio"]]
+        .to_dict(orient="records")
+    )
+    ltv_cac_channel = (
+        unit_economics_df[["channel", "ltv_cac_ratio"]]
+        .sort_values("ltv_cac_ratio", ascending=False)
+        .to_dict(orient="records")
+    )
+
+    summary = {
+        "data_refresh_utc": datetime.now(UTC).isoformat(),
+        "kpis": {
+            "total_revenue_proxy": float(scored_df["monetary"].sum()),
+            "avg_arpu": float(scored_df["arpu"].mean()),
+            "avg_churn_probability": float(recommendations_df["churn_probability"].mean()),
+        },
+        "ltv_cac_by_channel": ltv_cac_channel,
+        "top_churn_risk_customers": top_churn,
+        "top_20_recommended_actions": top_actions,
+    }
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as file:
+        json.dump(summary, file, indent=2, ensure_ascii=False)
+    return summary

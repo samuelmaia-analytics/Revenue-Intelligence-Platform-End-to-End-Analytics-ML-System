@@ -22,6 +22,7 @@
 - [Local Run (Windows / PowerShell)](#local-run-windows--powershell)
 - [CLI](#cli)
 - [Engineering Quality](#engineering-quality)
+- [CI](#ci)
 - [Docker](#docker)
 - [Main Outputs](#main-outputs)
 - [Streamlit Cloud](#streamlit-cloud)
@@ -176,6 +177,7 @@ docker run -p 8501:8501 revenue-intelligence
 - `data/processed/unit_economics.csv`
 - `data/processed/metrics_report.json`
 - `data/processed/executive_report.json`
+- `data/processed/executive_summary.json`
 - `data/processed/dim_customers.csv`
 - `data/processed/dim_date.csv`
 - `data/processed/dim_channel.csv`
@@ -186,5 +188,12 @@ docker run -p 8501:8501 revenue-intelligence
 - Main file path: `app/streamlit_app.py`
 - Dependency file: `requirements.txt`
 - Kaggle CSV is versioned in `data/raw/` for deterministic cloud runs
+
+## CI
+
+GitHub Actions workflow at `.github/workflows/ci.yml` runs:
+- `ruff`
+- `black --check`
+- `pytest -q`
 
 

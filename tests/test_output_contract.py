@@ -30,6 +30,7 @@ def test_pipeline_generates_expected_contract_outputs(tmp_path: Path) -> None:
         "unit_economics.csv",
         "metrics_report.json",
         "executive_report.json",
+        "executive_summary.json",
         "dim_customers.csv",
         "dim_date.csv",
         "dim_channel.csv",

@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
 from main import run_pipeline  # noqa: E402
+from src.config import PipelineConfig  # noqa: E402
 
 
 def moeda(valor: float) -> str:
@@ -80,7 +81,7 @@ def carregar(processed_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
         "metrics_report.json",
     ]
     if not all((processed_dir / f).exists() for f in arquivos):
-        run_pipeline()
+        run_pipeline(PipelineConfig.from_env(PROJECT_ROOT))
 
     rec = pd.read_csv(processed_dir / "recommendations.csv")
     cohort = pd.read_csv(processed_dir / "cohort_retention.csv")
@@ -187,7 +188,7 @@ rec, cohort, unit, report = carregar(dir_proc)
 with st.sidebar:
     st.header("Filtros")
     if st.button("Atualizar Base", use_container_width=True):
-        run_pipeline()
+        run_pipeline(PipelineConfig.from_env(PROJECT_ROOT))
         st.rerun()
 
     segs = ["Todos"] + sorted(rec["segment"].dropna().unique().tolist())

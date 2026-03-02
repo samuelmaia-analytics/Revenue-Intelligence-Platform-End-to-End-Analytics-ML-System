@@ -13,7 +13,7 @@ from src.metrics import (
 )
 from src.modeling import train_and_score_models
 from src.recommendation import build_recommendations
-from src.reporting import build_executive_report
+from src.reporting import build_executive_report, build_executive_summary
 from src.transformation import build_customer_features, build_silver_layer
 from src.warehouse import build_star_schema
 
@@ -27,8 +27,7 @@ def configure_logging(level: str = "INFO") -> None:
     )
 
 
-def run_pipeline(config: PipelineConfig | None = None) -> None:
-    cfg = config or PipelineConfig.from_env(Path(__file__).resolve().parent)
+def run_pipeline(cfg: PipelineConfig) -> None:
     configure_logging(cfg.log_level)
     cfg.processed_dir.mkdir(parents=True, exist_ok=True)
 
@@ -69,6 +68,12 @@ def run_pipeline(config: PipelineConfig | None = None) -> None:
         churn_results=churn_results,
         next_purchase_results=next_purchase_results,
         output_path=cfg.processed_dir / "executive_report.json",
+    )
+    build_executive_summary(
+        recommendations_df=rec_df,
+        scored_df=scored_df,
+        unit_economics_df=unit_df,
+        output_path=cfg.processed_dir / "executive_summary.json",
     )
 
     LOGGER.info("Pipeline completed successfully.")
