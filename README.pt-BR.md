@@ -1,50 +1,53 @@
-# Revenue Intelligence Platform - Sistema de Analytics e ML de Ponta a Ponta
+# Revenue Intelligence Platform - Sistema Executivo de Analytics e ML
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.43-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.6-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![Docker](https://img.shields.io/badge/Docker-pronto-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/Status-Projeto%20de%20Portfólio-0f766e)](#)
 [![Licença](https://img.shields.io/badge/Licença-MIT-black.svg)](LICENSE)
 
 [Read in English](README.md)
 
-## Sumário
+## Resumo Executivo
 
-- [Objetivo de Negócio](#objetivo-de-negócio)
-- [Arquitetura End-to-End](#arquitetura-end-to-end)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Fonte de Dados](#fonte-de-dados)
-- [Métricas Implementadas](#métricas-implementadas)
-- [Camada de Machine Learning](#camada-de-machine-learning)
-- [Motor de Recomendação](#motor-de-recomendação)
-- [Como Rodar (Windows / PowerShell)](#como-rodar-windows--powershell)
-- [Docker](#docker)
-- [Arquivos Gerados](#arquivos-gerados)
-- [Roadmap de 30 Dias](#roadmap-de-30-dias)
+A Revenue Intelligence Platform é um sistema de decisão comercial de ponta a ponta que transforma dados de comportamento de clientes em prioridades objetivas de negócio.
 
-Produto de analytics de receita com abordagem executiva, combinando inteligência de clientes, modelos preditivos e priorização de ações em um único painel.
+Responde diretamente a três perguntas de diretoria:
 
-## Objetivo de Negócio
+- Onde a receita está em risco?
+- Onde acelerar crescimento com maior eficiência?
+- Quais clientes priorizar imediatamente?
 
-Transformar dados brutos de comportamento de clientes em decisões executivas claras:
-- Onde a receita está em risco.
-- Quais clientes devem receber ação de retenção ou upsell.
-- Quais canais de aquisição são mais eficientes financeiramente.
+## Resultados de Negócio
 
-## Arquitetura End-to-End
+- Carteira de ações priorizada por cliente com impacto financeiro estimado.
+- Visibilidade de eficiência por canal com `LTV/CAC` e unit economics.
+- Sinalização de risco de churn e probabilidade de nova compra.
+- Narrativa executiva pronta para rituais semanais de gestão comercial.
+
+## Escopo e Capacidades
+
+- Ingestão de dados via Kaggle com fallback sintético.
+- Engenharia de features e base de scoring por cliente.
+- Saídas em Star Schema para interoperabilidade analítica.
+- Camada de KPIs: LTV, CAC, RFM, Coorte, Unit Economics.
+- Camada de ML: predição de churn e de nova compra.
+- Motor de recomendação de próxima melhor ação.
+- Dashboard executivo em Streamlit com governança e exportação.
+
+## Arquitetura
 
 Fonte de Dados (CSV Kaggle / fallback sintético)  
--> Ingestão de Dados (Python)  
+-> Ingestão (Python)  
 -> Limpeza e Engenharia de Features  
--> Saídas de Data Warehouse SQL (Star Schema)  
--> Camada Analítica (LTV, CAC, RFM, Cohort, Unit Economics)  
--> Camada de ML (Churn + Probabilidade de Nova Compra)  
--> Motor de Recomendação (Próxima Melhor Ação)  
--> App Executivo em Streamlit  
+-> Saídas de Warehouse (Star Schema)  
+-> Camada Analítica (KPI + Coorte + Unit Economics)  
+-> Camada de ML (Churn + Nova Compra)  
+-> Motor de Recomendação  
+-> Dashboard Executivo (Streamlit)  
 -> Deploy com Docker / Cloud
 
-## Estrutura do Projeto
+## Estrutura do Repositório
 
 ```text
 revenue-intelligence-platform/
@@ -52,24 +55,7 @@ revenue-intelligence-platform/
 |  \- streamlit_app.py
 |- data/
 |  |- raw/
-|  |  |- E-commerce Customer Behavior - Sheet1.csv
-|  |  |- customers.csv
-|  |  |- marketing_spend.csv
-|  |  \- orders.csv
 |  \- processed/
-|     |- cac_by_channel.csv
-|     |- churn_model.joblib
-|     |- cohort_retention.csv
-|     |- customer_features.csv
-|     |- dim_customers.csv
-|     |- dim_date.csv
-|     |- fact_orders.csv
-|     |- ltv.csv
-|     |- next_purchase_model.joblib
-|     |- recommendations.csv
-|     |- rfm_segments.csv
-|     |- scored_customers.csv
-|     \- unit_economics.csv
 |- notebooks/
 |  |- 01_exploration.ipynb
 |  |- 02_feature_engineering.ipynb
@@ -83,53 +69,46 @@ revenue-intelligence-platform/
 |  \- recommendation.py
 |- sql/
 |  \- create_tables.sql
-|- .gitignore
-|- Dockerfile
-|- LICENSE
 |- main.py
-|- README.md
-|- README.pt-BR.md
 |- requirements.txt
-\- (pastas locais excluídas: .venv, .idea, __pycache__)
+|- Dockerfile
+|- README.md
+\- README.pt-BR.md
 ```
+
+## Governança de Modelos
+
+O pipeline grava métricas de governança em:
+
+- `data/processed/metrics_report.json`
+
+Inclui:
+
+- estratégia de split (temporal ou fallback controlado)
+- ROC-AUC de validação cruzada
+- ROC-AUC de holdout
+
+## Dashboard Executivo
+
+`app/streamlit_app.py` entrega:
+
+- cards executivos de KPI
+- leitura de diretoria (risco, oportunidade e prioridade)
+- plano de ação por cliente com exportação CSV
+- análise de performance comercial
+- visão de governança dos modelos
 
 ## Fonte de Dados
 
-Fonte principal:
-- `data/raw/E-commerce Customer Behavior - Sheet1.csv` (Kaggle)
+Arquivo principal:
 
-A camada de ingestão converte automaticamente esse dataset em:
+- `data/raw/E-commerce Customer Behavior - Sheet1.csv`
+
+Convertido automaticamente para:
+
 - `customers.csv`
 - `orders.csv`
 - `marketing_spend.csv`
-
-Se o arquivo Kaggle não estiver presente, o pipeline gera dados sintéticos como fallback.
-
-## Métricas Implementadas
-
-- LTV: `LTV = ARPU * Retenção Esperada * Margem Bruta`
-- CAC: `CAC = Marketing Spend / Clientes Adquiridos`
-- Razão LTV/CAC por canal
-- Segmentação RFM (`VIP`, `Loyal`, `At Risk`, `Hibernating`)
-- Retenção por cohort de aquisição
-- Unit economics: margem de contribuição, payback period e indicadores de eficiência com margem bruta
-
-## Camada de Machine Learning
-
-- Predição de churn: `RandomForestClassifier`
-- Predição de nova compra em 30 dias: `LogisticRegression`
-- Validação com K-Fold ROC-AUC
-- Saídas: score de clientes, artefatos de modelo (`joblib`) e pontos de curvas ROC/PR
-
-## Motor de Recomendação
-
-Regras estratégicas:
-- `churn_prob > 0.7` -> `Retention Campaign`
-- `LTV alto + churn baixo` -> `Upsell Offer`
-- `LTV baixo + CAC alto` -> `Reduce Acquisition Spend`
-- Caso contrário -> `Nurture`
-
-O app executivo também estima impacto financeiro potencial por cliente/ação.
 
 ## Como Rodar (Windows / PowerShell)
 
@@ -148,23 +127,22 @@ docker build -t revenue-intelligence .
 docker run -p 8501:8501 revenue-intelligence
 ```
 
-## Arquivos Gerados
+## Saídas
 
-Depois de executar `python main.py`, confira `data/processed/`:
+Arquivos principais gerados em `data/processed/`:
+
 - `scored_customers.csv`
 - `recommendations.csv`
-- `ltv.csv`
-- `rfm_segments.csv`
 - `cohort_retention.csv`
 - `unit_economics.csv`
+- `metrics_report.json`
 - `churn_model.joblib`
 - `next_purchase_model.joblib`
-- `dim_customers.csv`, `dim_date.csv`, `fact_orders.csv`
 
-## Roadmap de 30 Dias
+## Plano de Entrega (30 dias)
 
-1. Semana 1: ingestão de dados e base star schema.
-2. Semana 2: camada analítica e indicadores executivos.
-3. Semana 3: robustez de ML (validação temporal, drift, explicabilidade).
-4. Semana 4: otimização de recomendações e deploy em produção.
+1. Semana 1: confiabilidade de dados e baseline de warehouse.
+2. Semana 2: estabilização da camada de KPIs e visão executiva.
+3. Semana 3: robustez de modelos e governança.
+4. Semana 4: otimização das recomendações e deploy em produção.
 
