@@ -139,6 +139,10 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+Gates atuais de qualidade:
+- `tests/test_output_contract.py` valida geração dos arquivos de saída e colunas mínimas do schema Gold.
+- `main.py` inicializa a execução com `PipelineConfig.from_env(...)` para configuração determinística.
+
 ## Docker
 
 ```bash

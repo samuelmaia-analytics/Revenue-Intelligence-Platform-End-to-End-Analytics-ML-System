@@ -157,6 +157,10 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+Current quality gates:
+- `tests/test_output_contract.py` validates output file generation and minimum Gold schema columns.
+- `main.py` bootstraps pipeline execution with `PipelineConfig.from_env(...)` for deterministic runtime settings.
+
 ## Docker
 
 ```bash
