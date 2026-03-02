@@ -36,12 +36,13 @@ A Revenue Intelligence Platform é um sistema de decisão comercial de ponta a p
 
 ## Arquitetura
 
-Fonte de Dados (CSV Kaggle / fallback sintético)
--> Ingestão
--> Limpeza e Engenharia de Features
--> Saídas de Warehouse
--> Camada Analítica
--> Camada de ML
+Fonte de Dados Kaggle
+-> Camada Raw
+-> Bronze (ingestão auditável)
+-> Silver (limpeza e padronização)
+-> Gold (Star Schema)
+-> Camada Analítica (KPIs em CSV + SQL)
+-> Camada de ML (churn e próxima compra)
 -> Motor de Recomendação
 -> Dashboard Executivo
 -> Deploy com Docker / Cloud
@@ -54,10 +55,15 @@ revenue-intelligence-platform/
 |  \- streamlit_app.py
 |- data/
 |  |- raw/
+|  |- bronze/
+|  |- silver/
+|  |- gold/
 |  \- processed/
 |- notebooks/
 |- src/
 |- sql/
+|  |- ddl/
+|  \- analytics/
 |- main.py
 |- requirements.txt
 |- Dockerfile
@@ -77,6 +83,11 @@ Mapeado automaticamente para:
 - `customers.csv`
 - `orders.csv`
 - `marketing_spend.csv`
+
+Depois normalizado em:
+- `data/bronze/*.csv`
+- `data/silver/*.csv`
+- `data/gold/dim_*.csv` e `data/gold/fact_*.csv`
 
 ## Como Rodar (Windows / PowerShell)
 

@@ -165,3 +165,31 @@ def save_raw_datasets(raw_dir: Path) -> tuple[Path, Path, Path]:
     marketing.to_csv(marketing_path, index=False)
 
     return customers_path, orders_path, marketing_path
+
+
+def build_bronze_layer(
+    customers_path: Path, orders_path: Path, marketing_path: Path, bronze_dir: Path
+) -> tuple[Path, Path, Path]:
+    bronze_dir.mkdir(parents=True, exist_ok=True)
+    ingestion_ts = pd.Timestamp.utcnow().isoformat()
+
+    customers = pd.read_csv(customers_path)
+    orders = pd.read_csv(orders_path)
+    marketing = pd.read_csv(marketing_path)
+
+    customers["_source_file"] = customers_path.name
+    customers["_ingestion_ts"] = ingestion_ts
+    orders["_source_file"] = orders_path.name
+    orders["_ingestion_ts"] = ingestion_ts
+    marketing["_source_file"] = marketing_path.name
+    marketing["_ingestion_ts"] = ingestion_ts
+
+    bronze_customers_path = bronze_dir / "bronze_customers.csv"
+    bronze_orders_path = bronze_dir / "bronze_orders.csv"
+    bronze_marketing_path = bronze_dir / "bronze_marketing_spend.csv"
+
+    customers.to_csv(bronze_customers_path, index=False)
+    orders.to_csv(bronze_orders_path, index=False)
+    marketing.to_csv(bronze_marketing_path, index=False)
+
+    return bronze_customers_path, bronze_orders_path, bronze_marketing_path

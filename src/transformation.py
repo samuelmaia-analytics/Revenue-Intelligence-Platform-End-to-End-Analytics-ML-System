@@ -4,6 +4,49 @@ import numpy as np
 import pandas as pd
 
 
+def build_silver_layer(
+    bronze_customers_path: Path,
+    bronze_orders_path: Path,
+    bronze_marketing_path: Path,
+    silver_dir: Path,
+) -> tuple[Path, Path, Path]:
+    silver_dir.mkdir(parents=True, exist_ok=True)
+
+    customers = pd.read_csv(bronze_customers_path, parse_dates=["signup_date"], low_memory=False)
+    orders = pd.read_csv(bronze_orders_path, parse_dates=["order_date"], low_memory=False)
+    marketing = pd.read_csv(bronze_marketing_path, low_memory=False)
+
+    customers = customers.drop(columns=["_source_file", "_ingestion_ts"], errors="ignore").drop_duplicates(
+        subset=["customer_id"]
+    )
+    orders = orders.drop(columns=["_source_file", "_ingestion_ts"], errors="ignore").drop_duplicates(
+        subset=["order_id"]
+    )
+    marketing = marketing.drop(columns=["_source_file", "_ingestion_ts"], errors="ignore").drop_duplicates(
+        subset=["channel"]
+    )
+
+    customers["customer_id"] = customers["customer_id"].astype(int)
+    orders["customer_id"] = orders["customer_id"].astype(int)
+    orders["order_value"] = pd.to_numeric(orders["order_value"], errors="coerce").fillna(0.0)
+    marketing["marketing_spend"] = (
+        pd.to_numeric(marketing["marketing_spend"], errors="coerce").fillna(0.0).clip(lower=0)
+    )
+
+    valid_customers = set(customers["customer_id"].tolist())
+    orders = orders[orders["customer_id"].isin(valid_customers)].copy()
+    orders = orders[orders["order_value"] > 0].copy()
+
+    silver_customers_path = silver_dir / "silver_customers.csv"
+    silver_orders_path = silver_dir / "silver_orders.csv"
+    silver_marketing_path = silver_dir / "silver_marketing_spend.csv"
+
+    customers.to_csv(silver_customers_path, index=False)
+    orders.to_csv(silver_orders_path, index=False)
+    marketing.to_csv(silver_marketing_path, index=False)
+    return silver_customers_path, silver_orders_path, silver_marketing_path
+
+
 def build_customer_features(
     customers_path: Path, orders_path: Path, output_dir: Path
 ) -> pd.DataFrame:
