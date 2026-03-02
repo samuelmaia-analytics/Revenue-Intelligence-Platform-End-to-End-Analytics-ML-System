@@ -257,9 +257,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab1, tab2, tab3 = st.tabs(["Plano de Ação", "Performance", "Governança de Modelos"])
+tab_overview, tab_risk_growth, tab_action_list = st.tabs(
+    ["Executive Overview", "Risk & Growth", "Action List"]
+)
 
-with tab1:
+with tab_action_list:
     board = df.sort_values("strategic_score", ascending=False).copy()
     board = board.rename(
         columns={
@@ -299,7 +301,7 @@ with tab1:
         mime="text/csv",
     )
 
-with tab2:
+with tab_overview:
     p1, p2 = st.columns(2)
     with p1:
         st.markdown('<div class="chart-card">', unsafe_allow_html=True)
@@ -361,7 +363,7 @@ with tab2:
     st.plotly_chart(fig3, use_container_width=True, theme=None)
     st.markdown("</div>", unsafe_allow_html=True)
 
-with tab3:
+with tab_risk_growth:
     gov = pd.DataFrame(
         [
             {

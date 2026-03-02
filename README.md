@@ -165,6 +165,7 @@ docker run -p 8501:8501 revenue-intelligence
 - `data/processed/cohort_retention.csv`
 - `data/processed/unit_economics.csv`
 - `data/processed/metrics_report.json`
+- `data/processed/executive_report.json`
 - `data/processed/dim_customers.csv`
 - `data/processed/dim_date.csv`
 - `data/processed/dim_channel.csv`

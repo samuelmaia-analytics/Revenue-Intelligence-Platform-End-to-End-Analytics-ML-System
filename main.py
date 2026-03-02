@@ -13,6 +13,7 @@ from src.metrics import (
 )
 from src.modeling import train_and_score_models
 from src.recommendation import build_recommendations
+from src.reporting import build_executive_report
 from src.transformation import build_customer_features, build_silver_layer
 from src.warehouse import build_star_schema
 
@@ -63,6 +64,12 @@ def run_pipeline(config: PipelineConfig | None = None) -> None:
     cohort_df.to_csv(cfg.processed_dir / "cohort_retention.csv", index=False)
     unit_df.to_csv(cfg.processed_dir / "unit_economics.csv", index=False)
     rec_df.to_csv(cfg.processed_dir / "recommendations.csv", index=False)
+    build_executive_report(
+        recommendations_df=rec_df,
+        churn_results=churn_results,
+        next_purchase_results=next_purchase_results,
+        output_path=cfg.processed_dir / "executive_report.json",
+    )
 
     LOGGER.info("Pipeline completed successfully.")
     LOGGER.info("Churn split strategy: %s", churn_results["split_strategy"])

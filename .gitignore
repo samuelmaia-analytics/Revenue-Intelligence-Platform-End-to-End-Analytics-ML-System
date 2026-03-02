@@ -8,3 +8,4 @@ data/bronze/*.csv
 data/silver/*.csv
 data/gold/*.csv
 data/processed/*.csv
+data/processed/*.json
