@@ -1,0 +1,18 @@
+{
+  "churn": {
+    "cv_roc_auc_mean": 0.7315151515151516,
+    "cv_roc_auc_std": 0.11236419208126444,
+    "temporal_test_roc_auc": 0.9285714285714286,
+    "split_strategy": "stratified_fallback",
+    "train_size": 246,
+    "test_size": 62
+  },
+  "next_purchase_30d": {
+    "cv_roc_auc_mean": 0.659568933481977,
+    "cv_roc_auc_std": 0.0426194290251362,
+    "temporal_test_roc_auc": 0.6166666666666667,
+    "split_strategy": "temporal",
+    "train_size": 246,
+    "test_size": 62
+  }
+}
