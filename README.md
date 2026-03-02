@@ -1,4 +1,4 @@
-﻿# Revenue Intelligence Platform - Executive Analytics & ML System
+# Revenue Intelligence Platform - Executive Analytics & ML System
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.43-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
@@ -17,6 +17,8 @@ Streamlit Cloud:
 
 Revenue Intelligence Platform is an end-to-end decision system that converts customer behavior data into commercial priorities.
 
+This version includes a mature layered data architecture (`raw -> bronze -> silver -> gold`) with a formal Star Schema and structured SQL domains for analytics.
+
 ## Business Outcomes
 
 - Prioritized customer action list with estimated financial impact
@@ -27,19 +29,22 @@ Revenue Intelligence Platform is an end-to-end decision system that converts cus
 ## Scope and Capabilities
 
 - Data ingestion from Kaggle source with synthetic fallback
+- Layered pipeline: raw, bronze, silver, gold
 - Feature engineering and customer-level scoring
 - Star schema outputs for analytics interoperability
 - KPI layer: LTV, CAC, RFM, Cohort Retention, Unit Economics
 - ML layer: churn + next purchase prediction
 - Recommendation engine for next best action
 - Executive Streamlit dashboard with governance and exports
+- Structured SQL domains (`ddl/` and `analytics/`)
 
 ## Architecture
 
-Data Source (Kaggle CSV / synthetic fallback)
--> Ingestion
--> Cleaning & Feature Engineering
--> Warehouse Outputs
+Kaggle Source Dataset
+-> Raw Layer
+-> Bronze (auditable ingestion)
+-> Silver (cleaning and standardization)
+-> Gold (Star Schema)
 -> Analytics Layer
 -> ML Layer
 -> Recommendation Engine
@@ -54,10 +59,15 @@ revenue-intelligence-platform/
 |  \- streamlit_app.py
 |- data/
 |  |- raw/
+|  |- bronze/
+|  |- silver/
+|  |- gold/
 |  \- processed/
 |- notebooks/
 |- src/
 |- sql/
+|  |- ddl/
+|  \- analytics/
 |- main.py
 |- requirements.txt
 |- Dockerfile
@@ -77,6 +87,23 @@ Automatically mapped into:
 - `customers.csv`
 - `orders.csv`
 - `marketing_spend.csv`
+
+Then normalized into:
+- `data/bronze/*.csv`
+- `data/silver/*.csv`
+- `data/gold/dim_*.csv` and `data/gold/fact_*.csv`
+
+## Star Schema (Gold)
+
+- Dimensions: `dim_date`, `dim_customers`, `dim_channel`
+- Fact: `fact_orders`
+- Standardized measures: `order_amount`, `order_count`
+
+## SQL Organization
+
+- `sql/ddl/`: schema creation scripts per table/domain
+- `sql/analytics/`: executive queries (revenue KPIs, channel efficiency, churn watchlist)
+- `sql/create_tables.sql`: consolidated bootstrap script
 
 ## Local Run (Windows / PowerShell)
 
@@ -102,3 +129,13 @@ docker run -p 8501:8501 revenue-intelligence
 - `data/processed/cohort_retention.csv`
 - `data/processed/unit_economics.csv`
 - `data/processed/metrics_report.json`
+- `data/processed/dim_customers.csv`
+- `data/processed/dim_date.csv`
+- `data/processed/dim_channel.csv`
+- `data/processed/fact_orders.csv`
+
+## Streamlit Cloud
+
+- Main file path: `app/streamlit_app.py`
+- Dependency file: `requirements.txt`
+- Kaggle CSV is versioned in `data/raw/` for deterministic cloud runs
