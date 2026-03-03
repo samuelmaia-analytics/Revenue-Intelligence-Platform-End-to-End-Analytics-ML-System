@@ -46,6 +46,7 @@ def test_pipeline_generates_expected_contract_outputs(tmp_path: Path) -> None:
     dim_channel = pd.read_csv(processed / "dim_channel.csv")
     fact_orders = pd.read_csv(processed / "fact_orders.csv")
     top_10_actions = pd.read_csv(processed / "top_10_actions.csv")
+    cohort_retention = pd.read_csv(processed / "cohort_retention.csv")
 
     assert {"customer_id", "signup_date", "channel", "segment"}.issubset(dim_customers.columns)
     assert {"date_key", "date", "year", "month", "week_of_year", "day_of_week"}.issubset(
@@ -70,3 +71,4 @@ def test_pipeline_generates_expected_contract_outputs(tmp_path: Path) -> None:
         "net_impact",
         "roi_simulated",
     }.issubset(top_10_actions.columns)
+    assert cohort_retention["retention_rate"].between(0, 1).all()

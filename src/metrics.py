@@ -71,11 +71,18 @@ def cohort_analysis(orders_path: Path, customers_path: Path) -> pd.DataFrame:
         .nunique()
         .reset_index(name="active_customers")
     )
-    cohort_size = cohort[cohort["cohort_index"] == 0][["cohort_month", "active_customers"]].rename(
-        columns={"active_customers": "cohort_size"}
+
+    # Denominator must be the full acquisition cohort size (all signed-up customers),
+    # not only customers who purchased in month 0.
+    cohort_size = (
+        customers.groupby("cohort_month")["customer_id"]
+        .nunique()
+        .reset_index(name="cohort_size")
     )
     out = cohort.merge(cohort_size, on="cohort_month", how="left")
-    out["retention_rate"] = out["active_customers"] / out["cohort_size"].clip(lower=1)
+    out["retention_rate"] = (
+        out["active_customers"] / out["cohort_size"].clip(lower=1)
+    ).clip(lower=0, upper=1)
     out["cohort_month"] = out["cohort_month"].astype(str)
     return out.sort_values(["cohort_month", "cohort_index"])
 

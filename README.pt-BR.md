@@ -42,6 +42,9 @@
 
 Streamlit Cloud:
 - https://revenue-intelligence-platform.streamlit.app/
+- Modo de idioma no Streamlit Cloud:
+  - `RIP_APP_LANG_MODE=bilingual`: seletor com `Portuguese (BR)` e `International (EN)`
+  - `RIP_APP_LANG_MODE=international`: app somente em ingles
 
 ## Resumo Executivo
 
@@ -134,6 +137,7 @@ Sobrescritas via ambiente:
 - `RIP_DATA_DIR`
 - `RIP_SEED`
 - `RIP_LOG_LEVEL`
+- `RIP_APP_LANG_MODE` (`bilingual` ou `international`)
 
 ## CLI
 

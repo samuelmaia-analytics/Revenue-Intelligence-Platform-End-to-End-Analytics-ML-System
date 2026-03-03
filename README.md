@@ -152,6 +152,7 @@ Environment overrides:
 - `RIP_DATA_DIR`
 - `RIP_SEED`
 - `RIP_LOG_LEVEL`
+- `RIP_APP_LANG_MODE` (`bilingual` or `international`)
 
 ## CLI
 
@@ -203,6 +204,9 @@ docker run -p 8501:8501 revenue-intelligence
 - Main file path: `app/streamlit_app.py`
 - Dependency file: `requirements.txt`
 - Kaggle CSV is versioned in `data/raw/` for deterministic cloud runs
+- App language mode:
+  - `RIP_APP_LANG_MODE=bilingual`: language switcher with `Portuguese (BR)` and `International (EN)`
+  - `RIP_APP_LANG_MODE=international`: app locked to English only
 
 ## CI
 
