@@ -283,6 +283,28 @@ st.markdown(
         .kpi-sub { color: #64748b; font-size: 0.82rem; margin-top: 4px; }
         .note-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; color: #1f2937; }
         .kpi-card, .note-card { overflow-wrap: anywhere; word-break: break-word; }
+        [data-testid="stMetric"] {
+            background: #ffffff !important;
+            border: 1px solid #dbe3ef !important;
+            border-radius: 12px !important;
+            padding: 12px 14px !important;
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04) !important;
+        }
+        [data-testid="stMetricLabel"] {
+            color: #475569 !important;
+            opacity: 1 !important;
+            font-weight: 700 !important;
+        }
+        [data-testid="stMetricValue"] {
+            color: #0f172a !important;
+            opacity: 1 !important;
+            font-weight: 800 !important;
+        }
+        [data-testid="stMetricDelta"] {
+            color: #1e40af !important;
+            opacity: 1 !important;
+            font-weight: 700 !important;
+        }
         [data-testid="stTabs"] [role="tablist"] { gap: 8px; }
         [data-testid="stTabs"] button[role="tab"] {
             border-radius: 8px !important;
