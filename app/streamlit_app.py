@@ -258,12 +258,16 @@ st.markdown(
             opacity: 1 !important;
         }
         [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] {
-            background: #ffffff !important;
+            background: #0b1220 !important;
             border: 1px solid #cbd5e1 !important;
         }
         [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] * {
-            color: #0f172a !important;
+            color: #ffffff !important;
             opacity: 1 !important;
+        }
+        [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] svg {
+            fill: #ffffff !important;
+            color: #ffffff !important;
         }
         div[role="listbox"] * {
             color: #0f172a !important;
