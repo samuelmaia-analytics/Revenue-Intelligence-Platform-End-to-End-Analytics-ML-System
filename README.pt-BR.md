@@ -160,7 +160,9 @@ revenue-intelligence-platform/
 |- app/
 |  \- streamlit_app.py
 |- contracts/
-|  \- data_contract.py
+|  |- data_contract.py (shim de compatibilidade)
+|  \- v1/
+|     \- data_contract.py
 |- api/
 |  \- main.py (shim de compatibilidade)
 |- services/
@@ -301,11 +303,39 @@ Endpoints:
 - `GET /health`: status, schema de input e versão dos modelos (`run_id`, `data_version`)
 - `POST /score`: scoring de churn e próxima compra para 1+ clientes
 
+Segurança e quota (`/score`):
+- Token obrigatório no modo `demo` (default): `X-API-Token` ou `Authorization: Bearer <token>`
+- Rate limit em memória por token/IP (`RIP_API_RATE_LIMIT_PER_MINUTE`, default `60`)
+- Modo de autenticação: `RIP_API_AUTH_MODE=demo|strict|off`
+
+Exemplo `curl` com token:
+
+```bash
+curl -X POST "http://localhost:8000/score" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Token: rip-demo-token-v1" \
+  -d '{
+    "records": [
+      {
+        "recency_days": 21,
+        "frequency": 7,
+        "monetary": 1450.0,
+        "avg_order_value": 207.0,
+        "tenure_days": 360,
+        "arpu": 148.0,
+        "channel": "Organic",
+        "segment": "SMB"
+      }
+    ]
+  }'
+```
+
 ## Contrato de Dados
 
-Contratos centralizados em `contracts/data_contract.py`:
+Fonte canônica versionada dos contratos em `contracts/v1/data_contract.py`:
 - Input de serving: `ScoreRequest` / `ScoreInputRecord`
 - Output Gold: `DimCustomersContract`, `DimDateContract`, `DimChannelContract`, `FactOrdersContract`
+- `contracts/data_contract.py` permanece como caminho de import legado/compatível.
 
 Validação automática:
 - `tests/test_output_contract.py` valida colunas obrigatórias a partir desse contrato.
@@ -313,7 +343,7 @@ Validação automática:
 ## Padrões Operacionais
 
 - Entrypoint de serviço: `services/api/main.py` (canônico), `api/main.py` (shim de compatibilidade).
-- Fonte única de contratos: `contracts/data_contract.py` (`src/data_contract.py` mantido por compatibilidade de import).
+- Fonte única de contratos: `contracts/v1/data_contract.py` (`contracts/data_contract.py` e `src/data_contract.py` mantidos por compatibilidade de import).
 - Padrão de estrutura do repositório: `docs/repository_structure.md`.
 - Governança de PR: `.github/pull_request_template.md` e workflow CI `.github/workflows/ci.yml`.
 
@@ -334,6 +364,12 @@ Validação automática:
 - Build de imagens: `make docker-build`
 - Verificar saúde da API em runtime: `GET /health`
 - Validar contrato de scoring em runtime: `POST /score`
+- Notas de release curtas e orientadas a negócio (impacto/ROI/uplift).
+- Registrar mudanças de quebra de API/contrato no `CHANGELOG.md` em `Breaking Changes`.
+- Release publicada: `docs/releases/v1.0.0.md`
+- Tag publicada: `v1.0.0` (já disponível em `origin`)
+- Comando para publicar no GitHub:
+  `gh release create v1.0.0 --title "v1.0.0" --notes-file docs/releases/v1.0.0.md`
 
 ### Incidente
 - Se `/health` retornar `degraded`, regenerar artefatos com `make pipeline`

@@ -12,8 +12,9 @@ This repository follows a production-oriented structure with explicit boundaries
 ## Import Policy
 
 - New code should import API entrypoints from `services.api`.
-- New code should import schemas from `contracts.data_contract`.
+- New code should import schemas from `contracts.v1.data_contract`.
 - `api/` and `src/data_contract.py` are maintained as compatibility shims.
+- `contracts/data_contract.py` is a compatibility shim to current versioned contracts.
 
 ## Evolution Rule
 

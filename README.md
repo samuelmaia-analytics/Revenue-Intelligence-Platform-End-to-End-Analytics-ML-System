@@ -161,7 +161,9 @@ revenue-intelligence-platform/
 |- app/
 |  \- streamlit_app.py
 |- contracts/
-|  \- data_contract.py
+|  |- data_contract.py (compatibility shim)
+|  \- v1/
+|     \- data_contract.py
 |- api/
 |  \- main.py (compatibility shim)
 |- services/
@@ -302,7 +304,34 @@ Available endpoints:
 - `GET /health`: service status, input schema, model versions (`run_id`, `data_version`)
 - `POST /score`: churn + next purchase prediction for one or multiple customers
 
-Example request:
+Security and quota (`/score`):
+- API token required in `demo` mode (default): `X-API-Token` or `Authorization: Bearer <token>`
+- In-memory rate limit per token/IP (`RIP_API_RATE_LIMIT_PER_MINUTE`, default `60`)
+- Auth mode: `RIP_API_AUTH_MODE=demo|strict|off`
+
+Example `curl` with token:
+
+```bash
+curl -X POST "http://localhost:8000/score" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Token: rip-demo-token-v1" \
+  -d '{
+    "records": [
+      {
+        "recency_days": 21,
+        "frequency": 7,
+        "monetary": 1450.0,
+        "avg_order_value": 207.0,
+        "tenure_days": 360,
+        "arpu": 148.0,
+        "channel": "Organic",
+        "segment": "SMB"
+      }
+    ]
+  }'
+```
+
+Example request body:
 
 ```json
 {
@@ -323,9 +352,10 @@ Example request:
 
 ## Data Contract
 
-Contracts are centralized in `contracts/data_contract.py`:
+Versioned contract source of truth is `contracts/v1/data_contract.py`:
 - Input serving schema: `ScoreRequest` / `ScoreInputRecord`
 - Gold output schema: `DimCustomersContract`, `DimDateContract`, `DimChannelContract`, `FactOrdersContract`
+- `contracts/data_contract.py` remains as backward-compatible import path.
 
 Automated validation:
 - `tests/test_output_contract.py` validates required columns from the contract.
@@ -333,7 +363,7 @@ Automated validation:
 ## Operating Standards
 
 - Service entrypoint: `services/api/main.py` (canonical), `api/main.py` (backward-compatible shim).
-- Contract source of truth: `contracts/data_contract.py` (`src/data_contract.py` kept as compatibility import path).
+- Contract source of truth: `contracts/v1/data_contract.py` (`contracts/data_contract.py` and `src/data_contract.py` kept as compatibility import paths).
 - Repository structure standard: `docs/repository_structure.md`.
 - PR governance: `.github/pull_request_template.md` and CI workflow `.github/workflows/ci.yml`.
 
@@ -354,6 +384,12 @@ Automated validation:
 - Build images: `make docker-build`
 - Verify API health in runtime: `GET /health`
 - Validate scoring contract in runtime: `POST /score`
+- Keep release notes short and business-first (impact/ROI/uplift deltas).
+- Register API/contract breaking changes in `CHANGELOG.md` under `Breaking Changes`.
+- Published release notes: `docs/releases/v1.0.0.md`
+- Published tag: `v1.0.0` (already available on `origin`)
+- GitHub publish command:
+  `gh release create v1.0.0 --title "v1.0.0" --notes-file docs/releases/v1.0.0.md`
 
 ### Incident
 - If `/health` returns `degraded`, regenerate artifacts with `make pipeline`

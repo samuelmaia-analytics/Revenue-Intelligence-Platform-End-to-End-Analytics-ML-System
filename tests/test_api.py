@@ -71,6 +71,9 @@ def _bootstrap_registry(tmp_path: Path) -> None:
 def test_api_health_and_score(tmp_path: Path) -> None:
     _bootstrap_registry(tmp_path)
     os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")
+    os.environ["RIP_API_AUTH_MODE"] = "demo"
+    os.environ["RIP_API_DEMO_TOKEN"] = "test-token"
+    os.environ["RIP_API_RATE_LIMIT_PER_MINUTE"] = "5"
 
     api_module = importlib.import_module("services.api.main")
     api_module = importlib.reload(api_module)
@@ -81,6 +84,7 @@ def test_api_health_and_score(tmp_path: Path) -> None:
     health_payload = health.json()
     assert health_payload["status"] == "ok"
     assert health_payload["models"]["churn"]["loaded"] is True
+    assert health_payload["api_security"]["auth_mode"] == "demo"
     assert "recency_days" in health_payload["input_schema"]
 
     score = client.post(
@@ -99,6 +103,7 @@ def test_api_health_and_score(tmp_path: Path) -> None:
                 }
             ]
         },
+        headers={"X-API-Token": "test-token"},
     )
     assert score.status_code == 200
     score_payload = score.json()
@@ -106,3 +111,66 @@ def test_api_health_and_score(tmp_path: Path) -> None:
     assert "churn_probability" in score_payload["predictions"][0]
     assert "next_purchase_probability" in score_payload["predictions"][0]
     assert "suggested_action" in score_payload["predictions"][0]
+
+
+def test_api_requires_token(tmp_path: Path) -> None:
+    _bootstrap_registry(tmp_path)
+    os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")
+    os.environ["RIP_API_AUTH_MODE"] = "demo"
+    os.environ["RIP_API_DEMO_TOKEN"] = "test-token"
+    os.environ["RIP_API_RATE_LIMIT_PER_MINUTE"] = "5"
+
+    api_module = importlib.import_module("services.api.main")
+    api_module = importlib.reload(api_module)
+    client = TestClient(api_module.app)
+
+    score = client.post(
+        "/score",
+        json={
+            "records": [
+                {
+                    "recency_days": 14,
+                    "frequency": 8,
+                    "monetary": 1800.0,
+                    "avg_order_value": 225.0,
+                    "tenure_days": 420,
+                    "arpu": 160.0,
+                    "channel": "Organic",
+                    "segment": "SMB",
+                }
+            ]
+        },
+    )
+    assert score.status_code == 401
+
+
+def test_api_rate_limit_enforced(tmp_path: Path) -> None:
+    _bootstrap_registry(tmp_path)
+    os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")
+    os.environ["RIP_API_AUTH_MODE"] = "demo"
+    os.environ["RIP_API_DEMO_TOKEN"] = "test-token"
+    os.environ["RIP_API_RATE_LIMIT_PER_MINUTE"] = "1"
+
+    api_module = importlib.import_module("services.api.main")
+    api_module = importlib.reload(api_module)
+    client = TestClient(api_module.app)
+
+    payload = {
+        "records": [
+            {
+                "recency_days": 14,
+                "frequency": 8,
+                "monetary": 1800.0,
+                "avg_order_value": 225.0,
+                "tenure_days": 420,
+                "arpu": 160.0,
+                "channel": "Organic",
+                "segment": "SMB",
+            }
+        ]
+    }
+    headers = {"Authorization": "Bearer test-token"}
+    first = client.post("/score", json=payload, headers=headers)
+    second = client.post("/score", json=payload, headers=headers)
+    assert first.status_code == 200
+    assert second.status_code == 429
