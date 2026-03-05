@@ -100,15 +100,18 @@ Esta versão inclui uma arquitetura de dados madura em camadas (`raw -> bronze -
 ```mermaid
 flowchart LR
     A[Fonte de Dados Kaggle] --> B[Camada Raw]
-    B --> C[Bronze - ingestao auditavel]
-    C --> D[Silver - limpeza e padronizacao]
-    D --> E[Gold - Star Schema]
-    E --> F[Camada Analitica]
-    E --> G[Camada de ML]
-    G --> H[Motor de Recomendacao]
-    F --> I[Dashboard Executivo]
-    H --> I
-    I --> J[Deploy com Docker / Cloud]
+    B --> C[Data Lake]
+    C --> D[Bronze - ingestao auditavel]
+    D --> E[Silver - limpeza e padronizacao]
+    E --> F[Warehouse - Gold Star Schema]
+    F --> G[Camada Analitica]
+    F --> H[Camada de ML]
+    H --> I[Motor de Recomendacao]
+    H --> J[Camada de API]
+    G --> K[Dashboard Executivo]
+    I --> K
+    J --> K
+    K --> L[Deploy com Docker / Cloud]
 ```
 
 ## Linhagem de Dados
@@ -300,20 +303,27 @@ python -m uvicorn services.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Endpoints:
-- `GET /health`: status, schema de input e versão dos modelos (`run_id`, `data_version`)
-- `POST /score`: scoring de churn e próxima compra para 1+ clientes
+- `GET /api/v1/health`: status, schema de input, versão dos modelos (`run_id`, `data_version`) e telemetria
+- `POST /api/v1/score`: scoring de churn e próxima compra para 1+ clientes
+- Aliases legados/compatíveis: `GET /health` e `POST /score`
 
-Segurança e quota (`/score`):
-- Token obrigatório no modo `demo` (default): `X-API-Token` ou `Authorization: Bearer <token>`
+Segurança e quota (`/api/v1/score`):
+- API key obrigatória no modo `demo` (default): `X-API-Key` ou `Authorization: Bearer <key>` (`X-API-Token` mantido como alias legado)
 - Rate limit em memória por token/IP (`RIP_API_RATE_LIMIT_PER_MINUTE`, default `60`)
 - Modo de autenticação: `RIP_API_AUTH_MODE=demo|strict|off`
+- Variáveis de chave: `RIP_API_KEYS` (lista) e `RIP_API_KEY` (fallback único)
 
-Exemplo `curl` com token:
+Telemetria de produção (health + logs):
+- `prediction_latency_ms`
+- `request_volume`
+- `model_version_usage`
+
+Exemplo `curl` com API key:
 
 ```bash
-curl -X POST "http://localhost:8000/score" \
+curl -X POST "http://localhost:8000/api/v1/score" \
   -H "Content-Type: application/json" \
-  -H "X-API-Token: rip-demo-token-v1" \
+  -H "X-API-Key: rip-demo-token-v1" \
   -d '{
     "records": [
       {
@@ -362,8 +372,8 @@ Validação automática:
 
 ### Release
 - Build de imagens: `make docker-build`
-- Verificar saúde da API em runtime: `GET /health`
-- Validar contrato de scoring em runtime: `POST /score`
+- Verificar saúde da API em runtime: `GET /api/v1/health`
+- Validar contrato de scoring em runtime: `POST /api/v1/score`
 - Notas de release curtas e orientadas a negócio (impacto/ROI/uplift).
 - Registrar mudanças de quebra de API/contrato no `CHANGELOG.md` em `Breaking Changes`.
 - Release publicada: `docs/releases/v1.0.0.md`
@@ -372,8 +382,8 @@ Validação automática:
   `gh release create v1.0.0 --title "v1.0.0" --notes-file docs/releases/v1.0.0.md`
 
 ### Incidente
-- Se `/health` retornar `degraded`, regenerar artefatos com `make pipeline`
-- Confirmar arquivos de registry em `data/processed/model_registry/*`
+- Se `/api/v1/health` retornar `degraded`, regenerar artefatos com `make pipeline`
+- Confirmar arquivos de registry em `data/processed/registry/*`
 - Opção de rollback: usar artefatos legados `*.joblib` suportados pelo fallback da API
 
 ## Qualidade de Engenharia
@@ -412,8 +422,10 @@ docker run -p 8000:8000 revenue-intelligence-api
 - `data/processed/business_outcomes.json` (KPIs de negócio, LTV/CAC por canal e simulação baseline vs cenário)
 - `data/processed/top_10_actions.csv` (top 10 ações priorizadas com uplift, custo, net impact e ROI simulado)
 - `data/processed/metrics_report.json` (artefato auxiliar de métricas de ML)
-- `data/processed/model_registry/churn/model.pkl` + `model_metadata.json` (model registry leve)
-- `data/processed/model_registry/next_purchase_30d/model.pkl` + `model_metadata.json` (model registry leve)
+- `data/processed/registry/churn/model_v1/model.pkl` + `model_metadata.json` (model registry versionado)
+- `data/processed/registry/churn/latest.json` (ponteiro de versão mais recente)
+- `data/processed/registry/next_purchase_30d/model_v1/model.pkl` + `model_metadata.json` (model registry versionado)
+- `data/processed/registry/next_purchase_30d/latest.json` (ponteiro de versão mais recente)
 - `data/processed/dim_customers.csv`
 - `data/processed/dim_date.csv`
 - `data/processed/dim_channel.csv`

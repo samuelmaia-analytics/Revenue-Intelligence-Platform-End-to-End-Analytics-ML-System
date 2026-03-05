@@ -101,15 +101,18 @@ This version includes a mature layered data architecture (`raw -> bronze -> silv
 ```mermaid
 flowchart LR
     A[Kaggle Source Dataset] --> B[Raw Layer]
-    B --> C[Bronze - auditable ingestion]
-    C --> D[Silver - cleaning and standardization]
-    D --> E[Gold - Star Schema]
-    E --> F[Analytics Layer]
-    E --> G[ML Layer]
-    G --> H[Recommendation Engine]
-    F --> I[Executive Dashboard]
-    H --> I
-    I --> J[Docker / Cloud Deployment]
+    B --> C[Data Lake]
+    C --> D[Bronze - auditable ingestion]
+    D --> E[Silver - cleaning and standardization]
+    E --> F[Warehouse - Gold Star Schema]
+    F --> G[Analytics Layer]
+    F --> H[ML Layer]
+    H --> I[Recommendation Engine]
+    H --> J[API Layer]
+    G --> K[Dashboard]
+    I --> K
+    J --> K
+    K --> L[Docker / Cloud Deployment]
 ```
 
 ## Data Lineage
@@ -301,20 +304,27 @@ python -m uvicorn services.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Available endpoints:
-- `GET /health`: service status, input schema, model versions (`run_id`, `data_version`)
-- `POST /score`: churn + next purchase prediction for one or multiple customers
+- `GET /api/v1/health`: service status, input schema, model versions (`run_id`, `data_version`) and telemetry
+- `POST /api/v1/score`: churn + next purchase prediction for one or multiple customers
+- Backward-compatible aliases: `GET /health` and `POST /score`
 
-Security and quota (`/score`):
-- API token required in `demo` mode (default): `X-API-Token` or `Authorization: Bearer <token>`
+Security and quota (`/api/v1/score`):
+- API key required in `demo` mode (default): `X-API-Key` or `Authorization: Bearer <key>` (`X-API-Token` kept as legacy alias)
 - In-memory rate limit per token/IP (`RIP_API_RATE_LIMIT_PER_MINUTE`, default `60`)
 - Auth mode: `RIP_API_AUTH_MODE=demo|strict|off`
+- Key env vars: `RIP_API_KEYS` (comma-separated), `RIP_API_KEY` (single key fallback)
 
-Example `curl` with token:
+Production telemetry (health + logs):
+- `prediction_latency_ms`
+- `request_volume`
+- `model_version_usage`
+
+Example `curl` with API key:
 
 ```bash
-curl -X POST "http://localhost:8000/score" \
+curl -X POST "http://localhost:8000/api/v1/score" \
   -H "Content-Type: application/json" \
-  -H "X-API-Token: rip-demo-token-v1" \
+  -H "X-API-Key: rip-demo-token-v1" \
   -d '{
     "records": [
       {
@@ -382,8 +392,8 @@ Automated validation:
 
 ### Release
 - Build images: `make docker-build`
-- Verify API health in runtime: `GET /health`
-- Validate scoring contract in runtime: `POST /score`
+- Verify API health in runtime: `GET /api/v1/health`
+- Validate scoring contract in runtime: `POST /api/v1/score`
 - Keep release notes short and business-first (impact/ROI/uplift deltas).
 - Register API/contract breaking changes in `CHANGELOG.md` under `Breaking Changes`.
 - Published release notes: `docs/releases/v1.0.0.md`
@@ -392,8 +402,8 @@ Automated validation:
   `gh release create v1.0.0 --title "v1.0.0" --notes-file docs/releases/v1.0.0.md`
 
 ### Incident
-- If `/health` returns `degraded`, regenerate artifacts with `make pipeline`
-- Confirm model registry files in `data/processed/model_registry/*`
+- If `/api/v1/health` returns `degraded`, regenerate artifacts with `make pipeline`
+- Confirm model registry files in `data/processed/registry/*`
 - Rollback option: use legacy `*.joblib` artifacts already supported by the API fallback
 
 ## Engineering Quality
@@ -432,8 +442,10 @@ docker run -p 8000:8000 revenue-intelligence-api
 - `data/processed/business_outcomes.json` (business KPIs, LTV/CAC by channel and baseline-vs-scenario simulation)
 - `data/processed/top_10_actions.csv` (top 10 prioritized actions with uplift, cost, net impact and simulated ROI)
 - `data/processed/metrics_report.json` (auxiliary ML metrics artifact)
-- `data/processed/model_registry/churn/model.pkl` + `model_metadata.json` (light model registry)
-- `data/processed/model_registry/next_purchase_30d/model.pkl` + `model_metadata.json` (light model registry)
+- `data/processed/registry/churn/model_v1/model.pkl` + `model_metadata.json` (versioned model registry)
+- `data/processed/registry/churn/latest.json` (latest pointer)
+- `data/processed/registry/next_purchase_30d/model_v1/model.pkl` + `model_metadata.json` (versioned model registry)
+- `data/processed/registry/next_purchase_30d/latest.json` (latest pointer)
 - `data/processed/dim_customers.csv`
 - `data/processed/dim_date.csv`
 - `data/processed/dim_channel.csv`

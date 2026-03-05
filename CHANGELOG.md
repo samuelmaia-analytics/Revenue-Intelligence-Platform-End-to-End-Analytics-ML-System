@@ -11,6 +11,25 @@ All notable changes to this project are documented in this file.
   - preserve older contract modules for migration windows when possible;
   - be documented in the relevant release under `Breaking Changes`.
 
+## [1.1.0] - 2026-03-05
+
+### Added
+
+- Versioned API endpoints: `GET /api/v1/health` and `POST /api/v1/score`.
+- API key validation (`X-API-Key` / bearer) with legacy header compatibility.
+- Production telemetry in health payload and logs:
+  - `prediction_latency_ms`
+  - `request_volume`
+  - `model_version_usage`
+- Versioned model registry layout:
+  - `data/processed/registry/<model_name>/model_vN/`
+  - `data/processed/registry/<model_name>/latest.json`
+
+### Changed
+
+- `/health` and `/score` remain available as backward-compatible aliases.
+- Model loader now prioritizes the latest versioned registry and still supports legacy `model_registry` paths as fallback.
+
 ## [1.0.0] - 2026-03-05
 
 ### Added
@@ -33,4 +52,3 @@ All notable changes to this project are documented in this file.
   - Top 10 net impact: `2,550.13`
   - Top 10 simulated ROI: `1.58x`
   - 90-day uplift vs baseline: `+4,165.63`
-

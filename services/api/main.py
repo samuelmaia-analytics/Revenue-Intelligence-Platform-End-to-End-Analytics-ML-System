@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import logging
 import os
 import time
+from collections import defaultdict
 from pathlib import Path
 from threading import Lock
 from typing import Any
 
 import pandas as pd
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Request, Response
 
 from contracts.data_contract import ScoreInputRecord, ScoreRequest, ScoreResponse
 from src.model_registry import load_registered_model
+
+LOGGER = logging.getLogger("revenue_intelligence.api")
+API_VERSION_PREFIX = "/api/v1"
 
 
 def _resolve_model_dir() -> Path:
@@ -24,11 +29,22 @@ def _resolve_auth_mode() -> str:
     return mode
 
 
-def _resolve_allowed_tokens() -> set[str]:
-    tokens_from_env = os.getenv("RIP_API_TOKENS", "")
-    parsed = {token.strip() for token in tokens_from_env.split(",") if token.strip()}
+def _resolve_allowed_api_keys() -> set[str]:
+    keys_from_env = os.getenv("RIP_API_KEYS", "")
+    parsed = {api_key.strip() for api_key in keys_from_env.split(",") if api_key.strip()}
     if parsed:
         return parsed
+
+    single_key = os.getenv("RIP_API_KEY", "").strip()
+    if single_key:
+        return {single_key}
+
+    # Backward-compatible fallback.
+    tokens_from_env = os.getenv("RIP_API_TOKENS", "")
+    parsed_legacy = {token.strip() for token in tokens_from_env.split(",") if token.strip()}
+    if parsed_legacy:
+        return parsed_legacy
+
     demo_token = os.getenv("RIP_API_DEMO_TOKEN", "rip-demo-token-v1")
     return {demo_token}
 
@@ -80,9 +96,13 @@ def _load_model_bundle(model_dir: Path, model_name: str, legacy_name: str) -> di
 
 
 def _extract_auth_token(
+    x_api_key: str | None,
     x_api_token: str | None,
     authorization: str | None,
 ) -> str | None:
+    if x_api_key:
+        return x_api_key.strip()
+
     if x_api_token:
         return x_api_token.strip()
 
@@ -95,20 +115,21 @@ def _extract_auth_token(
     return None
 
 
-def _check_auth(token: str | None) -> None:
+def _check_auth(api_key: str | None) -> None:
     if API_AUTH_MODE == "off":
         return
 
-    if token is None:
+    if api_key is None:
         raise HTTPException(
             status_code=401,
             detail=(
-                "Missing API token. Provide `X-API-Token` or " "`Authorization: Bearer <token>`."
+                "Missing API key. Provide `X-API-Key` (preferred), `X-API-Token` (legacy), or "
+                "`Authorization: Bearer <key>`."
             ),
         )
 
-    if token not in ALLOWED_TOKENS:
-        raise HTTPException(status_code=401, detail="Invalid API token.")
+    if api_key not in ALLOWED_API_KEYS:
+        raise HTTPException(status_code=401, detail="Invalid API key.")
 
 
 def _enforce_rate_limit(client_id: str) -> None:
@@ -126,22 +147,81 @@ def _enforce_rate_limit(client_id: str) -> None:
         history.append(now)
 
 
+class _TelemetryState:
+    def __init__(self) -> None:
+        self._lock = Lock()
+        self.request_volume: dict[str, int] = defaultdict(int)
+        self.model_version_usage: dict[str, int] = defaultdict(int)
+        self.prediction_count = 0
+        self.prediction_latency_total_ms = 0.0
+        self.prediction_latency_last_ms = 0.0
+
+    def record_request(self, endpoint: str, status_code: int) -> None:
+        key = f"{endpoint}|{status_code}"
+        with self._lock:
+            self.request_volume[key] += 1
+
+    def record_prediction(self, latency_ms: float, model_versions: dict[str, str]) -> None:
+        with self._lock:
+            self.prediction_count += 1
+            self.prediction_latency_total_ms += latency_ms
+            self.prediction_latency_last_ms = latency_ms
+            for model_name, version in model_versions.items():
+                usage_key = f"{model_name}:{version}"
+                self.model_version_usage[usage_key] += 1
+
+    def snapshot(self) -> dict[str, Any]:
+        with self._lock:
+            avg_latency_ms = (
+                self.prediction_latency_total_ms / self.prediction_count
+                if self.prediction_count
+                else 0.0
+            )
+            return {
+                "prediction_latency_ms": {
+                    "last": round(self.prediction_latency_last_ms, 3),
+                    "average": round(avg_latency_ms, 3),
+                    "total_predictions": self.prediction_count,
+                },
+                "request_volume": dict(self.request_volume),
+                "model_version_usage": dict(self.model_version_usage),
+            }
+
+
 app = FastAPI(
     title="Revenue Intelligence Model Serving API",
-    version="1.0.0",
-    description="Serve churn and next-purchase predictions with explicit input contracts.",
+    version="1.1.0",
+    description=(
+        "Serve churn and next-purchase predictions with explicit contracts, "
+        "versioned endpoints and production telemetry."
+    ),
 )
 
 MODEL_DIR = _resolve_model_dir()
 API_AUTH_MODE = _resolve_auth_mode()
-ALLOWED_TOKENS = _resolve_allowed_tokens()
+ALLOWED_API_KEYS = _resolve_allowed_api_keys()
 API_RATE_LIMIT_PER_MINUTE = _resolve_rate_limit_per_minute()
 REQUEST_HISTORY: dict[str, list[float]] = {}
 RATE_LIMIT_LOCK = Lock()
+TELEMETRY = _TelemetryState()
 CHURN_BUNDLE = _load_model_bundle(MODEL_DIR, "churn", "churn_model.joblib")
 NEXT_BUNDLE = _load_model_bundle(MODEL_DIR, "next_purchase_30d", "next_purchase_model.joblib")
 
 
+@app.middleware("http")
+async def _http_telemetry(request: Request, call_next: Any) -> Response:
+    response = await call_next(request)
+    TELEMETRY.record_request(endpoint=request.url.path, status_code=response.status_code)
+    LOGGER.info(
+        "request_volume endpoint=%s status_code=%s total=%s",
+        request.url.path,
+        response.status_code,
+        TELEMETRY.request_volume.get(f"{request.url.path}|{response.status_code}", 0),
+    )
+    return response
+
+
+@app.get(f"{API_VERSION_PREFIX}/health")
 @app.get("/health")
 def health() -> dict[str, Any]:
     churn_loaded = CHURN_BUNDLE["model"] is not None
@@ -167,23 +247,31 @@ def health() -> dict[str, Any]:
         },
         "api_security": {
             "auth_mode": API_AUTH_MODE,
-            "token_count": len(ALLOWED_TOKENS) if API_AUTH_MODE != "off" else 0,
+            "api_key_count": len(ALLOWED_API_KEYS) if API_AUTH_MODE != "off" else 0,
+            "accepted_headers": ["X-API-Key", "Authorization: Bearer <key>", "X-API-Token"],
             "rate_limit_per_minute": API_RATE_LIMIT_PER_MINUTE,
         },
+        "telemetry": TELEMETRY.snapshot(),
         "input_schema": ScoreInputRecord.model_json_schema()["properties"],
     }
 
 
+@app.post(f"{API_VERSION_PREFIX}/score", response_model=ScoreResponse)
 @app.post("/score", response_model=ScoreResponse)
 def score(
     payload: ScoreRequest,
     request: Request,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
     x_api_token: str | None = Header(default=None, alias="X-API-Token"),
     authorization: str | None = Header(default=None, alias="Authorization"),
 ) -> ScoreResponse:
-    token = _extract_auth_token(x_api_token=x_api_token, authorization=authorization)
-    _check_auth(token=token)
-    client_id = token or (request.client.host if request.client else "unknown")
+    api_key = _extract_auth_token(
+        x_api_key=x_api_key,
+        x_api_token=x_api_token,
+        authorization=authorization,
+    )
+    _check_auth(api_key=api_key)
+    client_id = api_key or (request.client.host if request.client else "unknown")
     _enforce_rate_limit(client_id=client_id)
 
     if CHURN_BUNDLE["model"] is None or NEXT_BUNDLE["model"] is None:
@@ -191,10 +279,11 @@ def score(
             status_code=503,
             detail=(
                 "Model artifacts not available. Run pipeline to generate registry in "
-                "data/processed/model_registry."
+                "data/processed/registry."
             ),
         )
 
+    prediction_start = time.perf_counter()
     records = [record.model_dump() for record in payload.records]
     features = pd.DataFrame(records)
 
@@ -220,4 +309,11 @@ def score(
         "churn": str(CHURN_BUNDLE["metadata"].get("run_id", "unknown")),
         "next_purchase_30d": str(NEXT_BUNDLE["metadata"].get("run_id", "unknown")),
     }
+    prediction_latency_ms = (time.perf_counter() - prediction_start) * 1000
+    TELEMETRY.record_prediction(latency_ms=prediction_latency_ms, model_versions=versions)
+    LOGGER.info(
+        "prediction_latency_ms=%.3f model_version_usage=%s",
+        prediction_latency_ms,
+        versions,
+    )
     return ScoreResponse(model_versions=versions, predictions=predictions)

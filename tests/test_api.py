@@ -79,16 +79,20 @@ def test_api_health_and_score(tmp_path: Path) -> None:
     api_module = importlib.reload(api_module)
     client = TestClient(api_module.app)
 
-    health = client.get("/health")
+    health = client.get("/api/v1/health")
     assert health.status_code == 200
     health_payload = health.json()
     assert health_payload["status"] == "ok"
     assert health_payload["models"]["churn"]["loaded"] is True
     assert health_payload["api_security"]["auth_mode"] == "demo"
+    assert health_payload["api_security"]["api_key_count"] == 1
     assert "recency_days" in health_payload["input_schema"]
+    assert "prediction_latency_ms" in health_payload["telemetry"]
+    assert "request_volume" in health_payload["telemetry"]
+    assert "model_version_usage" in health_payload["telemetry"]
 
     score = client.post(
-        "/score",
+        "/api/v1/score",
         json={
             "records": [
                 {
@@ -103,7 +107,7 @@ def test_api_health_and_score(tmp_path: Path) -> None:
                 }
             ]
         },
-        headers={"X-API-Token": "test-token"},
+        headers={"X-API-Key": "test-token"},
     )
     assert score.status_code == 200
     score_payload = score.json()
@@ -125,7 +129,7 @@ def test_api_requires_token(tmp_path: Path) -> None:
     client = TestClient(api_module.app)
 
     score = client.post(
-        "/score",
+        "/api/v1/score",
         json={
             "records": [
                 {
@@ -170,7 +174,7 @@ def test_api_rate_limit_enforced(tmp_path: Path) -> None:
         ]
     }
     headers = {"Authorization": "Bearer test-token"}
-    first = client.post("/score", json=payload, headers=headers)
-    second = client.post("/score", json=payload, headers=headers)
+    first = client.post("/api/v1/score", json=payload, headers=headers)
+    second = client.post("/api/v1/score", json=payload, headers=headers)
     assert first.status_code == 200
     assert second.status_code == 429
