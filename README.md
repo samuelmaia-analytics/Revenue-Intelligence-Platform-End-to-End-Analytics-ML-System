@@ -8,6 +8,7 @@
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 
 [Leia em Português](README.pt-BR.md)
+LinkedIn: https://linkedin.com/in/samuelmaia-analytics
 
 ## API Security Spotlight
 

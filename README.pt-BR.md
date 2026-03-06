@@ -8,6 +8,7 @@
 [![Licença](https://img.shields.io/badge/Licença-MIT-black.svg)](LICENSE)
 
 [Read in English](README.md)
+LinkedIn: https://linkedin.com/in/samuelmaia-analytics
 
 ## Destaque de Segurança da API
 

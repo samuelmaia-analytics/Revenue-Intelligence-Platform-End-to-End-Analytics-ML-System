@@ -9,3 +9,4 @@ data/silver/*.csv
 data/gold/*.csv
 data/processed/*.csv
 data/processed/*.json
+data/processed/registry/
