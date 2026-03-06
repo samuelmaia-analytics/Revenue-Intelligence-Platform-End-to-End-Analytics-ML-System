@@ -4,7 +4,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.43-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.6-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![Docker](https://img.shields.io/badge/Docker-pronto-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![CI](https://github.com/samuelmaia-data-analyst/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/actions/workflows/ci.yml/badge.svg)](https://github.com/samuelmaia-data-analyst/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/actions/workflows/ci.yml)
+[![CI](https://github.com/samuelmaia-analytics/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/actions/workflows/ci.yml/badge.svg)](https://github.com/samuelmaia-analytics/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/actions/workflows/ci.yml)
 [![Licença](https://img.shields.io/badge/Licença-MIT-black.svg)](LICENSE)
 
 [Read in English](README.md)
@@ -394,7 +394,7 @@ Validação automática:
   `gh release create v1.0.0 --title "v1.0.0" --notes-file docs/releases/v1.0.0.md`
 - Se a release já existir, atualize:
   `gh release edit v1.0.0 --title "v1.0.0" --notes-file docs/releases/v1.0.0.md`
-- Validar na UI do GitHub: `https://github.com/samuelmaia-data-analyst/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/releases`
+- Validar na UI do GitHub: `https://github.com/samuelmaia-analytics/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/releases`
 
 ### Incidente
 - Se `/api/v1/health` retornar `degraded`, regenerar artefatos com `make pipeline`
