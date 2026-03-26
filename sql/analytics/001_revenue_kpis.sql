@@ -1,3 +1,4 @@
+-- Monthly commercial snapshot over the governed order fact.
 SELECT
     d.year,
     d.month,

@@ -117,8 +117,10 @@ Primary references:
 
 - [docs/README.md](docs/README.md)
 - [docs/architecture.md](docs/architecture.md)
+- [docs/governance_framework.md](docs/governance_framework.md)
 - [docs/runtime_surfaces.md](docs/runtime_surfaces.md)
 - [docs/environments.md](docs/environments.md)
+- [docs/ci_cd.md](docs/ci_cd.md)
 - [docs/repository_structure.md](docs/repository_structure.md)
 - [docs/runbook.md](docs/runbook.md)
 - [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
@@ -230,8 +232,15 @@ Automation surfaces:
 - `Makefile` for local developer workflows
 - `.pre-commit-config.yaml` for fast local quality gates
 - `.github/workflows/ci.yml` for lint, tests, smoke, and build validation
+- `.github/workflows/ci.yml` splits quality, governance, dbt-on-SQLite, and container validation so failures are attributable
 - `.github/workflows/ci.yml` also runs a dbt-on-SQLite downstream smoke against the generated warehouse
 - downstream smoke scripts share a common temporary-runtime helper in `scripts/smoke_support.py`
+
+Governance checkpoints:
+
+- runtime changes must preserve `python -m src.pipeline run` as the canonical path
+- SQL examples should stay portable to the documented SQLite-first environment unless a dialect requirement is explicit
+- README, runbook, release notes, and CI should change together when operational behavior changes
 
 ## SQL Consumption Examples
 

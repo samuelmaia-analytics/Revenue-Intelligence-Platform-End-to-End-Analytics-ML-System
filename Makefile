@@ -1,7 +1,7 @@
 PYTHON ?= python
 DBT ?= dbt
 
-.PHONY: help install install-dev pipeline artifacts dictionary serve-app serve-api lint format type-check test smoke-dashboard snapshot-dashboard smoke-api smoke-downstream smoke-exports smoke-partner smoke-dbt verify package smoke docker-build-app docker-build-api docker-build docker-smoke clean
+.PHONY: help install install-dev pipeline artifacts dictionary serve-app serve-api lint format type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-downstream smoke-exports smoke-partner smoke-dbt verify package smoke docker-build-app docker-build-api docker-build docker-smoke clean
 
 help:
 	@echo "Available targets:"
@@ -15,6 +15,7 @@ help:
 	@echo "  format             Apply import sorting, black, and ruff fixes"
 	@echo "  type-check         Run mypy"
 	@echo "  test               Run pytest"
+	@echo "  governance         Run repository-governance and operational-asset tests"
 	@echo "  smoke-dashboard    Run the dashboard smoke check"
 	@echo "  snapshot-dashboard Run the dashboard UI snapshot check"
 	@echo "  smoke-api          Run the FastAPI smoke check"
@@ -65,6 +66,9 @@ type-check:
 test:
 	$(PYTHON) -m pytest -q
 
+governance:
+	$(PYTHON) -m pytest -q tests/test_repository_governance.py tests/test_operational_assets.py
+
 smoke-dashboard:
 	$(PYTHON) scripts/smoke_dashboard.py
 
@@ -88,7 +92,7 @@ smoke-dbt:
 
 quality: lint type-check test
 
-verify: lint type-check test smoke-dashboard snapshot-dashboard smoke-api smoke-downstream smoke-exports smoke-partner smoke-dbt package
+verify: lint type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-downstream smoke-exports smoke-partner smoke-dbt package
 
 package:
 	$(PYTHON) -m build

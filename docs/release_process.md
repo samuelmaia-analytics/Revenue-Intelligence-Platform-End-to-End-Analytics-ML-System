@@ -37,8 +37,16 @@ python scripts/smoke_downstream_sql.py
 python scripts/smoke_processed_exports.py
 python scripts/smoke_partner_payload.py
 python scripts/smoke_dbt_sqlite.py
+python -m pytest -q tests/test_repository_governance.py tests/test_operational_assets.py
 python -m build
 ```
+
+If containers, SQL portability, or repository policy change materially, also review:
+
+- `docs/governance_framework.md`
+- `docs/ci_cd.md`
+- `sql/README.md`
+- `.github/workflows/ci.yml`
 
 ## Release Notes Standard
 
@@ -74,6 +82,7 @@ Bad release examples:
 3. add or update a file in `docs/releases/`
 4. tag the version
 5. use the release note as the public summary for GitHub reviewers
+6. verify the changelog entry and release note describe the same operational delta
 
 ## Current Release Artifact
 

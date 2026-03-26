@@ -1,3 +1,4 @@
+-- Revenue concentration and customer monetization by acquisition channel.
 SELECT
     c.channel,
     SUM(f.order_amount) AS revenue,

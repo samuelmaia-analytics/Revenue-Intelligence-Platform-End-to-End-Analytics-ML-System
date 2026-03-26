@@ -117,8 +117,10 @@ Referências principais:
 
 - [docs/README.md](docs/README.md)
 - [docs/architecture.md](docs/architecture.md)
+- [docs/governance_framework.md](docs/governance_framework.md)
 - [docs/runtime_surfaces.md](docs/runtime_surfaces.md)
 - [docs/environments.md](docs/environments.md)
+- [docs/ci_cd.md](docs/ci_cd.md)
 - [docs/repository_structure.md](docs/repository_structure.md)
 - [docs/runbook.md](docs/runbook.md)
 - [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
@@ -229,8 +231,15 @@ Camadas de automação:
 - `Makefile` para o fluxo local do desenvolvedor
 - `.pre-commit-config.yaml` para gates rápidos antes do commit
 - `.github/workflows/ci.yml` para lint, testes, smoke e build
+- `.github/workflows/ci.yml` separa validação de qualidade, governança, dbt sobre SQLite e containers para facilitar diagnóstico
 - `.github/workflows/ci.yml` também valida consumo dbt real sobre o warehouse SQLite gerado pelo pipeline
 - os smokes downstream compartilham um helper comum de runtime temporário em `scripts/smoke_support.py`
+
+Checkpoints de governança:
+
+- mudanças de runtime devem preservar `python -m src.pipeline run` como caminho canônico
+- exemplos SQL devem permanecer portáveis para o ambiente SQLite-first documentado, salvo quando o dialeto exigido estiver explícito
+- README, runbook, release notes e CI devem evoluir juntos quando o comportamento operacional mudar
 
 ## Exemplos de Consumo SQL
 

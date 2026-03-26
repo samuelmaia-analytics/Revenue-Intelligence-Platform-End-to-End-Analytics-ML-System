@@ -5,8 +5,10 @@ This repository keeps documentation intentionally scoped and operational. Each d
 ## Core Documents
 
 - [architecture.md](architecture.md): system boundary, runtime path, data flow, reliability controls and trade-offs
+- [governance_framework.md](governance_framework.md): source-of-truth rules, ownership surfaces, and change-evidence expectations
 - [runtime_surfaces.md](runtime_surfaces.md): canonical runtime surface, downstream interfaces, and smoke ownership
 - [environments.md](environments.md): how `.venv`, `.dbt-venv`, and CI relate to each other
+- [ci_cd.md](ci_cd.md): CI job topology, required gates, and local-to-CI parity expectations
 - [repository_structure.md](repository_structure.md): why directories exist, where new code belongs and what should stay out of the top level
 - [onboarding.md](onboarding.md): fastest path to a successful local run, validation commands and common failure modes
 - [runbook.md](runbook.md): operational commands, failure investigation and output validation checklist
@@ -36,8 +38,10 @@ This repository keeps documentation intentionally scoped and operational. Each d
 
 1. Start with the root `README` in your preferred language.
 2. Read [architecture.md](architecture.md) for the system model.
-3. Read [runtime_surfaces.md](runtime_surfaces.md) to understand what is canonical versus downstream.
-4. Read [runbook.md](runbook.md) to understand operation and recovery.
-5. Read [troubleshooting_matrix.md](troubleshooting_matrix.md) for faster diagnosis.
-6. Read [repository_structure.md](repository_structure.md) before moving files or adding modules.
-7. Use [onboarding.md](onboarding.md) and [environments.md](environments.md) when you need to run, validate or extend the project locally.
+3. Read [governance_framework.md](governance_framework.md) to understand evidence, ownership, and what must stay aligned.
+4. Read [runtime_surfaces.md](runtime_surfaces.md) to understand what is canonical versus downstream.
+5. Read [ci_cd.md](ci_cd.md) to understand required checks and failure attribution.
+6. Read [runbook.md](runbook.md) to understand operation and recovery.
+7. Read [troubleshooting_matrix.md](troubleshooting_matrix.md) for faster diagnosis.
+8. Read [repository_structure.md](repository_structure.md) before moving files or adding modules.
+9. Use [onboarding.md](onboarding.md) and [environments.md](environments.md) when you need to run, validate or extend the project locally.

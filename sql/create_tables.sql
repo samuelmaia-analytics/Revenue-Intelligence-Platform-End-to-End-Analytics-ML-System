@@ -4,18 +4,23 @@ CREATE TABLE IF NOT EXISTS dim_customers (
     signup_date DATE NOT NULL,
     signup_month VARCHAR(7),
     channel VARCHAR(50),
-    segment VARCHAR(50)
+    segment VARCHAR(50),
+    gender VARCHAR(20),
+    age INTEGER,
+    city VARCHAR(100),
+    membership_type VARCHAR(50),
+    satisfaction_level VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS dim_date (
     date_key INTEGER PRIMARY KEY,
     date DATE NOT NULL,
-    year INTEGER,
-    month INTEGER,
-    month_name VARCHAR(20),
-    quarter INTEGER,
-    week_of_year INTEGER,
-    day_of_week INTEGER
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    month_name VARCHAR(20) NOT NULL,
+    quarter INTEGER NOT NULL,
+    week_of_year INTEGER NOT NULL,
+    day_of_week INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS dim_channel (

@@ -18,11 +18,13 @@ Read these files first:
 
 - [README.md](README.md)
 - [docs/architecture.md](docs/architecture.md)
+- [docs/governance_framework.md](docs/governance_framework.md)
 - [docs/runbook.md](docs/runbook.md)
 - [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
 - [docs/repository_structure.md](docs/repository_structure.md)
 - [docs/deprecation_policy.md](docs/deprecation_policy.md)
 - [docs/merge_policy.md](docs/merge_policy.md)
+- [docs/ci_cd.md](docs/ci_cd.md)
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
 
 ## Contribution Principles
@@ -97,6 +99,7 @@ python scripts/smoke_downstream_sql.py
 python scripts/smoke_processed_exports.py
 python scripts/smoke_partner_payload.py
 python scripts/smoke_dbt_sqlite.py
+python -m pytest -q tests/test_repository_governance.py tests/test_operational_assets.py
 python -m build
 ```
 
@@ -155,6 +158,8 @@ At minimum, review:
 - `docs/runbook.md`
 - `docs/troubleshooting_matrix.md`
 - `docs/release_process.md`
+- `docs/governance_framework.md`
+- `docs/ci_cd.md`
 
 Do not document planned behavior as if it already exists.
 

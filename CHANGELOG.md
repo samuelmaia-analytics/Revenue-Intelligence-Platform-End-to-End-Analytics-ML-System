@@ -11,6 +11,27 @@ All notable changes to this project are documented in this file.
   - preserve older contract modules for migration windows when possible;
   - be documented in the relevant release under `Breaking Changes`.
 
+## [1.4.0] - 2026-03-26
+
+### Added
+
+- governance framework document linking runtime, contracts, SQL, CI, and release evidence
+- CI/CD document describing job topology, local-to-CI parity, and artifact expectations
+- release note `docs/releases/v1.4.0.md`
+
+### Changed
+
+- main and localized READMEs now surface governance and CI checkpoints more explicitly
+- merge and release policy now require repository-governance evidence when operational policy changes
+- Makefile now exposes a dedicated governance target for repository-policy validation
+- SQL bootstrap DDL now matches the dimensional definitions more closely
+- analytical SQL examples now describe intent and use SQLite-portable date logic
+
+### Portfolio Deltas
+
+- the repository now reads more like an intentionally operated system than a collection of good individual assets
+- CI, SQL, and documentation tell a more consistent story about SQLite-first reproducibility and review discipline
+
 ## [1.3.0] - 2026-03-19
 
 ### Added

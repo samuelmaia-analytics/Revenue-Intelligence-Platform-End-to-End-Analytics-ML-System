@@ -25,6 +25,7 @@ Do not merge unless all relevant checks are green:
 
 - lint and static checks
 - pytest suite
+- repository governance tests
 - dashboard smoke
 - API smoke
 - downstream SQL smoke
@@ -42,6 +43,7 @@ Every PR should make these points obvious:
 3. what runtime surface is affected
 4. what validation was run
 5. what residual risks remain
+6. what documentation or governance surfaces were intentionally reviewed
 
 ## Merge Rule
 
@@ -62,3 +64,5 @@ If a PR changes runtime behavior, contracts, dashboard behavior, dbt assumptions
 - `docs/releases/`
 - `docs/runbook.md`
 - `README.md`
+- `docs/governance_framework.md`
+- `docs/ci_cd.md`

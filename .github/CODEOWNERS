@@ -6,3 +6,6 @@
 /app/ @samuelmaia
 /services/ @samuelmaia
 /dbt/ @samuelmaia
+/sql/ @samuelmaia
+/.github/ @samuelmaia
+/orchestration/ @samuelmaia

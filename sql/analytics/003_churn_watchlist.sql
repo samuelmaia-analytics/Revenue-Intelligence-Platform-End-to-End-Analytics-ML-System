@@ -1,3 +1,4 @@
+-- Watchlist of customers inactive for 90 days using SQLite-portable date arithmetic.
 WITH customer_orders AS (
     SELECT
         dc.customer_id,
@@ -17,5 +18,5 @@ SELECT
     lifetime_revenue
 FROM customer_orders
 WHERE last_order_date IS NULL
-   OR last_order_date < CURRENT_DATE - INTERVAL '90' DAY
+   OR DATE(last_order_date) < DATE('now', '-90 day')
 ORDER BY lifetime_revenue DESC NULLS LAST;
