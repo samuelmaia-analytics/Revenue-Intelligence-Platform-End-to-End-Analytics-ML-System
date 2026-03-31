@@ -1,11 +1,17 @@
-﻿# Revenue Intelligence Platform
+# Revenue Intelligence Platform
 
 Production-minded revenue analytics repository that turns customer and order behavior into governed batch outputs, warehouse-ready tables, executive decision artifacts, and a Streamlit workspace for actioning revenue opportunities.
+
+[![CI](https://github.com/samuelmaia-analytics/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/actions/workflows/ci.yml/badge.svg)](https://github.com/samuelmaia-analytics/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 
 Language versions:
 
 - [Português do Brasil](README.pt-BR.md)
 - [Português de Portugal](README.pt-PT.md)
+
+Live demo: https://revenue-intelligence-platform.streamlit.app/
+LinkedIn: https://linkedin.com/in/samuelmaia-analytics
 
 ## Executive Summary
 
@@ -19,6 +25,10 @@ This repository is designed to answer the questions a hiring manager, tech lead,
 
 Short answer: yes.
 
+It is also designed around a practical business question:
+
+**Where should the business act first to protect revenue and improve growth efficiency?**
+
 ## Reviewer Snapshot
 
 In less than 30 seconds, a reviewer should be able to see that this repository has:
@@ -31,7 +41,8 @@ In less than 30 seconds, a reviewer should be able to see that this repository h
 
 ## Why This Repository Exists
 
-Most data portfolio projects stop at notebooks, ad hoc scripts, or a standalone dashboard. This repository is intentionally narrower and more operational:
+Most data portfolio projects stop at notebooks, ad hoc scripts, or a standalone dashboard.
+This repository is intentionally narrower and more operational:
 
 - one official batch entrypoint
 - deterministic and reprocessable outputs
@@ -39,7 +50,8 @@ Most data portfolio projects stop at notebooks, ad hoc scripts, or a standalone 
 - governed processed artifacts with validation and contracts
 - downstream consumers that read the batch core instead of replacing it
 
-The goal is not to simulate an enterprise platform without substance. The goal is to demonstrate sound engineering judgment in a repository small enough to inspect end-to-end.
+The goal is not to simulate an enterprise platform without substance.
+The goal is to demonstrate sound engineering judgment in a repository small enough to inspect end-to-end.
 
 ## Business Value
 
@@ -52,7 +64,14 @@ The platform converts customer behavior data into assets that support commercial
 - executive KPI snapshots and monitoring outputs
 - warehouse tables ready for SQL and dbt-style consumption
 
-For a hiring reviewer, the practical signal is simple: this is not a notebook showcase dressed up as a platform. It is a small but disciplined data system with explicit runtime ownership and downstream accountability.
+Latest published run:
+
+- Simulated net impact (Top 10 actions): **2,550.13**
+- Simulated ROI (Top 10 actions): **1.58x**
+- Revenue uplift over baseline (90d, Top 10 actions): **+4,165.63**
+
+For a hiring reviewer, the practical signal is simple: this is not a notebook showcase dressed up as a platform.
+It is a small but disciplined data system with explicit runtime ownership and downstream accountability.
 
 ## Official Runtime Path
 
@@ -60,7 +79,8 @@ For a hiring reviewer, the practical signal is simple: this is not a notebook sh
 python -m src.pipeline run
 ```
 
-The batch pipeline is the system of record. The Streamlit app, API layer, warehouse, and dbt project all consume outputs produced by it.
+The batch pipeline is the system of record.
+The Streamlit app, API layer, warehouse, and dbt project all consume outputs produced by it.
 
 ## Architecture
 
@@ -83,6 +103,18 @@ Key characteristics:
 - explicit runtime policy for retries, retention, freshness, and quality thresholds
 - processed and operational report validation before pipeline completion
 - SQLite warehouse by default, with compatibility paths for service and dbt consumers
+
+## Scope and Capabilities
+
+- Data ingestion from Kaggle source with synthetic fallback
+- Layered pipeline: raw, bronze, silver, gold
+- Feature engineering and customer-level scoring
+- Star schema outputs for analytics interoperability
+- KPI layer: LTV, CAC, RFM, cohort retention, and unit economics
+- ML layer: churn and next purchase prediction
+- Recommendation engine for next-best action
+- Executive Streamlit dashboard with governance and exports
+- Structured SQL domains under `ddl/` and `analytics/`
 
 ## Repository Structure
 
@@ -111,6 +143,7 @@ Key characteristics:
 |- main.py                 minimal Python entrypoint wrapper
 |- Dockerfile*             container builds for Streamlit and API surfaces
 |- CHANGELOG.md            release-oriented evolution log
+`- README.md               main entry point
 ```
 
 Primary references:
@@ -131,6 +164,65 @@ Primary references:
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
 - [docs/hiring_review.md](docs/hiring_review.md)
 
+## Data Model and Outputs
+
+Primary file:
+
+- `data/raw/E-commerce Customer Behavior - Sheet1.csv`
+
+Normalized into:
+
+- `customers.csv`
+- `orders.csv`
+- `marketing_spend.csv`
+- `data/bronze/*.csv`
+- `data/silver/*.csv`
+- `data/gold/dim_*.csv`
+- `data/gold/fact_*.csv`
+
+Main outputs:
+
+- `data/processed/scored_customers.csv`
+- `data/processed/recommendations.csv`
+- `data/processed/cohort_retention.csv`
+- `data/processed/unit_economics.csv`
+- `data/processed/executive_report.json`
+- `data/processed/executive_summary.json`
+- `data/processed/business_outcomes.json`
+- `data/processed/top_10_actions.csv`
+- `data/processed/metrics_report.json`
+
+## API Delivery
+
+The serving layer is FastAPI-based, with versioned endpoints and basic runtime controls.
+
+Canonical runtime endpoint:
+
+- `services/api/main.py`
+
+Available endpoints:
+
+- `GET /api/v1/health`
+- `POST /api/v1/score`
+
+Security and quota:
+
+- API key support in demo mode
+- Rate limiting per token or IP
+- Runtime configuration through environment variables
+
+The API is positioned as a lightweight delivery layer for analytical outputs, not as an isolated backend exercise.
+
+## Streamlit Workspace
+
+The dashboard is not a second source of truth.
+It consumes processed artifacts generated by the batch pipeline and is organized into:
+
+- `app/ui` for layout primitives and visual consistency
+- `app/views` for business sections and user flows
+- `app/dashboard_data.py` for cached artifact access
+- `app/dashboard_i18n.py` for `EN`, `PT-BR`, and `PT-PT`
+
 ## Reliability and Data Engineering Signals
 
 - idempotent batch execution and reprocessing support
@@ -142,15 +234,6 @@ Primary references:
 - warehouse persistence plus downstream consumption validation
 - partner-facing payload generated from governed processed exports
 - smoke-tested Streamlit dashboard in CI
-
-## Streamlit Workspace
-
-The dashboard is not a second source of truth. It consumes processed artifacts generated by the batch pipeline and is organized into:
-
-- `app/ui` for layout primitives and visual consistency
-- `app/views` for business sections and user flows
-- `app/dashboard_data.py` for cached artifact access
-- `app/dashboard_i18n.py` for `EN`, `PT-BR`, and `PT-PT`
 
 ## Local Setup
 
@@ -232,15 +315,15 @@ Automation surfaces:
 - `Makefile` for local developer workflows
 - `.pre-commit-config.yaml` for fast local quality gates
 - `.github/workflows/ci.yml` for lint, tests, smoke, and build validation
-- `.github/workflows/ci.yml` splits quality, governance, dbt-on-SQLite, and container validation so failures are attributable
-- `.github/workflows/ci.yml` also runs a dbt-on-SQLite downstream smoke against the generated warehouse
-- downstream smoke scripts share a common temporary-runtime helper in `scripts/smoke_support.py`
+- dbt-on-SQLite downstream smoke against the generated warehouse
+- downstream smoke scripts sharing a temporary-runtime helper in `scripts/smoke_support.py`
 
-Governance checkpoints:
+## Governance and Operating Standards
 
 - runtime changes must preserve `python -m src.pipeline run` as the canonical path
 - SQL examples should stay portable to the documented SQLite-first environment unless a dialect requirement is explicit
 - README, runbook, release notes, and CI should change together when operational behavior changes
+- versioned contract source of truth remains `contracts/v1/data_contract.py`
 
 ## SQL Consumption Examples
 
@@ -248,10 +331,10 @@ See [docs/sql_examples.md](docs/sql_examples.md) for practical warehouse queries
 
 ## Technical Decisions and Trade-offs
 
-- SQLite is the default warehouse because local reproducibility matters more than introducing mandatory external infrastructure.
-- The project is batch-first on purpose. It demonstrates disciplined analytics engineering instead of pretending to be a full streaming platform.
-- The Streamlit app consumes artifacts instead of recomputing core business logic, preserving one authoritative runtime path.
-- Compatibility shims exist, but canonical imports remain explicit and documented.
+- SQLite is the default warehouse because local reproducibility matters more than introducing mandatory external infrastructure
+- the project is batch-first on purpose
+- the Streamlit app consumes artifacts instead of recomputing core business logic
+- compatibility shims exist, but canonical imports remain explicit and documented
 
 ## Operational Reading Order
 
@@ -274,6 +357,16 @@ If you are reviewing the repository for technical depth, read in this order:
 - not an MLOps platform clone
 
 It is a production-minded batch analytics system sized honestly for a strong senior-level portfolio.
+
+## Docker
+
+```bash
+docker build -t revenue-intelligence .
+docker run -p 8501:8501 revenue-intelligence
+
+docker build -f Dockerfile.api -t revenue-intelligence-api .
+docker run -p 8000:8000 revenue-intelligence-api
+```
 
 ## Roadmap
 
