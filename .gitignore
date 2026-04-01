@@ -1,5 +1,6 @@
 .venv/
 .dbt-venv/
+.env
 __pycache__/
 .pytest_cache/
 .ruff_cache/
@@ -29,3 +30,4 @@ data/manifests/*.json
 data/runs/
 data/snapshots/
 *.log
+*.db

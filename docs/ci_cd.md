@@ -8,6 +8,7 @@ CI exists to prove that the repository is reproducible, reviewable, and operatio
 
 The main workflow in `.github/workflows/ci.yml` is split into focused jobs:
 
+- `hygiene`: fast repository policy and tracked-artifact checks
 - `quality`: formatting, linting, typing, tests, smoke scripts, and package build
 - `governance`: repository-governance and operational-asset tests
 - `dbt-sqlite`: pipeline execution followed by dbt-on-SQLite validation
@@ -16,6 +17,7 @@ The main workflow in `.github/workflows/ci.yml` is split into focused jobs:
 This split matters because it makes failures attributable:
 
 - if `quality` fails, the code or core artifacts are inconsistent
+- if `hygiene` fails, repository discipline regressed before heavier validation even starts
 - if `governance` fails, repository policy or documentation drifted
 - if `dbt-sqlite` fails, downstream warehouse consumption regressed
 - if `docker` fails, the deployable surface regressed
@@ -53,9 +55,18 @@ CI should produce evidence, not only pass/fail signals:
 - processed manifest
 - quality report
 - KPI snapshot
+- runtime metrics artifact with runtime regression gate coverage
+- versioned runtime baseline in `metrics/runtime_baseline.json`
 - curated recommendation exports
 
 If a change removes or renames one of these artifacts, update the runbook, smoke checks, and release notes in the same change set.
+
+## Runtime Baseline Workflow
+
+The repository also keeps a manual workflow in `.github/workflows/runtime-baseline.yml` for controlled baseline refreshes.
+
+Use it only when runtime behavior changed intentionally and the new performance envelope is acceptable.
+The workflow refreshes the baseline, validates the gate, uploads the evidence, opens a labeled PR already routed for review, and attempts squash auto-merge when repository policy allows it.
 
 ## Change Discipline
 

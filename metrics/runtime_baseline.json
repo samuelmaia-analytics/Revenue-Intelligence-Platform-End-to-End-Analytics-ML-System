@@ -1,0 +1,10 @@
+{
+  "environment": "ci",
+  "max_total_runtime_seconds": 45.0,
+  "max_regression_fraction": 0.5,
+  "stage_timings_seconds": {
+    "ingestion.raw": 1.0,
+    "modeling.ml": 5.0,
+    "warehouse.sqlite": 1.0
+  }
+}

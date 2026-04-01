@@ -1,7 +1,7 @@
 PYTHON ?= python
 DBT ?= dbt
 
-.PHONY: help install install-dev pipeline artifacts dictionary serve-app serve-api lint format type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-downstream smoke-exports smoke-partner smoke-dbt verify package smoke docker-build-app docker-build-api docker-build docker-smoke clean
+.PHONY: help install install-dev pipeline artifacts dictionary serve-app serve-api lint format type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-downstream smoke-exports smoke-partner smoke-dbt assert-runtime update-runtime-baseline verify package smoke docker-build-app docker-build-api docker-build docker-smoke clean
 
 help:
 	@echo "Available targets:"
@@ -23,6 +23,8 @@ help:
 	@echo "  smoke-exports      Run the processed exports smoke check"
 	@echo "  smoke-partner      Run the partner payload smoke check"
 	@echo "  smoke-dbt          Run the dbt SQLite smoke validation"
+	@echo "  assert-runtime     Assert runtime metrics stay within CI thresholds"
+	@echo "  update-runtime-baseline Promote current runtime metrics into the versioned baseline"
 	@echo "  verify             Run the local high-signal validation flow"
 	@echo "  package            Build the package"
 	@echo "  docker-build       Build both Docker images"
@@ -31,10 +33,10 @@ help:
 
 install:
 	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m pip install -r requirements.txt
+	$(PYTHON) -m pip install -e .
 
 install-dev: install
-	$(PYTHON) -m pip install -r requirements-dev.txt
+	$(PYTHON) -m pip install -e .[dev]
 
 pipeline:
 	$(PYTHON) -m src.pipeline run
@@ -89,6 +91,12 @@ smoke-partner:
 
 smoke-dbt:
 	$(PYTHON) scripts/smoke_dbt_sqlite.py
+
+assert-runtime:
+	$(PYTHON) scripts/assert_runtime_metrics.py data/processed/runtime_metrics.json metrics/runtime_baseline.json
+
+update-runtime-baseline:
+	$(PYTHON) scripts/update_runtime_baseline.py data/processed/runtime_metrics.json metrics/runtime_baseline.json
 
 quality: lint type-check test
 

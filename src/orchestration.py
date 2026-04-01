@@ -36,8 +36,8 @@ from src.warehouse import build_star_schema
 
 LOGGER = logging.getLogger("revenue_intelligence.pipeline")
 T = TypeVar("T")
-RawDatasetMetadata: TypeAlias = dict[str, object]
-RawInputMetadata: TypeAlias = dict[str, object]
+RawDatasetMetadata: TypeAlias = dict[str, object]  # noqa: UP040
+RawInputMetadata: TypeAlias = dict[str, object]  # noqa: UP040
 
 
 def _copy_gold_outputs(cfg: PipelineConfig) -> None:
@@ -194,6 +194,52 @@ def _persist_run_snapshot(cfg: PipelineConfig, run_context: RunContext) -> None:
     atomic_copy_file(cfg.warehouse_db_path, run_context.snapshot_dir / cfg.warehouse_db_path.name)
 
 
+def _write_executive_outputs(
+    cfg: PipelineConfig,
+    recommendations_df: pd.DataFrame,
+    churn_results: dict,
+    next_purchase_results: dict,
+    unit_df: pd.DataFrame,
+    scored_df: pd.DataFrame,
+    kpi_snapshot: dict,
+) -> None:
+    build_executive_report(
+        recommendations_df=recommendations_df,
+        churn_results=churn_results,
+        next_purchase_results=next_purchase_results,
+        kpi_snapshot=kpi_snapshot,
+        output_path=cfg.processed_dir / "executive_report.json",
+    )
+    build_executive_summary(
+        recommendations_df=recommendations_df,
+        scored_df=scored_df,
+        unit_economics_df=unit_df,
+        kpi_snapshot=kpi_snapshot,
+        output_path=cfg.processed_dir / "executive_summary.json",
+    )
+    build_business_outcomes(
+        recommendations_df=recommendations_df,
+        unit_economics_df=unit_df,
+        outcomes_path=cfg.processed_dir / "business_outcomes.json",
+        top_actions_path=cfg.processed_dir / "top_10_actions.csv",
+    )
+
+
+def _load_warehouse_frames(processed_dir: Path) -> dict[str, pd.DataFrame]:
+    frame_names = [
+        "dim_customers",
+        "dim_date",
+        "dim_channel",
+        "fact_orders",
+        "customer_features",
+        "scored_customers",
+        "recommendations",
+        "unit_economics",
+        "top_10_actions",
+    ]
+    return {name: pd.read_csv(processed_dir / f"{name}.csv") for name in frame_names}
+
+
 def _apply_retention(cfg: PipelineConfig) -> None:
     snapshots = [path for path in cfg.snapshots_dir.iterdir() if path.is_dir()]
     snapshots.sort(key=lambda item: item.stat().st_mtime, reverse=True)
@@ -264,6 +310,27 @@ def _write_run_manifest(
     return manifest
 
 
+def _write_runtime_metrics(
+    cfg: PipelineConfig,
+    run_context: RunContext,
+    stage_timings: dict[str, float],
+    outputs: list[str],
+) -> dict[str, object]:
+    total_runtime_seconds = round(sum(stage_timings.values()), 3)
+    payload = {
+        "run_id": run_context.run_id,
+        "environment": cfg.env_name,
+        "log_format": cfg.log_format,
+        "stage_count": len(stage_timings),
+        "stage_timings_seconds": {name: round(value, 3) for name, value in stage_timings.items()},
+        "total_runtime_seconds": total_runtime_seconds,
+        "output_count": len(outputs),
+        "outputs": outputs,
+    }
+    atomic_write_json(cfg.processed_dir / "runtime_metrics.json", payload)
+    return payload
+
+
 def _write_failure_manifest(
     cfg: PipelineConfig,
     run_context: RunContext,
@@ -316,7 +383,10 @@ class RevenueIntelligencePipeline:
         )
         run_context.run_dir.mkdir(parents=True, exist_ok=True)
         configure_logging(
-            self.cfg.log_level, log_path=run_context.log_path, run_id=run_context.run_id
+            self.cfg.log_level,
+            log_path=run_context.log_path,
+            run_id=run_context.run_id,
+            log_format=self.cfg.log_format,
         )
         LOGGER.info(
             "Pipeline started | env=%s | data_dir=%s | seed=%s | fingerprint=%s",
@@ -500,27 +570,27 @@ class RevenueIntelligencePipeline:
 
             self._stage(
                 "reporting.executive",
-                lambda: (
-                    build_executive_report(
-                        recommendations_df=recommendations_df,
-                        churn_results=churn_results,
-                        next_purchase_results=next_purchase_results,
-                        kpi_snapshot=kpi_snapshot,
-                        output_path=self.cfg.processed_dir / "executive_report.json",
-                    ),
-                    build_executive_summary(
-                        recommendations_df=recommendations_df,
-                        scored_df=scored_df,
-                        unit_economics_df=unit_df,
-                        kpi_snapshot=kpi_snapshot,
-                        output_path=self.cfg.processed_dir / "executive_summary.json",
-                    ),
-                    build_business_outcomes(
-                        recommendations_df=recommendations_df,
-                        unit_economics_df=unit_df,
-                        outcomes_path=self.cfg.processed_dir / "business_outcomes.json",
-                        top_actions_path=self.cfg.processed_dir / "top_10_actions.csv",
-                    ),
+                lambda: _write_executive_outputs(
+                    self.cfg,
+                    recommendations_df=recommendations_df,
+                    churn_results=churn_results,
+                    next_purchase_results=next_purchase_results,
+                    unit_df=unit_df,
+                    scored_df=scored_df,
+                    kpi_snapshot=kpi_snapshot,
+                ),
+            )
+            current_outputs = sorted(
+                set(path.name for path in self.cfg.processed_dir.glob("*") if path.is_file())
+                | {self.cfg.warehouse_db_path.name, "runtime_metrics.json"}
+            )
+            runtime_metrics = self._stage(
+                "operations.runtime_metrics",
+                lambda: _write_runtime_metrics(
+                    self.cfg,
+                    run_context=run_context,
+                    stage_timings=self.stage_timings,
+                    outputs=current_outputs,
                 ),
             )
             self._stage(
@@ -531,17 +601,7 @@ class RevenueIntelligencePipeline:
                 ),
             )
 
-            warehouse_frames = {
-                "dim_customers": pd.read_csv(self.cfg.processed_dir / "dim_customers.csv"),
-                "dim_date": pd.read_csv(self.cfg.processed_dir / "dim_date.csv"),
-                "dim_channel": pd.read_csv(self.cfg.processed_dir / "dim_channel.csv"),
-                "fact_orders": pd.read_csv(self.cfg.processed_dir / "fact_orders.csv"),
-                "customer_features": pd.read_csv(self.cfg.processed_dir / "customer_features.csv"),
-                "scored_customers": pd.read_csv(self.cfg.processed_dir / "scored_customers.csv"),
-                "recommendations": pd.read_csv(self.cfg.processed_dir / "recommendations.csv"),
-                "unit_economics": pd.read_csv(self.cfg.processed_dir / "unit_economics.csv"),
-                "top_10_actions": pd.read_csv(self.cfg.processed_dir / "top_10_actions.csv"),
-            }
+            warehouse_frames = _load_warehouse_frames(self.cfg.processed_dir)
             self._stage(
                 f"warehouse.{self.cfg.warehouse_target}",
                 lambda: persist_frames(
@@ -569,7 +629,11 @@ class RevenueIntelligencePipeline:
                 freshness_snapshot=freshness_snapshot,
                 outputs=outputs,
             )
-            LOGGER.info("Pipeline completed successfully | outputs=%s", len(outputs))
+            LOGGER.info(
+                "Pipeline completed successfully | outputs=%s | total_runtime_seconds=%.3f",
+                len(outputs),
+                runtime_metrics["total_runtime_seconds"],
+            )
             return manifest
         except Exception as exc:
             _write_failure_manifest(

@@ -1,5 +1,6 @@
 import tomllib
 from pathlib import Path
+from subprocess import run
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,6 +29,7 @@ def test_repository_contains_high_signal_operational_docs() -> None:
         PROJECT_ROOT / "docs" / "releases" / "v1.3.1.md",
         PROJECT_ROOT / "docs" / "releases" / "v1.3.2.md",
         PROJECT_ROOT / "docs" / "releases" / "v1.3.3.md",
+        PROJECT_ROOT / ".github" / "workflows" / "runtime-baseline.yml",
     ]
     for path in expected_paths:
         assert path.exists(), f"Missing governance or documentation asset: {path}"
@@ -38,6 +40,7 @@ def test_ci_workflow_enforces_core_quality_gates() -> None:
     for expected_snippet in [
         "python -m pip install -e .[dev]",
         "python -m pip check",
+        "Repository hygiene and governance tests",
         "python -m ruff check .",
         "python -m black --check .",
         "python -m isort --check-only .",
@@ -49,10 +52,12 @@ def test_ci_workflow_enforces_core_quality_gates() -> None:
         "python scripts/smoke_processed_exports.py",
         "python scripts/smoke_partner_payload.py",
         "python scripts/smoke_dbt_sqlite.py",
+        "python scripts/assert_runtime_metrics.py ci_artifacts/data/processed/runtime_metrics.json metrics/runtime_baseline.json",
         "API container smoke test",
         "Wheel install smoke test",
         "http://127.0.0.1:8000/health",
         "python -m build",
+        "ci_artifacts/data/processed/runtime_metrics.json",
     ]:
         assert expected_snippet in workflow_text
 
@@ -80,6 +85,8 @@ def test_pr_template_and_makefile_expose_senior_review_workflow() -> None:
         "smoke-exports:",
         "smoke-partner:",
         "smoke-dbt:",
+        "assert-runtime:",
+        "update-runtime-baseline:",
         "verify:",
         "clean:",
     ]:
@@ -160,3 +167,69 @@ def test_onboarding_uses_package_install_and_install_smoke() -> None:
         "python -m src.pipeline --help",
     ]:
         assert expected_snippet in onboarding
+
+
+def test_gitignore_blocks_local_secrets_and_database_artifacts() -> None:
+    gitignore = (PROJECT_ROOT / ".gitignore").read_text(encoding="utf-8")
+
+    for expected_snippet in [
+        ".env",
+        "*.db",
+        "data/warehouse/*.db",
+    ]:
+        assert expected_snippet in gitignore
+
+
+def test_git_tracked_files_exclude_generated_runtime_artifacts() -> None:
+    tracked_files = run(
+        ["git", "ls-files"],
+        cwd=PROJECT_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+
+    forbidden_prefixes = [
+        "data/processed/",
+        "data/warehouse/",
+        "data/manifests/",
+        "data/runs/",
+        "data/snapshots/",
+    ]
+    forbidden_suffixes = [".db", ".log"]
+
+    offending = [
+        path
+        for path in tracked_files
+        if any(path.startswith(prefix) for prefix in forbidden_prefixes)
+        or any(path.endswith(suffix) for suffix in forbidden_suffixes)
+    ]
+
+    assert offending == [], f"Tracked generated artifacts must be removed: {offending}"
+
+
+def test_runtime_baseline_is_versioned_for_ci_regression_checks() -> None:
+    baseline_path = PROJECT_ROOT / "metrics" / "runtime_baseline.json"
+    assert baseline_path.exists()
+
+
+def test_runtime_baseline_workflow_opens_pull_request() -> None:
+    workflow_text = (PROJECT_ROOT / ".github" / "workflows" / "runtime-baseline.yml").read_text(
+        encoding="utf-8"
+    )
+
+    for expected_snippet in [
+        "contents: write",
+        "pull-requests: write",
+        "peter-evans/create-pull-request@v7",
+        "peter-evans/enable-pull-request-automerge@v3",
+        'branch: "automation/runtime-baseline-${{ github.run_id }}"',
+        'title: "chore: refresh runtime baseline"',
+        "continue-on-error: true",
+        "merge-method: squash",
+        "runtime",
+        "docs",
+        "assignees: samuelmaia",
+        "reviewers: samuelmaia",
+    ]:
+        assert expected_snippet in workflow_text

@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- versioned runtime baseline in `metrics/runtime_baseline.json`
+- runtime baseline refresh script `scripts/update_runtime_baseline.py`
+- manual GitHub Actions workflow `.github/workflows/runtime-baseline.yml` for controlled baseline promotion
+
+### Changed
+
+- CI runtime regression gate now compares container smoke runtime metrics against the versioned baseline
+- release process now documents when and how to refresh the runtime baseline intentionally
+- manual runtime baseline workflow now opens a PR automatically with refreshed baseline evidence
+- automated baseline PRs now include labels and reviewer routing aligned with repository policy
+- automated baseline PRs now attempt squash auto-merge when repository policy permits it
+
 ## Breaking Changes Policy
 
 - API and schema contracts follow semantic versioning.

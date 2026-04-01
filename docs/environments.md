@@ -33,6 +33,7 @@ Packages:
 
 Rule:
 - do not install `dbt` into `.venv`
+- keep `.env` local-only and out of version control
 
 ### CI environment
 
@@ -64,6 +65,7 @@ Rule:
 3. CI is the canonical reference for what must stay green.
 4. Local success is not enough if CI does not validate the same surface.
 5. The package install path `pip install -e .[dev]` is the preferred developer bootstrap.
+6. API auth mode `strict` requires an explicitly configured key and must not rely on demo defaults.
 
 ## Typical Commands
 

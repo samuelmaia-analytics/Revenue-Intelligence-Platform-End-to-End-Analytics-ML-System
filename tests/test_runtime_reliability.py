@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 import sys
+from argparse import ArgumentTypeError
 from dataclasses import replace
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from src.orchestration import (
     _run_stage_with_retry,
     run_pipeline,
 )
+from src.pipeline import _parse_positive_int
 from src.pipeline import main as pipeline_main
 
 
@@ -213,6 +215,7 @@ def test_pipeline_manifest_captures_runtime_evidence(tmp_path: Path) -> None:
     assert manifest["quality_snapshot"]["dataset_count"] >= 1
     assert "artifact_validation_report.json" in manifest["outputs"]
     assert "freshness_report.json" in manifest["outputs"]
+    assert "runtime_metrics.json" in manifest["outputs"]
     assert manifest["backfill_window"] == {"start_date": None, "end_date": None}
     assert artifact_validation["status"] == "ok"
     assert any(
@@ -328,6 +331,7 @@ def test_pipeline_config_reads_env_file(tmp_path: Path, monkeypatch: pytest.Monk
                 "RIP_DATA_DIR=./custom-data",
                 "RIP_SEED=123",
                 "RIP_LOG_LEVEL=debug",
+                "RIP_LOG_FORMAT=json",
                 "RIP_FRESHNESS_MAX_AGE_HOURS=12",
                 "RIP_RETRY_ATTEMPTS=3",
                 "RIP_RETRY_BACKOFF_SECONDS=0",
@@ -342,6 +346,7 @@ def test_pipeline_config_reads_env_file(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.delenv("RIP_DATA_DIR", raising=False)
     monkeypatch.delenv("RIP_SEED", raising=False)
     monkeypatch.delenv("RIP_LOG_LEVEL", raising=False)
+    monkeypatch.delenv("RIP_LOG_FORMAT", raising=False)
     monkeypatch.delenv("RIP_FRESHNESS_MAX_AGE_HOURS", raising=False)
     monkeypatch.delenv("RIP_RETRY_ATTEMPTS", raising=False)
     monkeypatch.delenv("RIP_RETRY_BACKOFF_SECONDS", raising=False)
@@ -355,6 +360,7 @@ def test_pipeline_config_reads_env_file(tmp_path: Path, monkeypatch: pytest.Monk
     assert cfg.data_dir == (tmp_path / "custom-data").resolve()
     assert cfg.seed == 123
     assert cfg.log_level == "DEBUG"
+    assert cfg.log_format == "json"
     assert cfg.freshness_max_age_hours == 12
     assert cfg.retry_attempts == 3
     assert cfg.retry_backoff_seconds == 0
@@ -382,6 +388,16 @@ def test_stage_runner_retries_transient_failures() -> None:
     assert result == "ok"
     assert attempts["count"] == 3
     assert elapsed >= 0
+
+
+def test_cli_positive_int_parser_rejects_invalid_retry_attempts() -> None:
+    with pytest.raises(ArgumentTypeError):
+        _parse_positive_int("0")
+
+    with pytest.raises(ArgumentTypeError):
+        _parse_positive_int("-2")
+
+    assert _parse_positive_int("3") == 3
 
 
 def test_backfill_window_filters_orders_and_respects_customer_cutoff() -> None:

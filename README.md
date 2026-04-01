@@ -127,6 +127,7 @@ Primary references:
 - [docs/release_process.md](docs/release_process.md)
 - [docs/deprecation_policy.md](docs/deprecation_policy.md)
 - [docs/merge_policy.md](docs/merge_policy.md)
+- [docs/windows_workflow.md](docs/windows_workflow.md)
 - [docs/sql_examples.md](docs/sql_examples.md)
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
 - [docs/hiring_review.md](docs/hiring_review.md)
@@ -137,6 +138,7 @@ Primary references:
 - configurable retry policy per stage
 - explicit backfill window in CLI and manifests
 - freshness, quality, and processed artifact validation reports
+- runtime metrics artifact with stage timing and output volume
 - operational reports validated as part of the processed contract surface
 - runtime manifests, logs, and snapshots for traceability
 - warehouse persistence plus downstream consumption validation
@@ -162,6 +164,12 @@ python -m pip install -e .[dev]
 Copy-Item .env.example .env
 ```
 
+Windows shortcut:
+
+```powershell
+.\scripts\bootstrap.ps1
+```
+
 Optional dbt CLI setup in an isolated environment:
 
 ```powershell
@@ -176,9 +184,15 @@ Important environment variables:
 - `RIP_DATA_DIR`
 - `RIP_WAREHOUSE_TARGET`
 - `RIP_RETRY_ATTEMPTS`
+- `RIP_LOG_FORMAT`
 - `RIP_QUALITY_MAX_NULL_FRACTION`
 - `RIP_BACKFILL_START_DATE`
 - `RIP_BACKFILL_END_DATE`
+- `RIP_API_KEY` or `RIP_API_KEYS` when `RIP_API_AUTH_MODE=strict`
+
+Local runtime note:
+
+- prefer `.venv\Scripts\python.exe` for validation commands so tests, smokes, and package checks run against the provisioned environment
 
 ## Run Commands
 
@@ -208,6 +222,23 @@ make smoke-dashboard
 make pipeline
 ```
 
+Windows PowerShell workflow:
+
+```powershell
+.\scripts\verify.ps1
+.\scripts\verify.ps1 -IncludeSmokes
+```
+
+Windows dev workflow:
+
+```powershell
+.\scripts\dev.ps1 -Target app
+.\scripts\dev.ps1 -Target api
+.\scripts\dev.ps1 -Target all
+.\scripts\status-dev.ps1
+.\scripts\stop-dev.ps1 -Target all
+```
+
 ## Validation and Automation
 
 Core validation commands:
@@ -232,8 +263,11 @@ Automation surfaces:
 - `Makefile` for local developer workflows
 - `.pre-commit-config.yaml` for fast local quality gates
 - `.github/workflows/ci.yml` for lint, tests, smoke, and build validation
+- `.github/workflows/ci.yml` starts with a dedicated hygiene/governance gate before heavier jobs fan out
 - `.github/workflows/ci.yml` splits quality, governance, dbt-on-SQLite, and container validation so failures are attributable
 - `.github/workflows/ci.yml` also runs a dbt-on-SQLite downstream smoke against the generated warehouse
+- `.github/workflows/ci.yml` publishes `runtime_metrics.json` with the container smoke artifacts for runtime evidence
+- `metrics/runtime_baseline.json` defines the CI runtime baseline used by the regression gate
 - downstream smoke scripts share a common temporary-runtime helper in `scripts/smoke_support.py`
 
 Governance checkpoints:

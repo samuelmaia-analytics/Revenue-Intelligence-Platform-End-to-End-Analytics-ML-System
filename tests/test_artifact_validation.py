@@ -250,6 +250,19 @@ def _build_valid_processed_artifacts(processed_dir: Path) -> None:
             "alerts": [],
         },
     )
+    _write_json(
+        processed_dir / "runtime_metrics.json",
+        {
+            "run_id": "20260101T000000Z-test",
+            "environment": "test",
+            "log_format": "json",
+            "stage_count": 3,
+            "stage_timings_seconds": {"ingestion.raw": 0.1, "modeling.ml": 0.2},
+            "total_runtime_seconds": 0.3,
+            "output_count": 20,
+            "outputs": ["runtime_metrics.json"],
+        },
+    )
     _write_json(processed_dir / "semantic_metrics_catalog.json", {"metrics": []})
 
 
@@ -264,7 +277,7 @@ def test_validate_processed_artifacts_writes_report(tmp_path: Path) -> None:
     )
 
     assert report["status"] == "ok"
-    assert int(report["artifact_count"]) == 19
+    assert int(report["artifact_count"]) == 20
     assert (processed_dir / "artifact_validation_report.json").exists()
 
 

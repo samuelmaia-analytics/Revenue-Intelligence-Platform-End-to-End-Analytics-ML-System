@@ -69,6 +69,9 @@ Purpose:
 
 Rule:
 - use registered models produced by the batch runtime
+- require explicit keys in `strict` auth mode
+- return `X-Request-ID` on every response for request correlation
+- expose a lightweight `/metrics` surface for operational scraping
 
 Validation:
 - `scripts/smoke_api.py`

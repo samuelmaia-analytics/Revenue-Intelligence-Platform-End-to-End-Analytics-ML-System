@@ -5,6 +5,8 @@ from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
 
+from src.exceptions import ConfigurationError
+
 
 def _load_dotenv_file(env_path: Path) -> None:
     if not env_path.exists():
@@ -20,14 +22,18 @@ def _load_dotenv_file(env_path: Path) -> None:
         os.environ.setdefault(key, value)
 
 
+def load_env_file(project_root: Path) -> None:
+    _load_dotenv_file(project_root / ".env")
+
+
 def _resolve_int(name: str, default: int, minimum: int | None = None) -> int:
     raw = os.getenv(name, str(default)).strip()
     try:
         value = int(raw)
     except ValueError as exc:
-        raise RuntimeError(f"{name} must be an integer.") from exc
+        raise ConfigurationError(f"{name} must be an integer.") from exc
     if minimum is not None and value < minimum:
-        raise RuntimeError(f"{name} must be >= {minimum}.")
+        raise ConfigurationError(f"{name} must be >= {minimum}.")
     return value
 
 
@@ -42,17 +48,26 @@ def _resolve_float(
     try:
         value = float(raw)
     except ValueError as exc:
-        raise RuntimeError(f"{name} must be a float.") from exc
+        raise ConfigurationError(f"{name} must be a float.") from exc
     if minimum is not None and value < minimum:
-        raise RuntimeError(f"{name} must be >= {minimum}.")
+        raise ConfigurationError(f"{name} must be >= {minimum}.")
     if maximum is not None and value > maximum:
-        raise RuntimeError(f"{name} must be <= {maximum}.")
+        raise ConfigurationError(f"{name} must be <= {maximum}.")
     return value
 
 
 def _resolve_path(root: Path, env_var: str, default: Path) -> Path:
     raw = os.getenv(env_var, str(default)).strip()
     candidate = Path(raw)
+    if not candidate.is_absolute():
+        candidate = (root / candidate).resolve()
+    return candidate
+
+
+def resolve_optional_path(root: Path, value: str | Path | None) -> Path | None:
+    if value is None:
+        return None
+    candidate = Path(value)
     if not candidate.is_absolute():
         candidate = (root / candidate).resolve()
     return candidate
@@ -65,7 +80,7 @@ def _resolve_optional_date(name: str) -> date | None:
     try:
         return date.fromisoformat(raw)
     except ValueError as exc:
-        raise RuntimeError(f"{name} must use YYYY-MM-DD format.") from exc
+        raise ConfigurationError(f"{name} must use YYYY-MM-DD format.") from exc
 
 
 @dataclass(frozen=True)
@@ -95,6 +110,7 @@ class PipelineConfig:
     snapshot_retention_runs: int
     snapshot_retention_days: int
     failure_retention_days: int
+    log_format: str = "text"
     retry_attempts: int = 1
     retry_backoff_seconds: int = 0
     quality_max_null_fraction: float = 0.20
@@ -135,13 +151,19 @@ class PipelineConfig:
         )
         resolved_end = self.backfill_end_date if backfill_end_date is None else backfill_end_date
         if resolved_start and resolved_end and resolved_start > resolved_end:
-            raise RuntimeError("Backfill start date must be <= backfill end date.")
+            raise ConfigurationError("Backfill start date must be <= backfill end date.")
+        if seed is not None and seed < 0:
+            raise ConfigurationError("Seed must be >= 0.")
+        resolved_log_format = self.log_format.lower()
+        if resolved_log_format not in {"text", "json"}:
+            raise ConfigurationError("Log format must be one of: text, json.")
 
         if data_dir is None:
             return replace(
                 self,
                 seed=self.seed if seed is None else seed,
                 log_level=self.log_level if log_level is None else log_level.upper(),
+                log_format=resolved_log_format,
                 backfill_start_date=resolved_start,
                 backfill_end_date=resolved_end,
             )
@@ -164,6 +186,7 @@ class PipelineConfig:
             data_dictionary_path=data_dir / "processed" / "data_dictionary.json",
             seed=self.seed if seed is None else seed,
             log_level=self.log_level if log_level is None else log_level.upper(),
+            log_format=resolved_log_format,
             backfill_start_date=resolved_start,
             backfill_end_date=resolved_end,
         )
@@ -171,15 +194,18 @@ class PipelineConfig:
     @classmethod
     def from_env(cls, project_root: Path | None = None) -> PipelineConfig:
         root = project_root or Path(__file__).resolve().parents[1]
-        _load_dotenv_file(root / ".env")
+        load_env_file(root)
 
         data_dir = _resolve_path(root, "RIP_DATA_DIR", root / "data")
         seed = _resolve_int("RIP_SEED", 42)
         log_level = os.getenv("RIP_LOG_LEVEL", "INFO").upper()
+        log_format = os.getenv("RIP_LOG_FORMAT", "text").strip().lower()
+        if log_format not in {"text", "json"}:
+            raise ConfigurationError("RIP_LOG_FORMAT must be one of: text, json.")
         backfill_start_date = _resolve_optional_date("RIP_BACKFILL_START_DATE")
         backfill_end_date = _resolve_optional_date("RIP_BACKFILL_END_DATE")
         if backfill_start_date and backfill_end_date and backfill_start_date > backfill_end_date:
-            raise RuntimeError("RIP_BACKFILL_START_DATE must be <= RIP_BACKFILL_END_DATE.")
+            raise ConfigurationError("RIP_BACKFILL_START_DATE must be <= RIP_BACKFILL_END_DATE.")
 
         return cls(
             project_root=root.resolve(),
@@ -207,6 +233,7 @@ class PipelineConfig:
             warehouse_url=os.getenv("RIP_WAREHOUSE_URL", "").strip() or None,
             seed=seed,
             log_level=log_level,
+            log_format=log_format,
             freshness_max_age_hours=_resolve_int("RIP_FRESHNESS_MAX_AGE_HOURS", 48, minimum=1),
             snapshot_retention_runs=_resolve_int("RIP_SNAPSHOT_RETENTION_RUNS", 10, minimum=1),
             snapshot_retention_days=_resolve_int("RIP_SNAPSHOT_RETENTION_DAYS", 30, minimum=1),
