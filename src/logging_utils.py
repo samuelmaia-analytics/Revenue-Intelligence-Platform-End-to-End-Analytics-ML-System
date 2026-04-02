@@ -4,6 +4,33 @@ import json
 import logging
 from pathlib import Path
 
+_STANDARD_LOG_RECORD_FIELDS = {
+    "args",
+    "asctime",
+    "created",
+    "exc_info",
+    "exc_text",
+    "filename",
+    "funcName",
+    "levelname",
+    "levelno",
+    "lineno",
+    "module",
+    "msecs",
+    "message",
+    "msg",
+    "name",
+    "pathname",
+    "process",
+    "processName",
+    "relativeCreated",
+    "run_id",
+    "request_id",
+    "stack_info",
+    "thread",
+    "threadName",
+}
+
 
 class _DefaultContextFilter(logging.Filter):
     def __init__(self, *, run_id: str, request_id: str = "n/a") -> None:
@@ -29,6 +56,13 @@ class JsonLogFormatter(logging.Formatter):
             "run_id": getattr(record, "run_id", "n/a"),
             "request_id": getattr(record, "request_id", "n/a"),
         }
+        extra_fields = {
+            key: value
+            for key, value in record.__dict__.items()
+            if key not in _STANDARD_LOG_RECORD_FIELDS and not key.startswith("_")
+        }
+        if extra_fields:
+            payload["context"] = extra_fields
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=True)

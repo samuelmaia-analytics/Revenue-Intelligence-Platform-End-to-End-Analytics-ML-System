@@ -75,6 +75,7 @@ Every successful run should leave evidence in these locations:
 - `data/processed/artifact_validation_report.json`
 - `data/processed/freshness_report.json`
 - `data/processed/runtime_metrics.json`
+- `data/processed/run_events.jsonl`
 - `data/manifests/`
 - `data/runs/`
 - `data/snapshots/`
@@ -87,8 +88,9 @@ When a run fails:
 
 1. open the latest failure manifest in `data/manifests/*.failure.json`
 2. inspect the `error_type`, `error_message`, `run_id` and stage timings
-3. open the run log referenced in the manifest
-4. identify whether the failure belongs to:
+3. inspect `run_events.jsonl` to identify the last successful stage transition
+4. open the run log referenced in the manifest
+5. identify whether the failure belongs to:
    - input shape
    - quality gate
    - processed artifact validation

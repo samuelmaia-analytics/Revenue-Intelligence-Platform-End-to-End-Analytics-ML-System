@@ -172,9 +172,17 @@ JSON_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
         "stage_count",
         "stage_timings_seconds",
         "total_runtime_seconds",
+        "event_count",
         "output_count",
     ),
     "semantic_metrics_catalog.json": ("metrics",),
+}
+JSONL_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
+    "run_events.jsonl": (
+        "timestamp",
+        "event_type",
+        "run_id",
+    ),
 }
 
 
@@ -228,6 +236,33 @@ def _validate_json_artifact(
     }
 
 
+def _validate_jsonl_artifact(
+    processed_dir: Path, file_name: str, required_keys: tuple[str, ...]
+) -> dict[str, object]:
+    path = processed_dir / file_name
+    if not path.exists():
+        raise DataQualityError(f"Missing processed artifact: {file_name}")
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if not lines:
+        raise DataQualityError(f"{file_name} must contain at least one event line")
+
+    payload = json.loads(lines[0])
+    missing_keys: list[str] = []
+    for dotted_key in required_keys:
+        try:
+            _resolve_nested_key(payload, dotted_key)
+        except DataQualityError:
+            missing_keys.append(dotted_key)
+    if missing_keys:
+        raise DataQualityError(f"{file_name} missing required key paths: {missing_keys}")
+    return {
+        "artifact": file_name,
+        "type": "jsonl",
+        "required_keys": list(required_keys),
+        "line_count": len(lines),
+    }
+
+
 def validate_processed_artifacts(
     processed_dir: Path, output_path: Path | None = None
 ) -> dict[str, object]:
@@ -236,6 +271,8 @@ def validate_processed_artifacts(
         checks.append(_validate_csv_artifact(processed_dir, file_name, required_columns))
     for file_name, required_keys in JSON_ARTIFACT_SPECS.items():
         checks.append(_validate_json_artifact(processed_dir, file_name, required_keys))
+    for file_name, required_keys in JSONL_ARTIFACT_SPECS.items():
+        checks.append(_validate_jsonl_artifact(processed_dir, file_name, required_keys))
 
     payload = {
         "validated_at_utc": datetime.now(UTC).isoformat(),
