@@ -53,6 +53,7 @@ def test_pipeline_generates_expected_contract_outputs(tmp_path: Path) -> None:
         "unit_economics.csv",
         "kpi_snapshot.json",
         "metrics_report.json",
+        "runtime_metrics.json",
         "monitoring_report.json",
         "monitoring_baseline.json",
         "semantic_metrics_catalog.json",
@@ -97,6 +98,7 @@ def test_pipeline_generates_expected_contract_outputs(tmp_path: Path) -> None:
     cohort_retention = pd.read_csv(processed / "cohort_retention.csv")
     unit_economics = pd.read_csv(processed / "unit_economics.csv")
     business_outcomes = pd.read_json(processed / "business_outcomes.json", typ="series")
+    runtime_metrics = pd.read_json(processed / "runtime_metrics.json", typ="series")
 
     validate_gold_table(dim_customers, "dim_customers.csv")
     validate_gold_table(dim_date, "dim_date.csv")
@@ -120,3 +122,5 @@ def test_pipeline_generates_expected_contract_outputs(tmp_path: Path) -> None:
         business_outcomes["ltv_cac_by_channel"], key=lambda item: item["ltv_cac_ratio"]
     )["channel"]
     assert observed_best_channel == expected_best_channel
+    assert runtime_metrics["stage_count"] > 0
+    assert runtime_metrics["total_runtime_seconds"] >= 0

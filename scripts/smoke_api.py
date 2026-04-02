@@ -90,6 +90,8 @@ def main() -> None:
         health = client.get("/api/v1/health")
         if health.status_code != 200:
             raise SystemExit(f"API smoke failed: health returned {health.status_code}.")
+        if "X-Request-ID" not in health.headers:
+            raise SystemExit("API smoke failed: health response missing X-Request-ID.")
 
         score = client.post(
             "/api/v1/score",
@@ -117,6 +119,12 @@ def main() -> None:
         for key in ["churn_probability", "next_purchase_probability", "suggested_action"]:
             if key not in prediction:
                 raise SystemExit(f"API smoke failed: missing key '{key}' in prediction payload.")
+
+        metrics = client.get("/api/v1/metrics", headers={"X-Request-ID": "smoke-metrics"})
+        if metrics.status_code != 200:
+            raise SystemExit(f"API smoke failed: metrics returned {metrics.status_code}.")
+        if "rip_api_predictions_total" not in metrics.text:
+            raise SystemExit("API smoke failed: metrics surface missing prediction counter.")
 
     print("API smoke check passed.")
 

@@ -23,6 +23,7 @@ Before tagging a release:
 3. confirm `README`, `runbook` and relevant ADRs still match implementation
 4. confirm output contracts and processed artifact validation still reflect reality
 5. confirm no generated local runtime noise is being committed by accident
+6. if runtime shape changed intentionally, refresh `metrics/runtime_baseline.json` using the manual runtime-baseline workflow or `make update-runtime-baseline`
 
 Validation commands:
 
@@ -83,6 +84,15 @@ Bad release examples:
 4. tag the version
 5. use the release note as the public summary for GitHub reviewers
 6. verify the changelog entry and release note describe the same operational delta
+
+## Runtime Baseline Maintenance
+
+When performance changes intentionally and the new runtime is acceptable:
+
+1. run the manual workflow `.github/workflows/runtime-baseline.yml` to generate runtime evidence and open a PR automatically, with squash auto-merge attempted when repository policy allows it, or run `make update-runtime-baseline` after a fresh pipeline execution
+2. review the diff in `metrics/runtime_baseline.json`
+3. confirm the CI runtime regression gate still passes against the refreshed baseline
+4. mention the baseline update in release notes if the change is material
 
 ## Current Release Artifact
 

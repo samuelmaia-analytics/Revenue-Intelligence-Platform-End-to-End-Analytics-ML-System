@@ -165,6 +165,15 @@ JSON_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
         "status",
         "alerts",
     ),
+    "runtime_metrics.json": (
+        "run_id",
+        "environment",
+        "log_format",
+        "stage_count",
+        "stage_timings_seconds",
+        "total_runtime_seconds",
+        "output_count",
+    ),
     "semantic_metrics_catalog.json": ("metrics",),
 }
 

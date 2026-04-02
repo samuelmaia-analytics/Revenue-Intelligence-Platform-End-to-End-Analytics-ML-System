@@ -5,10 +5,12 @@ import os
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from fastapi.testclient import TestClient
 from sklearn.dummy import DummyClassifier
 from sklearn.pipeline import Pipeline
 
+from src.exceptions import ConfigurationError
 from src.model_registry import register_model
 
 
@@ -81,6 +83,7 @@ def test_api_health_and_score(tmp_path: Path) -> None:
 
     health = client.get("/api/v1/health")
     assert health.status_code == 200
+    assert health.headers["X-Request-ID"].startswith("rip-")
     health_payload = health.json()
     assert health_payload["status"] == "ok"
     assert health_payload["models"]["churn"]["loaded"] is True
@@ -110,11 +113,70 @@ def test_api_health_and_score(tmp_path: Path) -> None:
         headers={"X-API-Key": "test-token"},
     )
     assert score.status_code == 200
+    assert score.headers["X-Request-ID"].startswith("rip-")
     score_payload = score.json()
     assert len(score_payload["predictions"]) == 1
     assert "churn_probability" in score_payload["predictions"][0]
     assert "next_purchase_probability" in score_payload["predictions"][0]
     assert "suggested_action" in score_payload["predictions"][0]
+
+
+def test_api_preserves_incoming_request_id(tmp_path: Path) -> None:
+    _bootstrap_registry(tmp_path)
+    os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")
+    os.environ["RIP_API_AUTH_MODE"] = "demo"
+    os.environ["RIP_API_DEMO_TOKEN"] = "test-token"
+    os.environ["RIP_API_RATE_LIMIT_PER_MINUTE"] = "5"
+
+    api_module = importlib.import_module("services.api.main")
+    api_module = importlib.reload(api_module)
+    client = TestClient(api_module.app)
+
+    response = client.get("/api/v1/health", headers={"X-Request-ID": "req-123"})
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"] == "req-123"
+
+
+def test_api_metrics_surface_exposes_prometheus_text(tmp_path: Path) -> None:
+    _bootstrap_registry(tmp_path)
+    os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")
+    os.environ["RIP_API_AUTH_MODE"] = "demo"
+    os.environ["RIP_API_DEMO_TOKEN"] = "test-token"
+    os.environ["RIP_API_RATE_LIMIT_PER_MINUTE"] = "5"
+
+    api_module = importlib.import_module("services.api.main")
+    api_module = importlib.reload(api_module)
+    client = TestClient(api_module.app)
+
+    client.get("/api/v1/health")
+    client.post(
+        "/api/v1/score",
+        json={
+            "records": [
+                {
+                    "recency_days": 14,
+                    "frequency": 8,
+                    "monetary": 1800.0,
+                    "avg_order_value": 225.0,
+                    "tenure_days": 420,
+                    "arpu": 160.0,
+                    "channel": "Organic",
+                    "segment": "SMB",
+                }
+            ]
+        },
+        headers={"X-API-Key": "test-token"},
+    )
+    metrics = client.get("/api/v1/metrics", headers={"X-Request-ID": "req-metrics"})
+
+    assert metrics.status_code == 200
+    assert metrics.headers["content-type"].startswith("text/plain")
+    assert metrics.headers["X-Request-ID"] == "req-metrics"
+    assert "rip_api_predictions_total" in metrics.text
+    assert (
+        'rip_api_request_volume_total{endpoint="/api/v1/health",status_code="200"}' in metrics.text
+    )
 
 
 def test_api_requires_token(tmp_path: Path) -> None:
@@ -178,3 +240,38 @@ def test_api_rate_limit_enforced(tmp_path: Path) -> None:
     second = client.post("/api/v1/score", json=payload, headers=headers)
     assert first.status_code == 200
     assert second.status_code == 429
+
+
+def test_api_strict_mode_requires_explicit_key_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _bootstrap_registry(tmp_path)
+    monkeypatch.setenv("RIP_MODEL_DIR", str(tmp_path / "processed"))
+    monkeypatch.setenv("RIP_API_AUTH_MODE", "strict")
+    monkeypatch.delenv("RIP_API_KEYS", raising=False)
+    monkeypatch.delenv("RIP_API_KEY", raising=False)
+    monkeypatch.delenv("RIP_API_TOKENS", raising=False)
+    monkeypatch.delenv("RIP_API_DEMO_TOKEN", raising=False)
+
+    with pytest.raises(ConfigurationError):
+        importlib.reload(importlib.import_module("services.api.main"))
+
+
+def test_api_model_dir_is_resolved_from_project_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _bootstrap_registry(tmp_path)
+    project_root = Path(__file__).resolve().parents[1]
+    relative_model_dir = os.path.relpath(tmp_path / "processed", project_root)
+    monkeypatch.setenv("RIP_MODEL_DIR", relative_model_dir)
+    monkeypatch.setenv("RIP_API_AUTH_MODE", "demo")
+    monkeypatch.setenv("RIP_API_DEMO_TOKEN", "test-token")
+
+    isolated_root = project_root / "tests" / "fixtures"
+    isolated_root.mkdir(parents=True, exist_ok=True)
+    monkeypatch.chdir(isolated_root)
+
+    api_module = importlib.reload(importlib.import_module("services.api.main"))
+    settings = api_module.APISettings.from_env()
+
+    assert settings.model_dir == (tmp_path / "processed").resolve()

@@ -74,6 +74,7 @@ Every successful run should leave evidence in these locations:
 - `data/processed/quality_report.json`
 - `data/processed/artifact_validation_report.json`
 - `data/processed/freshness_report.json`
+- `data/processed/runtime_metrics.json`
 - `data/manifests/`
 - `data/runs/`
 - `data/snapshots/`
@@ -164,6 +165,7 @@ Typical cause:
 Action:
 - inspect `services/api/main.py` health behavior
 - confirm `RIP_MODEL_DIR`, `RIP_API_AUTH_MODE`, and `RIP_API_DEMO_TOKEN`
+- confirm `/metrics` exposes counters and `X-Request-ID` is present on responses
 - run the API smoke locally before changing the Docker path
 
 ### dbt smoke fails

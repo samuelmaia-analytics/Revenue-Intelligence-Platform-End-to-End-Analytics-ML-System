@@ -4,9 +4,8 @@ from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
+from src.bootstrap import load_config, resolve_project_root
 from src.config import PipelineConfig
-from src.governance import build_data_dictionary
-from src.orchestration import run_pipeline
 
 
 def _parse_cli_date(value: str) -> date:
@@ -14,6 +13,16 @@ def _parse_cli_date(value: str) -> date:
         return date.fromisoformat(value)
     except ValueError as exc:
         raise argparse.ArgumentTypeError("Date must use YYYY-MM-DD format.") from exc
+
+
+def _parse_positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("Value must be an integer.") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("Value must be >= 1.")
+    return parsed
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -42,7 +51,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     run_cmd.add_argument(
         "--retry-attempts",
-        type=int,
+        type=_parse_positive_int,
         default=None,
         help="Override stage retry attempts for transient failures.",
     )
@@ -67,8 +76,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _resolve_config(args: argparse.Namespace) -> PipelineConfig:
-    cfg = PipelineConfig.from_env(Path(__file__).resolve().parents[1])
-    data_dir = Path(args.data_dir) if getattr(args, "data_dir", None) else None
+    cfg = load_config(resolve_project_root(Path(__file__).resolve().parents[1]))
+    data_dir = (
+        (cfg.project_root / args.data_dir).resolve()
+        if getattr(args, "data_dir", None) and not Path(args.data_dir).is_absolute()
+        else (Path(args.data_dir).resolve() if getattr(args, "data_dir", None) else None)
+    )
     seed = getattr(args, "seed", None)
     log_level = getattr(args, "log_level", None)
     retry_attempts = getattr(args, "retry_attempts", None)
@@ -93,12 +106,16 @@ def main() -> None:
         return
 
     if args.command == "run":
+        from src.orchestration import run_pipeline
+
         cfg = _resolve_config(args)
         run_pipeline(cfg)
         return
 
     if args.command == "artifacts":
-        cfg = PipelineConfig.from_env(Path(__file__).resolve().parents[1])
+        from src.governance import build_data_dictionary
+
+        cfg = load_config(resolve_project_root(Path(__file__).resolve().parents[1]))
         output_path = (
             Path(args.data_dictionary_path)
             if args.data_dictionary_path
