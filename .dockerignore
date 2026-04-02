@@ -20,6 +20,10 @@ tests
 data/bronze
 data/gold
 data/manifests
+data/processed
+data/raw
 data/runs
 data/snapshots
 data/silver
+data/warehouse
+ci_artifacts

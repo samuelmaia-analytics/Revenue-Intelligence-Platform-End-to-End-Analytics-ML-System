@@ -224,7 +224,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Docker build (streamlit app)
-        run: docker build --progress=plain -t revenue-intelligence .
+        run: docker build --progress=plain -t revenue-intelligence-streamlit .
+
+      - name: Docker build (batch runtime)
+        run: docker build --progress=plain -f Dockerfile.batch -t revenue-intelligence-batch .
 
       - name: Docker build (serving api)
         run: docker build --progress=plain -f Dockerfile.api -t revenue-intelligence-api .
@@ -256,20 +259,29 @@ jobs:
           docker logs revenue-intelligence-api-smoke --tail 100
           docker stop revenue-intelligence-api-smoke
 
-      - name: Container smoke test
+      - name: Batch container smoke test
         run: |
           mkdir -p ci_artifacts
           docker run --rm \
             -v "${{ github.workspace }}/ci_artifacts:/tmp/rip-artifacts" \
             -e RIP_DATA_DIR=/tmp/rip-artifacts/data \
-            revenue-intelligence \
-            python -m src.pipeline run --log-level INFO
+            revenue-intelligence-batch \
+            run --log-level INFO
           test -f ci_artifacts/data/processed/pipeline_manifest.json
           test -f ci_artifacts/data/processed/quality_report.json
           test -f ci_artifacts/data/processed/kpi_snapshot.json
           test -f ci_artifacts/data/processed/runtime_metrics.json
           test -f ci_artifacts/data/processed/recommendations.csv
           test -f ci_artifacts/data/processed/top_10_actions.csv
+
+      - name: Streamlit container smoke test
+        run: |
+          docker run -d --name revenue-intelligence-streamlit-smoke -p 8501:8501 \
+            -v "${{ github.workspace }}/ci_artifacts/data:/app/data:ro" \
+            revenue-intelligence-streamlit
+          python scripts/smoke_streamlit.py http://127.0.0.1:8501
+          docker logs revenue-intelligence-streamlit-smoke --tail 100
+          docker stop revenue-intelligence-streamlit-smoke
 
       - name: Runtime regression gate
         run: python scripts/assert_runtime_metrics.py ci_artifacts/data/processed/runtime_metrics.json metrics/runtime_baseline.json

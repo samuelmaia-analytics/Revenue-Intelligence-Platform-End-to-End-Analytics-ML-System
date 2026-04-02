@@ -109,7 +109,7 @@ Key characteristics:
 |- data/                   local runtime outputs, manifests, snapshots, and warehouse
 |- notebooks/              isolated exploration, kept out of the official runtime path
 |- main.py                 minimal Python entrypoint wrapper
-|- Dockerfile*             container builds for Streamlit and API surfaces
+|- Dockerfile*             container builds for Streamlit, batch, and API surfaces
 |- CHANGELOG.md            release-oriented evolution log
 ```
 
@@ -142,6 +142,7 @@ Primary references:
 - warehouse persistence plus downstream consumption validation
 - partner-facing payload generated from governed processed exports
 - smoke-tested Streamlit dashboard in CI
+- explicit container separation between dashboard, batch runtime, and API
 
 ## Streamlit Workspace
 
@@ -234,6 +235,7 @@ Automation surfaces:
 - `.github/workflows/ci.yml` for lint, tests, smoke, and build validation
 - `.github/workflows/ci.yml` splits quality, governance, dbt-on-SQLite, and container validation so failures are attributable
 - `.github/workflows/ci.yml` also runs a dbt-on-SQLite downstream smoke against the generated warehouse
+- `.github/workflows/ci.yml` proves dashboard, batch, and API container surfaces independently
 - downstream smoke scripts share a common temporary-runtime helper in `scripts/smoke_support.py`
 
 Governance checkpoints:
