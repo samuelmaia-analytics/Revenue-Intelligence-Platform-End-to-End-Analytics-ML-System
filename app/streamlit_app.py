@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-# ruff: noqa: E402, I001
-
 import os
 import sys
 from pathlib import Path
 
+import streamlit as st
+
+# ruff: noqa: E402, I001
+
+
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
-
-import streamlit as st
 
 from app.dashboard_data import filter_recommendations, load_processed_assets
 from app.dashboard_i18n import translate as t
