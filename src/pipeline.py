@@ -6,6 +6,7 @@ from pathlib import Path
 
 from src.bootstrap import load_config, resolve_project_root
 from src.config import PipelineConfig
+from src.observability import export_observability_summary
 
 
 def _parse_cli_date(value: str) -> date:
@@ -72,6 +73,23 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Override data dictionary output path.",
     )
+
+    observability_cmd = subparsers.add_parser(
+        "observability",
+        help="Summarize processed run observability artifacts.",
+    )
+    observability_cmd.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help="Override data directory (default: <project_root>/data).",
+    )
+    observability_cmd.add_argument(
+        "--output-path",
+        type=str,
+        default=None,
+        help="Optional JSON output path for the observability summary.",
+    )
     return parser
 
 
@@ -116,17 +134,32 @@ def main() -> None:
         from src.governance import build_data_dictionary
 
         cfg = load_config(resolve_project_root(Path(__file__).resolve().parents[1]))
-        output_path = (
+        dictionary_output_path = (
             Path(args.data_dictionary_path)
             if args.data_dictionary_path
             else cfg.data_dictionary_path
         )
-        dictionary = build_data_dictionary(output_path)
+        dictionary = build_data_dictionary(dictionary_output_path)
         print(
             json.dumps(
-                {"data_dictionary_path": str(output_path), "tables": len(dictionary["tables"])}
+                {
+                    "data_dictionary_path": str(dictionary_output_path),
+                    "tables": len(dictionary["tables"]),
+                }
             )
         )
+        return
+
+    if args.command == "observability":
+        cfg = _resolve_config(args)
+        observability_output_path: Path | None = (
+            Path(args.output_path).resolve() if args.output_path else None
+        )
+        summary = export_observability_summary(
+            cfg.processed_dir,
+            output_path=observability_output_path,
+        )
+        print(json.dumps(summary, indent=2))
         return
 
     parser.print_help()

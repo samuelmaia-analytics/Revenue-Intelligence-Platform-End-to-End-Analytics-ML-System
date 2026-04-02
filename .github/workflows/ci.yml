@@ -286,6 +286,13 @@ jobs:
       - name: Runtime regression gate
         run: python scripts/assert_runtime_metrics.py ci_artifacts/data/processed/runtime_metrics.json metrics/runtime_baseline.json
 
+      - name: Export batch observability summary
+        run: |
+          python -m src.pipeline observability \
+            --data-dir ci_artifacts/data \
+            --output-path ci_artifacts/data/processed/observability_summary.json
+          test -f ci_artifacts/data/processed/observability_summary.json
+
       - name: Upload smoke artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -295,3 +302,5 @@ jobs:
             ci_artifacts/data/processed/quality_report.json
             ci_artifacts/data/processed/kpi_snapshot.json
             ci_artifacts/data/processed/runtime_metrics.json
+            ci_artifacts/data/processed/run_events.jsonl
+            ci_artifacts/data/processed/observability_summary.json

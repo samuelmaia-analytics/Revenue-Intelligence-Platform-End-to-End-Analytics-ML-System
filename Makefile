@@ -1,7 +1,7 @@
 PYTHON ?= python
 DBT ?= dbt
 
-.PHONY: help install install-dev pipeline artifacts dictionary serve-app serve-api lint format type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-streamlit smoke-downstream smoke-exports smoke-partner smoke-dbt assert-runtime update-runtime-baseline verify package smoke docker-build-app docker-build-batch docker-build-api docker-build docker-smoke clean
+.PHONY: help install install-dev pipeline artifacts dictionary observability serve-app serve-api lint format type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-streamlit smoke-downstream smoke-exports smoke-partner smoke-dbt assert-runtime update-runtime-baseline verify package smoke docker-build-app docker-build-batch docker-build-api docker-build docker-smoke clean
 
 help:
 	@echo "Available targets:"
@@ -9,6 +9,7 @@ help:
 	@echo "  install-dev        Install runtime and development dependencies"
 	@echo "  pipeline           Run the official batch pipeline"
 	@echo "  artifacts          Generate governance artifacts only"
+	@echo "  observability      Export the batch observability summary"
 	@echo "  serve-app          Start the Streamlit app"
 	@echo "  serve-api          Start the FastAPI service"
 	@echo "  lint               Run isort, ruff, and black checks"
@@ -46,6 +47,9 @@ artifacts: dictionary
 
 dictionary:
 	$(PYTHON) -m src.pipeline artifacts
+
+observability:
+	$(PYTHON) -m src.pipeline observability --output-path data/processed/observability_summary.json
 
 serve-app:
 	$(PYTHON) -m streamlit run app/streamlit_app.py

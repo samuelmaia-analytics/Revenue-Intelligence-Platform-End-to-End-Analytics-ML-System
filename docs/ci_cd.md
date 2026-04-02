@@ -56,6 +56,7 @@ CI should produce evidence, not only pass/fail signals:
 - quality report
 - KPI snapshot
 - runtime metrics artifact with runtime regression gate coverage
+- observability summary derived from manifest, metrics, and event timeline artifacts
 - versioned runtime baseline in `metrics/runtime_baseline.json`
 - curated recommendation exports
 
