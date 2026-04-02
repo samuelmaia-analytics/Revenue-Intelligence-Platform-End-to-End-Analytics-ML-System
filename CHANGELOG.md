@@ -9,6 +9,9 @@ All notable changes to this project are documented in this file.
 - versioned runtime baseline in `metrics/runtime_baseline.json`
 - runtime baseline refresh script `scripts/update_runtime_baseline.py`
 - manual GitHub Actions workflow `.github/workflows/runtime-baseline.yml` for controlled baseline promotion
+- `Dockerfile.batch` as the dedicated canonical batch container surface
+- governed `run_events.jsonl` batch event timeline artifact
+- `python -m src.pipeline observability` and `data/processed/observability_summary.json`
 
 ### Changed
 
@@ -17,6 +20,9 @@ All notable changes to this project are documented in this file.
 - manual runtime baseline workflow now opens a PR automatically with refreshed baseline evidence
 - automated baseline PRs now include labels and reviewer routing aligned with repository policy
 - automated baseline PRs now attempt squash auto-merge when repository policy permits it
+- `Dockerfile` now boots the Streamlit surface instead of the batch runtime
+- CI now publishes `run_events.jsonl` and `observability_summary.json` as operational artifacts
+- localized READMEs and operational docs now reflect batch/API/dashboard container separation and observability exports
 
 ## Breaking Changes Policy
 

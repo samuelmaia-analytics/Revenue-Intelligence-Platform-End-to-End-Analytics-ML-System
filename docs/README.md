@@ -7,11 +7,11 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [architecture.md](architecture.md): system boundary, runtime path, data flow, reliability controls and trade-offs
 - [governance_framework.md](governance_framework.md): source-of-truth rules, ownership surfaces, and change-evidence expectations
 - [runtime_surfaces.md](runtime_surfaces.md): canonical runtime surface, downstream interfaces, and smoke ownership
+- [runbook.md](runbook.md): operational commands, failure investigation, and exported observability evidence
 - [environments.md](environments.md): how `.venv`, `.dbt-venv`, and CI relate to each other
 - [ci_cd.md](ci_cd.md): CI job topology, required gates, and local-to-CI parity expectations
 - [repository_structure.md](repository_structure.md): why directories exist, where new code belongs and what should stay out of the top level
 - [onboarding.md](onboarding.md): fastest path to a successful local run, validation commands and common failure modes
-- [runbook.md](runbook.md): operational commands, failure investigation and output validation checklist
 - [incident_playbooks.md](incident_playbooks.md): short containment playbooks for the most likely incident classes
 - [troubleshooting_matrix.md](troubleshooting_matrix.md): fast diagnosis map from symptom to artifact and first action
 - [release_process.md](release_process.md): lightweight release discipline for technical portfolio changes
@@ -33,6 +33,7 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [releases/v1.3.1.md](releases/v1.3.1.md): processed-exports smoke coverage, richer incident handling, and CI/runtime alignment
 - [releases/v1.3.2.md](releases/v1.3.2.md): partner payload consumer, incident playbooks, and stronger downstream portfolio evidence
 - [releases/v1.3.3.md](releases/v1.3.3.md): secondary export contracts, semantic warehouse coverage, and label-governance alignment
+- [releases/v1.4.0.md](releases/v1.4.0.md): governance topology, CI discipline, and SQLite-first reviewer story
 
 ## Reading Order
 

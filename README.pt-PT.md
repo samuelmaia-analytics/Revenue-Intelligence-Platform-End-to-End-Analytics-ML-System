@@ -25,7 +25,7 @@ Em menos de 30 segundos, alguém a avaliar o repositório deve conseguir ver que
 
 - um caminho oficial de execução batch
 - outputs governados com contratos e validação
-- evidência operacional via manifests, snapshots e relatórios de qualidade
+- evidência operacional via manifests, timeline de eventos, snapshots e relatórios de qualidade
 - consumo downstream por Streamlit, API, SQL e dbt
 - CI que vai além de testes unitários e cobre smoke e build
 
@@ -36,6 +36,7 @@ Muitos projectos de portefólio ficam presos a notebooks, scripts ad hoc ou um d
 - um entrypoint batch oficial
 - saídas determinísticas e reprocessáveis
 - manifests, logs, snapshots e retenção de execução
+- timeline governada de observabilidade via `run_events.jsonl`
 - artefactos processados com validação e contratos
 - consumidores downstream que leem o core batch em vez de o substituir
 
@@ -109,7 +110,7 @@ Características principais:
 |- data/                   outputs locais de runtime, manifests, snapshots e warehouse
 |- notebooks/              exploração isolada, fora do caminho oficial de execução
 |- main.py                 wrapper mínimo de entrada Python
-|- Dockerfile*             builds de contentor para Streamlit e API
+|- Dockerfile*             builds de contentor para Streamlit, batch e API
 |- CHANGELOG.md            histórico de evolução orientado a releases
 ```
 
@@ -137,10 +138,11 @@ Referências principais:
 - retry configurável por estágio
 - janela explícita de backfill na CLI e nos manifests
 - relatórios de freshness, qualidade e validação de artefactos processados
-- manifests, logs e snapshots para rastreabilidade
+- manifests, logs, timeline de eventos e snapshots para rastreabilidade
 - persistência em warehouse com validação de consumo downstream
 - payload parceiro gerado a partir de exports processados governados
 - dashboard Streamlit com smoke test no CI
+- separação explícita entre contentores de dashboard, runtime batch e API
 
 ## Workspace Streamlit
 
@@ -205,6 +207,13 @@ Fluxo com Make:
 make verify
 make smoke-dashboard
 make pipeline
+make observability
+```
+
+Resumo operacional exportável:
+
+```powershell
+python -m src.pipeline observability --output-path data/processed/observability_summary.json
 ```
 
 ## Validação e Automação
@@ -233,6 +242,7 @@ Camadas de automação:
 - `.github/workflows/ci.yml` para lint, testes, smoke e build
 - `.github/workflows/ci.yml` separa validação de qualidade, governação, dbt sobre SQLite e containers para simplificar o diagnóstico
 - `.github/workflows/ci.yml` também valida consumo dbt real sobre o warehouse SQLite gerado pelo pipeline
+- `.github/workflows/ci.yml` publica `run_events.jsonl` e `observability_summary.json` como evidência operacional do batch
 - os smokes downstream partilham um helper comum de runtime temporário em `scripts/smoke_support.py`
 
 Checkpoints de governação:
