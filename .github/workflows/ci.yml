@@ -161,19 +161,19 @@ jobs:
 
       - name: Bootstrap environment
         shell: pwsh
-        run: .\scripts\bootstrap.ps1 -SkipEnvCopy
+        run: & "$env:GITHUB_WORKSPACE\scripts\bootstrap.ps1" -SkipEnvCopy
 
       - name: Verify PowerShell workflow
         shell: pwsh
-        run: .\scripts\verify.ps1
+        run: & "$env:GITHUB_WORKSPACE\scripts\verify.ps1"
 
       - name: Pipeline run through PowerShell workflow
         shell: pwsh
-        run: .\scripts\dev.ps1 -Target pipeline
+        run: & "$env:GITHUB_WORKSPACE\scripts\dev.ps1" -Target pipeline
 
       - name: Assert process inspection is clean
         shell: pwsh
-        run: .\scripts\status-dev.ps1
+        run: & "$env:GITHUB_WORKSPACE\scripts\status-dev.ps1"
 
   dbt-sqlite:
     runs-on: ubuntu-latest
