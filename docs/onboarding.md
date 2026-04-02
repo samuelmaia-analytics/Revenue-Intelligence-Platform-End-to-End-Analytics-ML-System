@@ -4,6 +4,10 @@
 
 Get a new contributor from clone to a validated local run quickly, with minimal ambiguity.
 
+Windows-first operational flow:
+
+- `docs/windows_workflow.md`
+
 ## 1. Environment Setup
 
 ```powershell
@@ -12,6 +16,12 @@ py -3.11 -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -e .[dev]
 copy .env.example .env
+```
+
+Windows shortcut:
+
+```powershell
+.\scripts\bootstrap.ps1
 ```
 
 Recommended interpreter:
@@ -59,6 +69,13 @@ python scripts/smoke_dbt_sqlite.py
 python -m build
 ```
 
+Windows shortcut:
+
+```powershell
+.\scripts\verify.ps1
+.\scripts\verify.ps1 -IncludeSmokes
+```
+
 Clean package-install smoke:
 
 ```powershell
@@ -78,10 +95,25 @@ Dashboard:
 python -m streamlit run app/streamlit_app.py
 ```
 
+Windows shortcut:
+
+```powershell
+.\scripts\dev.ps1 -Target app
+```
+
 API:
 
 ```powershell
 python -m uvicorn services.api.main:app --reload
+```
+
+Windows shortcut:
+
+```powershell
+.\scripts\dev.ps1 -Target api
+.\scripts\dev.ps1 -Target all
+.\scripts\status-dev.ps1
+.\scripts\stop-dev.ps1 -Target all
 ```
 
 dbt:

@@ -1,6 +1,7 @@
 import hashlib
 import pickle
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -177,7 +178,7 @@ def _extract_model_drivers(pipeline: Pipeline) -> list[dict[str, float | str]]:
 
     drivers = pd.DataFrame({"feature": feature_names, "importance": scores})
     drivers = drivers.sort_values("importance", ascending=False).head(8)
-    return drivers.to_dict(orient="records")
+    return cast(list[dict[str, float | str]], drivers.to_dict(orient="records"))
 
 
 def _build_business_model_summary(
