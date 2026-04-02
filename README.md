@@ -208,6 +208,7 @@ Make-based workflow:
 make verify
 make smoke-dashboard
 make pipeline
+make observability
 ```
 
 ## Validation and Automation
@@ -237,6 +238,7 @@ Automation surfaces:
 - `.github/workflows/ci.yml` splits quality, governance, dbt-on-SQLite, and container validation so failures are attributable
 - `.github/workflows/ci.yml` also runs a dbt-on-SQLite downstream smoke against the generated warehouse
 - `.github/workflows/ci.yml` proves dashboard, batch, and API container surfaces independently
+- `.github/workflows/ci.yml` exports an `observability_summary.json` artifact from the official batch runtime evidence
 - downstream smoke scripts share a common temporary-runtime helper in `scripts/smoke_support.py`
 
 Governance checkpoints:

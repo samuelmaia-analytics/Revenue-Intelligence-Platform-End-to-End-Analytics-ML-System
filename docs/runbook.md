@@ -31,6 +31,12 @@ Generate governance artifacts only:
 python -m src.pipeline artifacts
 ```
 
+Export batch observability summary:
+
+```powershell
+python -m src.pipeline observability --output-path data/processed/observability_summary.json
+```
+
 Dashboard smoke validation:
 
 ```powershell
@@ -76,6 +82,7 @@ Every successful run should leave evidence in these locations:
 - `data/processed/freshness_report.json`
 - `data/processed/runtime_metrics.json`
 - `data/processed/run_events.jsonl`
+- `data/processed/observability_summary.json` when exported for release or CI evidence
 - `data/manifests/`
 - `data/runs/`
 - `data/snapshots/`
