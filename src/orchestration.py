@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import shutil
 from collections.abc import Callable
@@ -17,7 +18,13 @@ from src.config import PipelineConfig
 from src.exceptions import PipelineStageError
 from src.governance import build_data_dictionary
 from src.ingestion import build_bronze_layer, save_raw_datasets
-from src.io_utils import atomic_copy_file, atomic_copy_tree, atomic_write_csv, atomic_write_json
+from src.io_utils import (
+    atomic_copy_file,
+    atomic_copy_tree,
+    atomic_write_csv,
+    atomic_write_json,
+    atomic_write_text,
+)
 from src.logging_utils import configure_logging
 from src.modeling import train_and_score_models
 from src.monitoring import build_monitoring_report
@@ -60,15 +67,28 @@ def _run_stage_with_retry(
     *,
     attempts: int,
     backoff_seconds: int,
+    on_attempt_failed: Callable[..., None] | None = None,
+    on_attempt_succeeded: Callable[..., None] | None = None,
 ) -> tuple[T, float]:
     last_error: Exception | None = None
     total_elapsed = 0.0
     for attempt in range(1, attempts + 1):
         try:
             result, elapsed = _run_stage(stage_name, func)
+            if on_attempt_succeeded is not None:
+                on_attempt_succeeded(stage_name, attempt, attempts, total_elapsed + elapsed)
             return result, total_elapsed + elapsed
         except PipelineStageError as exc:
             last_error = exc
+            if on_attempt_failed is not None:
+                on_attempt_failed(
+                    stage_name,
+                    attempt,
+                    attempts,
+                    exc,
+                    will_retry=attempt < attempts,
+                    elapsed_seconds=total_elapsed,
+                )
             if attempt >= attempts:
                 break
             LOGGER.warning(
@@ -266,6 +286,7 @@ def _write_run_manifest(
     kpi_snapshot: dict,
     freshness_snapshot: dict,
     outputs: list[str],
+    observability: dict[str, object],
 ) -> dict:
     manifest = {
         "pipeline_name": "revenue_intelligence_platform",
@@ -303,6 +324,7 @@ def _write_run_manifest(
         "freshness_snapshot": freshness_snapshot,
         "quality_snapshot": _quality_snapshot(quality_payload),
         "kpi_snapshot": kpi_snapshot,
+        "observability": observability,
         "outputs": outputs,
     }
     atomic_write_json(cfg.processed_dir / "pipeline_manifest.json", manifest)
@@ -315,6 +337,7 @@ def _write_runtime_metrics(
     run_context: RunContext,
     stage_timings: dict[str, float],
     outputs: list[str],
+    event_count: int,
 ) -> dict[str, object]:
     total_runtime_seconds = round(sum(stage_timings.values()), 3)
     payload = {
@@ -324,6 +347,7 @@ def _write_runtime_metrics(
         "stage_count": len(stage_timings),
         "stage_timings_seconds": {name: round(value, 3) for name, value in stage_timings.items()},
         "total_runtime_seconds": total_runtime_seconds,
+        "event_count": event_count,
         "output_count": len(outputs),
         "outputs": outputs,
     }
@@ -331,11 +355,17 @@ def _write_runtime_metrics(
     return payload
 
 
+def _write_run_events(path: Path, events: list[dict[str, object]]) -> None:
+    serialized = "\n".join(json.dumps(event, ensure_ascii=False) for event in events)
+    atomic_write_text(path, serialized + "\n")
+
+
 def _write_failure_manifest(
     cfg: PipelineConfig,
     run_context: RunContext,
     stage_timings: dict[str, float],
     exc: Exception,
+    event_count: int,
 ) -> None:
     payload = {
         "pipeline_name": "revenue_intelligence_platform",
@@ -348,7 +378,11 @@ def _write_failure_manifest(
         "error_type": exc.__class__.__name__,
         "error_message": str(exc),
         "stage_timings_seconds": {name: round(value, 3) for name, value in stage_timings.items()},
-        "log_path": str(run_context.log_path),
+        "observability": {
+            "log_path": str(run_context.log_path),
+            "run_events_path": str(run_context.run_dir / "run_events.jsonl"),
+            "event_count": event_count,
+        },
     }
     atomic_write_json(run_context.failure_manifest_path, payload)
 
@@ -357,16 +391,77 @@ class RevenueIntelligencePipeline:
     def __init__(self, cfg: PipelineConfig) -> None:
         self.cfg = cfg
         self.stage_timings: dict[str, float] = {}
+        self.run_events: list[dict[str, object]] = []
+        self.run_id = "n/a"
+
+    def _record_event(self, event_type: str, **fields: object) -> None:
+        self.run_events.append(
+            {
+                "timestamp": datetime.now(UTC).isoformat(),
+                "event_type": event_type,
+                "run_id": self.run_id,
+                **fields,
+            }
+        )
 
     def _stage(self, stage_name: str, func: Callable[[], T]) -> T:
+        self._record_event("stage.started", stage=stage_name, status="running")
+
+        def on_attempt_failed(
+            current_stage: str,
+            attempt: int,
+            attempts: int,
+            exc: Exception,
+            *,
+            will_retry: bool,
+            elapsed_seconds: float,
+        ) -> None:
+            self._record_event(
+                "stage.retry_scheduled" if will_retry else "stage.failed",
+                stage=current_stage,
+                status="retrying" if will_retry else "failed",
+                attempt=attempt,
+                max_attempts=attempts,
+                elapsed_seconds=round(elapsed_seconds, 3),
+                error_type=exc.__class__.__name__,
+                error_message=str(exc),
+            )
+
+        def on_attempt_succeeded(
+            current_stage: str,
+            attempt: int,
+            attempts: int,
+            elapsed_seconds: float,
+        ) -> None:
+            self._record_event(
+                "stage.completed",
+                stage=current_stage,
+                status="completed",
+                attempt=attempt,
+                max_attempts=attempts,
+                elapsed_seconds=round(elapsed_seconds, 3),
+            )
+
         result, elapsed = _run_stage_with_retry(
             stage_name,
             func,
             attempts=self.cfg.retry_attempts,
             backoff_seconds=self.cfg.retry_backoff_seconds,
+            on_attempt_failed=on_attempt_failed,
+            on_attempt_succeeded=on_attempt_succeeded,
         )
         self.stage_timings[stage_name] = elapsed
-        LOGGER.info("Stage completed | stage=%s | elapsed=%.3fs", stage_name, elapsed)
+        LOGGER.info(
+            "Stage completed | stage=%s | elapsed=%.3fs",
+            stage_name,
+            elapsed,
+            extra={
+                "event_type": "stage.completed",
+                "stage": stage_name,
+                "elapsed_seconds": round(elapsed, 3),
+                "status": "completed",
+            },
+        )
         return result
 
     def run(self) -> dict:
@@ -388,12 +483,27 @@ class RevenueIntelligencePipeline:
             run_id=run_context.run_id,
             log_format=self.cfg.log_format,
         )
+        self.run_id = run_context.run_id
+        self._record_event(
+            "pipeline.started",
+            environment=self.cfg.env_name,
+            data_dir=str(self.cfg.data_dir),
+            seed=self.cfg.seed,
+            input_fingerprint=run_context.input_fingerprint,
+        )
         LOGGER.info(
             "Pipeline started | env=%s | data_dir=%s | seed=%s | fingerprint=%s",
             self.cfg.env_name,
             self.cfg.data_dir,
             self.cfg.seed,
             run_context.input_fingerprint,
+            extra={
+                "event_type": "pipeline.started",
+                "environment": self.cfg.env_name,
+                "data_dir": str(self.cfg.data_dir),
+                "seed": self.cfg.seed,
+                "input_fingerprint": run_context.input_fingerprint,
+            },
         )
 
         try:
@@ -582,8 +692,21 @@ class RevenueIntelligencePipeline:
             )
             current_outputs = sorted(
                 set(path.name for path in self.cfg.processed_dir.glob("*") if path.is_file())
-                | {self.cfg.warehouse_db_path.name, "runtime_metrics.json"}
+                | {self.cfg.warehouse_db_path.name, "run_events.jsonl", "runtime_metrics.json"}
             )
+            self._record_event(
+                "pipeline.runtime_summary",
+                status="running",
+                stage_count=len(self.stage_timings),
+                output_count=len(current_outputs),
+            )
+            self._stage(
+                "operations.run_events",
+                lambda: _write_run_events(
+                    self.cfg.processed_dir / "run_events.jsonl", self.run_events
+                ),
+            )
+            _write_run_events(run_context.run_dir / "run_events.jsonl", self.run_events)
             runtime_metrics = self._stage(
                 "operations.runtime_metrics",
                 lambda: _write_runtime_metrics(
@@ -591,6 +714,7 @@ class RevenueIntelligencePipeline:
                     run_context=run_context,
                     stage_timings=self.stage_timings,
                     outputs=current_outputs,
+                    event_count=len(self.run_events),
                 ),
             )
             self._stage(
@@ -627,20 +751,48 @@ class RevenueIntelligencePipeline:
                 quality_payload=quality_payload,
                 kpi_snapshot=kpi_snapshot,
                 freshness_snapshot=freshness_snapshot,
+                observability={
+                    "log_format": self.cfg.log_format,
+                    "log_path": str(run_context.log_path),
+                    "run_events_path": str(self.cfg.processed_dir / "run_events.jsonl"),
+                    "event_count": len(self.run_events),
+                },
                 outputs=outputs,
             )
+            self._record_event(
+                "pipeline.completed",
+                status="success",
+                output_count=len(outputs),
+                total_runtime_seconds=runtime_metrics["total_runtime_seconds"],
+            )
+            _write_run_events(self.cfg.processed_dir / "run_events.jsonl", self.run_events)
+            _write_run_events(run_context.run_dir / "run_events.jsonl", self.run_events)
             LOGGER.info(
                 "Pipeline completed successfully | outputs=%s | total_runtime_seconds=%.3f",
                 len(outputs),
                 runtime_metrics["total_runtime_seconds"],
+                extra={
+                    "event_type": "pipeline.completed",
+                    "status": "success",
+                    "output_count": len(outputs),
+                    "total_runtime_seconds": runtime_metrics["total_runtime_seconds"],
+                },
             )
             return manifest
         except Exception as exc:
+            self._record_event(
+                "pipeline.failed",
+                status="failed",
+                error_type=exc.__class__.__name__,
+                error_message=str(exc),
+            )
+            _write_run_events(run_context.run_dir / "run_events.jsonl", self.run_events)
             _write_failure_manifest(
                 self.cfg,
                 run_context=run_context,
                 stage_timings=self.stage_timings,
                 exc=exc,
+                event_count=len(self.run_events),
             )
             LOGGER.exception("Pipeline failed")
             raise

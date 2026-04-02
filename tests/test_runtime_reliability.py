@@ -217,6 +217,9 @@ def test_pipeline_manifest_captures_runtime_evidence(tmp_path: Path) -> None:
     assert "freshness_report.json" in manifest["outputs"]
     assert "runtime_metrics.json" in manifest["outputs"]
     assert manifest["backfill_window"] == {"start_date": None, "end_date": None}
+    assert manifest["observability"]["log_format"] == cfg.log_format
+    assert manifest["observability"]["event_count"] > 0
+    assert (cfg.processed_dir / "run_events.jsonl").exists()
     assert artifact_validation["status"] == "ok"
     assert any(
         check["artifact"] == "quality_report.json" for check in artifact_validation["checks"]
@@ -238,6 +241,8 @@ def test_failure_manifest_is_written(tmp_path: Path) -> None:
     assert payload["status"] == "failed"
     assert payload["error_type"]
     assert payload["run_id"]
+    assert payload["observability"]["event_count"] > 0
+    assert Path(payload["observability"]["run_events_path"]).exists()
 
 
 def test_kaggle_csv_parsing_creates_curated_raw_tables(tmp_path: Path) -> None:

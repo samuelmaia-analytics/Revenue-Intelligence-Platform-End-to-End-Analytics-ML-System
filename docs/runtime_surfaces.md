@@ -49,6 +49,11 @@ Container contract:
 - `Dockerfile.batch`
 - preserves `python -m src.pipeline run` as the canonical packaged execution path
 
+Operational evidence:
+- `pipeline_manifest.json`
+- `runtime_metrics.json`
+- `run_events.jsonl`
+
 ## Streamlit Workspace
 
 Owner:

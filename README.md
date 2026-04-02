@@ -139,6 +139,7 @@ Primary references:
 - freshness, quality, and processed artifact validation reports
 - operational reports validated as part of the processed contract surface
 - runtime manifests, logs, and snapshots for traceability
+- governed `run_events.jsonl` timeline for stage-level batch observability
 - warehouse persistence plus downstream consumption validation
 - partner-facing payload generated from governed processed exports
 - smoke-tested Streamlit dashboard in CI
