@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TypedDict
 
 import pandas as pd
 
@@ -16,13 +17,23 @@ from src.metrics import (
 from src.recommendation import build_recommendations
 
 
+class AnalyticsOutputs(TypedDict):
+    ltv: pd.DataFrame
+    cac: pd.DataFrame
+    rfm: pd.DataFrame
+    cohort: pd.DataFrame
+    unit_economics: pd.DataFrame
+    recommendations: pd.DataFrame
+    kpi_snapshot: dict[str, object]
+
+
 def build_analytics_outputs(
     scored_df: pd.DataFrame,
     silver_customers_path: Path,
     silver_orders_path: Path,
     silver_marketing_path: Path,
     processed_dir: Path,
-) -> dict[str, pd.DataFrame | dict]:
+) -> AnalyticsOutputs:
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     ltv_df = calculate_ltv(scored_df)

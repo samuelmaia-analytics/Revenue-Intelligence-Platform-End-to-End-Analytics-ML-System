@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -7,6 +8,18 @@ from src.io_utils import atomic_write_csv
 
 CHANNELS = ["Organic", "Paid Search", "Social Ads", "Referral", "Partnership"]
 KAGGLE_FILE = "E-commerce Customer Behavior - Sheet1.csv"
+
+
+def _coerce_signup_date(value: Any) -> pd.Timestamp:
+    return pd.Timestamp(value).normalize()
+
+
+def _coerce_int(value: Any) -> int:
+    return int(value)
+
+
+def _coerce_float(value: Any) -> float:
+    return float(value)
 
 
 def generate_synthetic_data(
@@ -33,15 +46,18 @@ def generate_synthetic_data(
     churn_risk = {"SMB": 0.38, "Mid-Market": 0.28, "Enterprise": 0.18}
     order_rows = []
     for row in customers.itertuples(index=False):
-        tenure_days = max((today - row.signup_date).days, 1)
+        signup_date = _coerce_signup_date(row.signup_date)
+        segment = cast(str, row.segment)
+        customer_id = _coerce_int(row.customer_id)
+        tenure_days = max((today - signup_date).days, 1)
         expected_orders = max(1, int(tenure_days / 45))
         num_orders = rng.poisson(lam=expected_orders * 0.6) + 1
-        if rng.random() < churn_risk[row.segment]:
+        if rng.random() < churn_risk[segment]:
             num_orders = max(1, int(num_orders * 0.4))
 
         order_days = rng.integers(1, tenure_days + 1, size=num_orders)
-        order_dates = sorted([row.signup_date + pd.Timedelta(days=int(x)) for x in order_days])
-        base_value = {"SMB": 120, "Mid-Market": 320, "Enterprise": 950}[row.segment]
+        order_dates = sorted(signup_date + pd.to_timedelta(order_days, unit="D"))
+        base_value = {"SMB": 120, "Mid-Market": 320, "Enterprise": 950}[segment]
         order_values = np.clip(rng.normal(base_value, base_value * 0.35, size=num_orders), 25, None)
 
         for idx, (order_date, order_value) in enumerate(
@@ -49,8 +65,8 @@ def generate_synthetic_data(
         ):
             order_rows.append(
                 {
-                    "order_id": f"O{row.customer_id:05d}-{idx:03d}",
-                    "customer_id": row.customer_id,
+                    "order_id": f"O{customer_id:05d}-{idx:03d}",
+                    "customer_id": customer_id,
                     "order_date": pd.Timestamp(order_date).normalize(),
                     "order_value": round(float(order_value), 2),
                 }
@@ -129,9 +145,12 @@ def _build_from_kaggle_dataset(
     for row, tenure, recency in zip(
         df.itertuples(index=False), tenure_days, recency_days, strict=False
     ):
+        customer_id = _coerce_int(row.customer_id)
+        items_purchased = max(1, _coerce_int(row.items_purchased))
+        total_spend = _coerce_float(row.total_spend)
         customer_signup = today - pd.Timedelta(days=int(tenure))
-        n_orders = int(max(1, row.items_purchased))
-        avg_ticket = float(row.total_spend) / n_orders
+        n_orders = items_purchased
+        avg_ticket = total_spend / n_orders
         std_ticket = max(5.0, avg_ticket * 0.25)
 
         if n_orders == 1:
@@ -143,7 +162,7 @@ def _build_from_kaggle_dataset(
             order_dates.append(today - pd.Timedelta(days=int(recency)))
 
         order_values = np.clip(rng.normal(avg_ticket, std_ticket, size=n_orders), 5, None)
-        correction = float(row.total_spend) / float(order_values.sum())
+        correction = total_spend / float(order_values.sum())
         order_values = order_values * correction
 
         for idx, (order_date, order_value) in enumerate(
@@ -151,8 +170,8 @@ def _build_from_kaggle_dataset(
         ):
             order_rows.append(
                 {
-                    "order_id": f"O{int(row.customer_id):05d}-{idx:03d}",
-                    "customer_id": int(row.customer_id),
+                    "order_id": f"O{customer_id:05d}-{idx:03d}",
+                    "customer_id": customer_id,
                     "order_date": pd.Timestamp(order_date).normalize(),
                     "order_value": round(float(order_value), 2),
                 }

@@ -17,6 +17,7 @@ That means:
 Read these files first:
 
 - [README.md](README.md)
+- [docs/windows_workflow.md](docs/windows_workflow.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/governance_framework.md](docs/governance_framework.md)
 - [docs/runbook.md](docs/runbook.md)
@@ -58,29 +59,27 @@ Low-signal changes to avoid:
 Setup:
 
 ```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt -r requirements-dev.txt
-Copy-Item .env.example .env
+.\scripts\bootstrap.ps1
 ```
 
 Common commands:
 
 ```powershell
-make verify
-make smoke-dashboard
-make smoke-api
-make smoke-dbt
-make pipeline
+.\scripts\verify.ps1
+.\scripts\verify.ps1 -IncludeSmokes
+.\scripts\dev.ps1 -Target pipeline
+.\scripts\dev.ps1 -Target app
+.\scripts\dev.ps1 -Target api
+.\scripts\status-dev.ps1
+.\scripts\stop-dev.ps1 -Target all
 ```
 
 Equivalent direct commands:
 
 ```powershell
-python -m src.pipeline run
-python scripts/smoke_dashboard.py
-python -m pytest -q
+.\.venv\Scripts\python.exe -m src.pipeline run
+.\.venv\Scripts\python.exe scripts/smoke_dashboard.py
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
 ## Validation Expectations
@@ -88,19 +87,25 @@ python -m pytest -q
 Run before opening a PR:
 
 ```powershell
-python -m ruff check .
-python -m black --check .
-python -m isort --check-only .
-python -m mypy src services contracts main.py
-python -m pytest -q
-python scripts/smoke_dashboard.py
-python scripts/smoke_api.py
-python scripts/smoke_downstream_sql.py
-python scripts/smoke_processed_exports.py
-python scripts/smoke_partner_payload.py
-python scripts/smoke_dbt_sqlite.py
-python -m pytest -q tests/test_repository_governance.py tests/test_operational_assets.py
-python -m build
+.\scripts\verify.ps1
+.\scripts\verify.ps1 -IncludeSmokes
+```
+
+Equivalent direct commands:
+
+```powershell
+.\.venv\Scripts\python.exe -m ruff check src services api main.py
+.\.venv\Scripts\python.exe -m black --check src services api main.py
+.\.venv\Scripts\python.exe -m isort --check-only src services api main.py
+.\.venv\Scripts\python.exe -m mypy src services contracts main.py
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe scripts/smoke_dashboard.py
+.\.venv\Scripts\python.exe scripts/smoke_api.py
+.\.venv\Scripts\python.exe scripts/smoke_downstream_sql.py
+.\.venv\Scripts\python.exe scripts/smoke_processed_exports.py
+.\.venv\Scripts\python.exe scripts/smoke_partner_payload.py
+.\.venv\Scripts\python.exe scripts/smoke_dbt_sqlite.py
+.\.venv\Scripts\python.exe -m build
 ```
 
 If your change affects the container path, also validate:

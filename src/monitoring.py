@@ -84,6 +84,13 @@ def _calibration_summary(y_true: pd.Series, y_prob: pd.Series, label: str) -> di
     }
 
 
+def _required_series(df: pd.DataFrame, column: str) -> pd.Series:
+    series = df.get(column)
+    if series is None:
+        return pd.Series(dtype="float64")
+    return series
+
+
 def build_monitoring_report(
     scored_df: pd.DataFrame,
     labeled_df: pd.DataFrame,
@@ -104,15 +111,14 @@ def build_monitoring_report(
         drift = {column: {"status": "initialized"} for column in current_summary}
         drift_status = "initialized"
 
-    labeled = labeled_df.copy()
     churn_calibration = _calibration_summary(
-        labeled.get("is_churned"),
-        labeled.get("churn_probability"),
+        _required_series(labeled_df, "is_churned"),
+        _required_series(labeled_df, "churn_probability"),
         "churn",
     )
     next_purchase_calibration = _calibration_summary(
-        labeled.get("next_purchase_30d"),
-        labeled.get("next_purchase_probability"),
+        _required_series(labeled_df, "next_purchase_30d"),
+        _required_series(labeled_df, "next_purchase_probability"),
         "next_purchase_30d",
     )
 

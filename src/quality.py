@@ -40,7 +40,7 @@ def build_dataset_quality_report(
     if foreign_key and valid_values is not None and foreign_key in df.columns:
         referential_issues = int((~df[foreign_key].isin(valid_values)).sum())
 
-    null_counts = {col: int(value) for col, value in df.isna().sum().to_dict().items()}
+    null_counts = {str(col): int(value) for col, value in df.isna().sum().to_dict().items()}
     denominator = max(len(df), 1)
     null_fraction_by_column = {
         column: round(count / denominator, 6) for column, count in null_counts.items()
