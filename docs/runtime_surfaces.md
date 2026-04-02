@@ -43,6 +43,11 @@ Validation:
 - artifact validation
 - quality reports
 - manifests and snapshots
+- batch container smoke in CI
+
+Container contract:
+- `Dockerfile.batch`
+- preserves `python -m src.pipeline run` as the canonical packaged execution path
 
 ## Streamlit Workspace
 
@@ -58,6 +63,12 @@ Rule:
 Validation:
 - `scripts/smoke_dashboard.py`
 - `scripts/ui_snapshot.py`
+- Streamlit container smoke in CI
+
+Container contract:
+- `Dockerfile`
+- reads governed artifacts from `data/processed`
+- does not run orchestration as its default command
 
 ## API Surface
 
@@ -76,6 +87,9 @@ Rule:
 Validation:
 - `scripts/smoke_api.py`
 - API container smoke in CI
+
+Container contract:
+- `Dockerfile.api`
 
 ## Warehouse and SQL Consumption
 

@@ -12,7 +12,7 @@ The main workflow in `.github/workflows/ci.yml` is split into focused jobs:
 - `quality`: formatting, linting, typing, tests, smoke scripts, and package build
 - `governance`: repository-governance and operational-asset tests
 - `dbt-sqlite`: pipeline execution followed by dbt-on-SQLite validation
-- `docker`: container image build plus API and batch container smoke validation
+- `docker`: container image build plus dashboard, batch, and API container smoke validation
 
 This split matters because it makes failures attributable:
 
@@ -20,7 +20,7 @@ This split matters because it makes failures attributable:
 - if `hygiene` fails, repository discipline regressed before heavier validation even starts
 - if `governance` fails, repository policy or documentation drifted
 - if `dbt-sqlite` fails, downstream warehouse consumption regressed
-- if `docker` fails, the deployable surface regressed
+- if `docker` fails, at least one deployable surface regressed
 
 ## Local To CI Parity
 
@@ -46,7 +46,7 @@ The workflow is expected to keep these signals green before merge:
 - dashboard, API, SQL, processed-export, partner-payload, and dbt smoke checks
 - package build
 - repository-governance and operational-asset tests
-- container smoke validation
+- dashboard, batch, and API container smoke validation
 
 ## Artifact Expectations
 
@@ -60,6 +60,12 @@ CI should produce evidence, not only pass/fail signals:
 - curated recommendation exports
 
 If a change removes or renames one of these artifacts, update the runbook, smoke checks, and release notes in the same change set.
+
+The docker job proves three independent runtime surfaces:
+
+- `Dockerfile`: Streamlit dashboard container
+- `Dockerfile.batch`: canonical batch runtime container
+- `Dockerfile.api`: serving API container
 
 ## Runtime Baseline Workflow
 

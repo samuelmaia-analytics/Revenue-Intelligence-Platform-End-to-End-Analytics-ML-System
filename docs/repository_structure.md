@@ -33,7 +33,7 @@ If a directory does none of those, it probably does not belong at the top level.
 |- src/                Batch pipeline and domain logic
 |- tests/              Behavioral and regression coverage
 |- main.py             Minimal Python entrypoint wrapper
-|- Dockerfile*         Container builds for Streamlit and API surfaces
+|- Dockerfile*         Container builds for Streamlit, batch, and API surfaces
 |- CHANGELOG.md        Release-oriented evolution log
 ```
 

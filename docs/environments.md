@@ -51,6 +51,7 @@ Purpose:
 
 Current reference shape:
 - Streamlit container from `Dockerfile`
+- batch runtime container from `Dockerfile.batch`
 - API container from `Dockerfile.api`
 - GitHub Actions as the canonical automated verification environment
 

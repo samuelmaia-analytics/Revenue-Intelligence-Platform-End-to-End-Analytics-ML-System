@@ -1,7 +1,7 @@
 PYTHON ?= python
 DBT ?= dbt
 
-.PHONY: help install install-dev pipeline artifacts dictionary serve-app serve-api lint format type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-downstream smoke-exports smoke-partner smoke-dbt assert-runtime update-runtime-baseline verify package smoke docker-build-app docker-build-api docker-build docker-smoke clean
+.PHONY: help install install-dev pipeline artifacts dictionary serve-app serve-api lint format type-check test governance smoke-dashboard snapshot-dashboard smoke-api smoke-streamlit smoke-downstream smoke-exports smoke-partner smoke-dbt assert-runtime update-runtime-baseline verify package smoke docker-build-app docker-build-batch docker-build-api docker-build docker-smoke clean
 
 help:
 	@echo "Available targets:"
@@ -27,8 +27,9 @@ help:
 	@echo "  update-runtime-baseline Promote current runtime metrics into the versioned baseline"
 	@echo "  verify             Run the local high-signal validation flow"
 	@echo "  package            Build the package"
-	@echo "  docker-build       Build both Docker images"
+	@echo "  docker-build       Build dashboard, batch, and API Docker images"
 	@echo "  docker-smoke       Smoke-test the batch container"
+	@echo "  smoke-streamlit    Smoke-test the local Streamlit surface"
 	@echo "  clean              Remove local tooling caches"
 
 install:
@@ -118,15 +119,21 @@ dbt-docs:
 	$(DBT) --project-dir dbt docs generate
 
 docker-build-app:
-	docker build -t revenue-intelligence .
+	docker build -t revenue-intelligence-streamlit .
+
+docker-build-batch:
+	docker build -f Dockerfile.batch -t revenue-intelligence-batch .
 
 docker-build-api:
 	docker build -f Dockerfile.api -t revenue-intelligence-api .
 
-docker-build: docker-build-app docker-build-api
+docker-build: docker-build-app docker-build-batch docker-build-api
 
 docker-smoke:
-	docker run --rm revenue-intelligence python -m src.pipeline run --log-level INFO
+	docker run --rm revenue-intelligence-batch run --log-level INFO
+
+smoke-streamlit:
+	$(PYTHON) scripts/smoke_streamlit.py http://127.0.0.1:8501
 
 clean:
 	$(PYTHON) -c "import pathlib, shutil; roots=[pathlib.Path('.')]; dirs={'.pytest_cache','.ruff_cache','.mypy_cache','__pycache__','.ipynb_checkpoints','htmlcov','.streamlit'}; files={'.coverage','coverage.xml'}; [shutil.rmtree(path, ignore_errors=True) for root in roots for path in root.rglob('*') if path.is_dir() and path.name in dirs]; [path.unlink(missing_ok=True) for root in roots for path in root.rglob('*') if path.is_file() and path.name in files]"

@@ -30,6 +30,8 @@ def test_repository_contains_high_signal_operational_docs() -> None:
         PROJECT_ROOT / "docs" / "releases" / "v1.3.2.md",
         PROJECT_ROOT / "docs" / "releases" / "v1.3.3.md",
         PROJECT_ROOT / ".github" / "workflows" / "runtime-baseline.yml",
+        PROJECT_ROOT / "Dockerfile.batch",
+        PROJECT_ROOT / "scripts" / "smoke_streamlit.py",
     ]
     for path in expected_paths:
         assert path.exists(), f"Missing governance or documentation asset: {path}"
@@ -48,12 +50,18 @@ def test_ci_workflow_enforces_core_quality_gates() -> None:
         "python scripts/smoke_dashboard.py",
         "python scripts/ui_snapshot.py",
         "python scripts/smoke_api.py",
+        "python scripts/smoke_streamlit.py http://127.0.0.1:8501",
         "python scripts/smoke_downstream_sql.py",
         "python scripts/smoke_processed_exports.py",
         "python scripts/smoke_partner_payload.py",
         "python scripts/smoke_dbt_sqlite.py",
         "python scripts/assert_runtime_metrics.py ci_artifacts/data/processed/runtime_metrics.json metrics/runtime_baseline.json",
         "API container smoke test",
+        "Streamlit container smoke test",
+        "Docker build (batch runtime)",
+        "Dockerfile.batch",
+        "revenue-intelligence-batch",
+        "revenue-intelligence-streamlit",
         "Wheel install smoke test",
         "http://127.0.0.1:8000/health",
         "python -m build",
@@ -81,6 +89,7 @@ def test_pr_template_and_makefile_expose_senior_review_workflow() -> None:
         "smoke-dashboard:",
         "snapshot-dashboard:",
         "smoke-api:",
+        "smoke-streamlit:",
         "smoke-downstream:",
         "smoke-exports:",
         "smoke-partner:",
@@ -89,6 +98,7 @@ def test_pr_template_and_makefile_expose_senior_review_workflow() -> None:
         "update-runtime-baseline:",
         "verify:",
         "clean:",
+        "docker-build-batch:",
     ]:
         assert expected_target in makefile_text
 
@@ -178,6 +188,18 @@ def test_gitignore_blocks_local_secrets_and_database_artifacts() -> None:
         "data/warehouse/*.db",
     ]:
         assert expected_snippet in gitignore
+
+
+def test_dockerignore_excludes_runtime_outputs_and_ci_artifacts() -> None:
+    dockerignore = (PROJECT_ROOT / ".dockerignore").read_text(encoding="utf-8")
+
+    for expected_snippet in [
+        "data/raw",
+        "data/processed",
+        "data/warehouse",
+        "ci_artifacts",
+    ]:
+        assert expected_snippet in dockerignore
 
 
 def test_git_tracked_files_exclude_generated_runtime_artifacts() -> None:
