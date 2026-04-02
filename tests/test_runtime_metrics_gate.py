@@ -8,7 +8,9 @@ import pytest
 from scripts.assert_runtime_metrics import main as assert_runtime_metrics_main
 
 
-def _write_runtime_metrics(path: Path, *, total_runtime_seconds: float, stage_elapsed: float) -> None:
+def _write_runtime_metrics(
+    path: Path, *, total_runtime_seconds: float, stage_elapsed: float
+) -> None:
     path.write_text(
         json.dumps(
             {

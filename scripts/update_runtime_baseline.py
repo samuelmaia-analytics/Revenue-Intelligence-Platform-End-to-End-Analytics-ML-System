@@ -13,7 +13,9 @@ def _load_json(path: Path) -> dict[str, object]:
         return json.load(handle)
 
 
-def _build_baseline(metrics: dict[str, object], current_baseline: dict[str, object] | None) -> dict[str, object]:
+def _build_baseline(
+    metrics: dict[str, object], current_baseline: dict[str, object] | None
+) -> dict[str, object]:
     stage_timings = metrics.get("stage_timings_seconds", {})
     if not isinstance(stage_timings, dict):
         raise SystemExit("Runtime metrics invalid: stage_timings_seconds must be a mapping.")
@@ -21,9 +23,7 @@ def _build_baseline(metrics: dict[str, object], current_baseline: dict[str, obje
     baseline = {
         "environment": metrics.get("environment", "ci"),
         "max_total_runtime_seconds": (
-            current_baseline.get("max_total_runtime_seconds", 45.0)
-            if current_baseline
-            else 45.0
+            current_baseline.get("max_total_runtime_seconds", 45.0) if current_baseline else 45.0
         ),
         "max_regression_fraction": (
             current_baseline.get("max_regression_fraction", 0.5) if current_baseline else 0.5

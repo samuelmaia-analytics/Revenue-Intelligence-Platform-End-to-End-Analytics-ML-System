@@ -174,7 +174,9 @@ def test_api_metrics_surface_exposes_prometheus_text(tmp_path: Path) -> None:
     assert metrics.headers["content-type"].startswith("text/plain")
     assert metrics.headers["X-Request-ID"] == "req-metrics"
     assert "rip_api_predictions_total" in metrics.text
-    assert 'rip_api_request_volume_total{endpoint="/api/v1/health",status_code="200"}' in metrics.text
+    assert (
+        'rip_api_request_volume_total{endpoint="/api/v1/health",status_code="200"}' in metrics.text
+    )
 
 
 def test_api_requires_token(tmp_path: Path) -> None:

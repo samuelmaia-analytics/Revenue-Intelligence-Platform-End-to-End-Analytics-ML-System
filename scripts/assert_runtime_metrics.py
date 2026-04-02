@@ -44,7 +44,9 @@ def _assert_runtime_thresholds(payload: dict[str, object]) -> None:
 
 
 def _assert_against_baseline(payload: dict[str, object], baseline: dict[str, object]) -> None:
-    max_total_runtime_seconds = float(baseline.get("max_total_runtime_seconds", MAX_TOTAL_RUNTIME_SECONDS))
+    max_total_runtime_seconds = float(
+        baseline.get("max_total_runtime_seconds", MAX_TOTAL_RUNTIME_SECONDS)
+    )
     total_runtime_seconds = float(payload["total_runtime_seconds"])
     if total_runtime_seconds > max_total_runtime_seconds:
         raise SystemExit(

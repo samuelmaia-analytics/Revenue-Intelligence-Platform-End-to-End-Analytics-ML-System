@@ -27,9 +27,7 @@ def _write_runtime_metrics(path: Path) -> None:
     )
 
 
-def test_update_runtime_baseline_promotes_stage_timings(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_update_runtime_baseline_promotes_stage_timings(tmp_path: Path, monkeypatch) -> None:
     metrics_path = tmp_path / "runtime_metrics.json"
     baseline_path = tmp_path / "runtime_baseline.json"
     _write_runtime_metrics(metrics_path)
