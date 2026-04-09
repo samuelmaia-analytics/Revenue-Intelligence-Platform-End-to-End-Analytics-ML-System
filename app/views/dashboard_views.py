@@ -161,6 +161,13 @@ def render_header(lang: str, filtered_df: pd.DataFrame, format_currency_fn: Any)
         .sort_values(ascending=False)
         .index[0]
     )
+    top_action = (
+        filtered_df["recommended_action"].value_counts(normalize=True).mul(100).round(1).index[0]
+    )
+    high_risk_share = f"{(filtered_df['churn_probability'] >= 0.7).mean():.1%}"
+    strongest_channel = (
+        filtered_df.groupby("channel")["ltv_cac_ratio"].mean().sort_values(ascending=False).index[0]
+    )
     st.markdown(
         f"""
         <div class="hero">
@@ -169,6 +176,23 @@ def render_header(lang: str, filtered_df: pd.DataFrame, format_currency_fn: Any)
                     <div class="hero-badge">{st.session_state.get("rip_brand_badge", t(lang, "header_badge"))}</div>
                     <h1>{st.session_state.get("rip_brand_hero_title", t(lang, "header_title"))}</h1>
                     <p>{t(lang, "header_sub")}</p>
+                    <div class="hero-support">
+                        Executive decision surface for retention pressure, commercial prioritization and operating trust.
+                    </div>
+                    <div class="hero-brief">
+                        <div class="hero-brief-card">
+                            <div class="hero-brief-label">Revenue Pressure</div>
+                            <div class="hero-brief-value">{high_risk_share} of the current portfolio is in high-risk scope.</div>
+                        </div>
+                        <div class="hero-brief-card">
+                            <div class="hero-brief-label">Commercial Focus</div>
+                            <div class="hero-brief-value">{top_action} is the dominant recommended action in this cut.</div>
+                        </div>
+                        <div class="hero-brief-card">
+                            <div class="hero-brief-label">Efficiency Signal</div>
+                            <div class="hero-brief-value">{strongest_channel} is the strongest channel by LTV/CAC in the active view.</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="hero-meta">
                     <div class="hero-stat">

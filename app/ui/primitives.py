@@ -26,7 +26,7 @@ DEFAULT_THEME = {
 def apply_chart_style(fig: go.Figure) -> go.Figure:
     fig.update_layout(
         template="plotly_white",
-        font={"color": DEFAULT_THEME["text"], "family": "Segoe UI, Aptos, sans-serif", "size": 13},
+        font={"color": DEFAULT_THEME["text"], "family": "Georgia, Cambria, Times New Roman, serif", "size": 13},
         title_font={"color": DEFAULT_THEME["text"], "size": 18},
         plot_bgcolor=DEFAULT_THEME["surface"],
         paper_bgcolor=DEFAULT_THEME["surface"],
@@ -44,9 +44,11 @@ def render_global_styles() -> None:
         <style>
             .stApp {{
                 background:
-                    radial-gradient(circle at top right, rgba(15, 91, 215, 0.08), transparent 28%),
-                    linear-gradient(180deg, {DEFAULT_THEME["bg"]} 0%, #edf3f9 100%);
+                    radial-gradient(circle at top right, rgba(15, 91, 215, 0.12), transparent 26%),
+                    radial-gradient(circle at bottom left, rgba(10, 63, 151, 0.07), transparent 28%),
+                    linear-gradient(180deg, {DEFAULT_THEME["bg"]} 0%, #e9f0f7 100%);
                 color: {DEFAULT_THEME["text"]};
+                font-family: "Aptos", "Segoe UI", sans-serif;
             }}
             [data-testid="stHeader"] {{ background: transparent; }}
             [data-testid="stMainBlockContainer"] {{
@@ -101,57 +103,126 @@ def render_global_styles() -> None:
                 line-height: 1.45;
             }}
             .hero {{
-                padding: 1.5rem 1.65rem;
-                border-radius: 24px;
+                position: relative;
+                overflow: hidden;
+                padding: 1.6rem 1.8rem;
+                border-radius: 28px;
                 background:
-                    linear-gradient(135deg, rgba(10, 63, 151, 0.95), rgba(15, 91, 215, 0.90)),
+                    radial-gradient(circle at top right, rgba(255,255,255,0.14), transparent 26%),
+                    linear-gradient(135deg, rgba(10, 63, 151, 0.98), rgba(15, 91, 215, 0.92)),
                     linear-gradient(180deg, #0b1b35, #143259);
                 color: #f8fbff;
-                box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+                border: 1px solid rgba(255,255,255,0.08);
+                box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+            }}
+            .hero::after {{
+                content: "";
+                position: absolute;
+                right: -4rem;
+                top: -4rem;
+                width: 16rem;
+                height: 16rem;
+                border-radius: 999px;
+                background: radial-gradient(circle, rgba(255,255,255,0.16), transparent 62%);
             }}
             .hero-grid {{
                 display: grid;
-                grid-template-columns: 1.9fr 1fr;
-                gap: 1rem;
-                align-items: end;
+                grid-template-columns: 1.5fr 1fr;
+                gap: 1.2rem;
+                align-items: start;
             }}
             .hero-badge {{
                 display: inline-block;
-                padding: 0.38rem 0.65rem;
+                padding: 0.42rem 0.72rem;
                 border-radius: 999px;
-                background: rgba(255,255,255,0.12);
-                font-size: 0.78rem;
-                font-weight: 700;
-                margin-bottom: 0.7rem;
+                background: rgba(255,255,255,0.14);
+                border: 1px solid rgba(255,255,255,0.08);
+                font-size: 0.74rem;
+                font-weight: 800;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                margin-bottom: 0.85rem;
             }}
             .hero h1 {{
                 margin: 0;
-                font-size: 2rem;
-                line-height: 1.15;
+                font-family: "Georgia", "Times New Roman", serif;
+                font-size: 2.35rem;
+                line-height: 1.08;
                 font-weight: 800;
                 letter-spacing: -0.03em;
+                max-width: 10ch;
             }}
             .hero p {{
-                margin: 0.55rem 0 0 0;
+                margin: 0.65rem 0 0 0;
                 color: rgba(248, 251, 255, 0.92);
-                font-size: 0.98rem;
-                max-width: 62ch;
+                font-size: 1rem;
+                line-height: 1.65;
+                max-width: 60ch;
             }}
-            .hero-meta {{ display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; }}
-            .hero-stat {{
-                min-width: 150px;
-                padding: 0.9rem 1rem;
-                border-radius: 16px;
-                background: rgba(255, 255, 255, 0.12);
-            }}
-            .hero-stat-label {{
-                font-size: 0.76rem;
-                color: rgba(248, 251, 255, 0.86);
+            .hero-support {{
+                margin-top: 1rem;
+                max-width: 64ch;
+                color: rgba(255,255,255,0.78);
+                font-size: 0.84rem;
                 text-transform: uppercase;
                 letter-spacing: 0.08em;
                 font-weight: 700;
             }}
-            .hero-stat-value {{ font-size: 1.25rem; font-weight: 800; margin-top: 0.2rem; }}
+            .hero-brief {{
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.8rem;
+                margin-top: 1.15rem;
+            }}
+            .hero-brief-card {{
+                padding: 0.9rem 1rem;
+                border-radius: 18px;
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.08);
+                backdrop-filter: blur(8px);
+            }}
+            .hero-brief-label {{
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                font-weight: 800;
+                color: rgba(248, 251, 255, 0.72);
+            }}
+            .hero-brief-value {{
+                margin-top: 0.3rem;
+                font-size: 0.98rem;
+                font-weight: 800;
+                color: #ffffff;
+                line-height: 1.25;
+            }}
+            .hero-meta {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.8rem;
+                position: relative;
+                z-index: 1;
+            }}
+            .hero-stat {{
+                min-width: 150px;
+                padding: 0.95rem 1rem;
+                border-radius: 18px;
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255,255,255,0.08);
+                backdrop-filter: blur(10px);
+            }}
+            .hero-stat-label {{
+                font-size: 0.72rem;
+                color: rgba(248, 251, 255, 0.78);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                font-weight: 800;
+            }}
+            .hero-stat-value {{
+                font-size: 1.35rem;
+                font-weight: 800;
+                margin-top: 0.28rem;
+                line-height: 1.15;
+            }}
             .panel {{
                 background: rgba(255,255,255,0.97);
                 border: 1px solid {DEFAULT_THEME["border"]};
@@ -168,7 +239,7 @@ def render_global_styles() -> None:
             }}
             .panel-title {{
                 color: {DEFAULT_THEME["text"]};
-                font-size: 1.05rem;
+                font-size: 1.08rem;
                 font-weight: 800;
                 line-height: 1.2;
             }}
@@ -242,10 +313,10 @@ def render_global_styles() -> None:
             .kpi-card {{
                 background: linear-gradient(180deg, {DEFAULT_THEME["surface"]}, {DEFAULT_THEME["surface_alt"]});
                 border: 1px solid {DEFAULT_THEME["border"]};
-                border-radius: 18px;
-                padding: 1rem;
+                border-radius: 20px;
+                padding: 1.05rem;
                 min-height: 126px;
-                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+                box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
             }}
             .kpi-title {{
                 color: {DEFAULT_THEME["muted"]};
@@ -479,7 +550,8 @@ def render_global_styles() -> None:
                     padding-right: 1rem;
                 }}
                 .hero-grid {{ grid-template-columns: 1fr; }}
-                .hero-meta {{ justify-content: flex-start; }}
+                .hero-meta {{ grid-template-columns: 1fr; }}
+                .hero-brief {{ grid-template-columns: 1fr; }}
                 .status-strip {{ grid-template-columns: 1fr 1fr; }}
                 .panel-head {{ flex-direction: column; }}
                 .section-title {{ font-size: 1.24rem; }}
