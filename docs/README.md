@@ -49,6 +49,8 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [client_adaptation/implementation_checklist.md](client_adaptation/implementation_checklist.md): new-client implementation checklist
 - [client_adaptation/handoff_checklist.md](client_adaptation/handoff_checklist.md): client handoff checklist for delivery closeout
 - [client_adaptation/branding_guide.md](client_adaptation/branding_guide.md): presentation-layer branding adaptation without changing runtime logic
+- [client_adaptation/client_env_template.example](client_adaptation/client_env_template.example): example client deployment environment template
+- [api_external_consumption.md](api_external_consumption.md): API surfaces for external and commercial consumption
 - [use_case_templates/saas_b2b_revenue.md](use_case_templates/saas_b2b_revenue.md): B2B SaaS template
 - [use_case_templates/omnichannel_retail.md](use_case_templates/omnichannel_retail.md): omnichannel retail template
 - [executive/acceptance_checklist.md](executive/acceptance_checklist.md): executive acceptance criteria and handoff checks

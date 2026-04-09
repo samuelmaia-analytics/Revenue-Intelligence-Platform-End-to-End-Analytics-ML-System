@@ -1,0 +1,12 @@
+# Copy values into a client-specific deployment environment.
+# Keep secrets outside Git.
+
+RIP_ENV=client
+RIP_API_AUTH_MODE=strict
+RIP_API_RATE_LIMIT_PER_MINUTE=120
+RIP_INSIGHT_DRAFT_MODE=deterministic
+RIP_BRAND_NAME=Client Revenue Command Center
+RIP_BRAND_HERO_TITLE=Client Revenue Command Center
+RIP_BRAND_BADGE=Executive Analytics Workspace
+RIP_BRAND_FOOTER_TITLE=Client Revenue Intelligence
+RIP_BRAND_FOOTER_BODY=Governed analytics for executive decision support.

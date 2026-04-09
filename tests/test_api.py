@@ -155,6 +155,25 @@ def test_api_preserves_incoming_request_id(tmp_path: Path) -> None:
     assert response.headers["X-Request-ID"] == "req-123"
 
 
+def test_api_ready_surface_reports_export_readiness(tmp_path: Path) -> None:
+    _bootstrap_registry(tmp_path)
+    os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")
+    os.environ["RIP_API_AUTH_MODE"] = "demo"
+    os.environ["RIP_API_DEMO_TOKEN"] = "test-token"
+    os.environ["RIP_API_RATE_LIMIT_PER_MINUTE"] = "5"
+
+    api_module = importlib.import_module("services.api.main")
+    api_module = importlib.reload(api_module)
+    client = TestClient(api_module.app)
+
+    response = client.get("/api/v1/ready")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ready"
+    assert payload["export_surfaces_ready"] is True
+
+
 def test_api_metrics_surface_exposes_prometheus_text(tmp_path: Path) -> None:
     _bootstrap_registry(tmp_path)
     os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")

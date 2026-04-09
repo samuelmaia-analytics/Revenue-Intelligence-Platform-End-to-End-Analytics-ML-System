@@ -282,6 +282,25 @@ class APIService:
             ],
         }
 
+    def readiness_payload(self) -> dict[str, Any]:
+        health = self.health_payload()
+        required_artifacts = [
+            "executive_summary.json",
+            "insight_draft.json",
+            "reliability_report.json",
+            "top_10_actions.csv",
+        ]
+        artifacts = {
+            name: (self.settings.model_dir / name).exists() for name in required_artifacts
+        }
+        ready = health["status"] == "ok" and all(artifacts.values())
+        return {
+            "status": "ready" if ready else "degraded",
+            "models_status": health["status"],
+            "artifacts": artifacts,
+            "export_surfaces_ready": all(artifacts.values()),
+        }
+
     def read_processed_json(self, file_name: str) -> dict[str, Any]:
         path = self.settings.model_dir / file_name
         if not path.exists():
@@ -398,6 +417,11 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
     @app.get("/health")
     def health(request: Request) -> dict[str, Any]:
         return _service(request).health_payload()
+
+    @app.get(f"{API_VERSION_PREFIX}/ready")
+    @app.get("/ready")
+    def ready(request: Request) -> dict[str, Any]:
+        return _service(request).readiness_payload()
 
     @app.get(f"{API_VERSION_PREFIX}/metrics", response_class=PlainTextResponse)
     @app.get("/metrics", response_class=PlainTextResponse)
