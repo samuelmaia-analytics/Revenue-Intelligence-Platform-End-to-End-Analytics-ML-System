@@ -209,11 +209,13 @@ def test_api_exposes_governed_export_surfaces(tmp_path: Path) -> None:
     headers = {"X-API-Key": "test-token"}
 
     executive = client.get("/api/v1/executive-summary", headers=headers)
+    scorecard = client.get("/api/v1/scorecard", headers=headers)
     insight = client.get("/api/v1/insight-draft", headers=headers)
     reliability = client.get("/api/v1/reliability-report", headers=headers)
     export_csv = client.get("/api/v1/exports/top-actions.csv", headers=headers)
 
     assert executive.status_code == 200
+    assert scorecard.status_code == 200
     assert insight.status_code == 200
     assert reliability.status_code == 200
     assert export_csv.status_code == 200

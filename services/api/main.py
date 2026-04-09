@@ -275,6 +275,7 @@ class APIService:
             "input_schema": ScoreInputRecord.model_json_schema()["properties"],
             "export_surfaces": [
                 "/api/v1/executive-summary",
+                "/api/v1/scorecard",
                 "/api/v1/insight-draft",
                 "/api/v1/reliability-report",
                 "/api/v1/exports/top-actions.csv",
@@ -298,6 +299,24 @@ class APIService:
         if not path.exists():
             raise HTTPException(status_code=404, detail=f"Processed artifact not found: {file_name}")
         return path.read_text(encoding="utf-8")
+
+    def executive_scorecard_payload(self) -> dict[str, Any]:
+        executive_summary = self.read_processed_json("executive_summary.json")
+        insight_draft = self.read_processed_json("insight_draft.json")
+        reliability_report = self.read_processed_json("reliability_report.json")
+        return {
+            "executive_summary": executive_summary,
+            "insight_draft": {
+                "headline": insight_draft.get("headline"),
+                "summary": insight_draft.get("summary"),
+                "recommended_actions": insight_draft.get("recommended_actions", []),
+            },
+            "reliability": {
+                "status": reliability_report.get("status"),
+                "runtime": reliability_report.get("runtime", {}),
+                "governance": reliability_report.get("governance", {}),
+            },
+        }
 
 
 def _extract_auth_token(
@@ -400,6 +419,21 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
         service.check_auth(api_key=api_key)
         response = JSONResponse(service.read_processed_json("executive_summary.json"))
+        response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
+        return response
+
+    @app.get(f"{API_VERSION_PREFIX}/scorecard")
+    @app.get("/scorecard")
+    def scorecard(
+        request: Request,
+        x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+        x_api_token: str | None = Header(default=None, alias="X-API-Token"),
+        authorization: str | None = Header(default=None, alias="Authorization"),
+    ) -> JSONResponse:
+        service = _service(request)
+        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        service.check_auth(api_key=api_key)
+        response = JSONResponse(service.executive_scorecard_payload())
         response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
         return response
 

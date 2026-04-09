@@ -39,3 +39,13 @@ def test_dbt_schema_contains_core_models() -> None:
         "action_priority_board",
     ]:
         assert f"- name: {model_name}" in schema_text
+
+
+def test_semantic_metric_catalog_contains_enterprise_metadata() -> None:
+    catalog = json.loads(
+        (PROJECT_ROOT / "metrics" / "semantic_metrics.json").read_text(encoding="utf-8")
+    )
+    for metric in catalog["metrics"]:
+        assert "source_model" in metric
+        assert "decision_use" in metric
+        assert "consumer_surfaces" in metric

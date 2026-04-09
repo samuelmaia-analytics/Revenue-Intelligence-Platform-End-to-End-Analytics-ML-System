@@ -7,7 +7,10 @@
       "description": "Total observed monetary value in the scored customer base.",
       "owner": "finance",
       "grain": "portfolio",
-      "expression": "sum(monetary)"
+      "expression": "sum(monetary)",
+      "source_model": "portfolio_semantic_metrics",
+      "decision_use": "Executive revenue review and portfolio sizing.",
+      "consumer_surfaces": ["streamlit", "api", "dbt", "sql"]
     },
     {
       "name": "avg_ltv",
@@ -15,7 +18,10 @@
       "description": "Average expected lifetime value across customers in scope.",
       "owner": "revenue_ops",
       "grain": "portfolio",
-      "expression": "avg(ltv)"
+      "expression": "avg(ltv)",
+      "source_model": "portfolio_semantic_metrics",
+      "decision_use": "Commercial prioritization and segment value comparison.",
+      "consumer_surfaces": ["streamlit", "api", "dbt", "sql"]
     },
     {
       "name": "avg_cac",
@@ -23,7 +29,10 @@
       "description": "Average customer acquisition cost blended across channels.",
       "owner": "growth",
       "grain": "portfolio",
-      "expression": "avg(cac)"
+      "expression": "avg(cac)",
+      "source_model": "portfolio_semantic_metrics",
+      "decision_use": "Acquisition efficiency review and spend control.",
+      "consumer_surfaces": ["streamlit", "api", "dbt", "sql"]
     },
     {
       "name": "avg_ltv_cac_ratio",
@@ -31,7 +40,10 @@
       "description": "Average efficiency ratio across the active portfolio.",
       "owner": "finance",
       "grain": "portfolio",
-      "expression": "avg(ltv_cac_ratio)"
+      "expression": "avg(ltv_cac_ratio)",
+      "source_model": "portfolio_semantic_metrics",
+      "decision_use": "Capital efficiency and channel quality review.",
+      "consumer_surfaces": ["streamlit", "api", "dbt", "sql"]
     },
     {
       "name": "high_churn_risk_pct",
@@ -39,7 +51,10 @@
       "description": "Share of customers with churn probability at or above 70%.",
       "owner": "customer_success",
       "grain": "portfolio",
-      "expression": "avg(churn_probability >= 0.70)"
+      "expression": "avg(churn_probability >= 0.70)",
+      "source_model": "portfolio_semantic_metrics",
+      "decision_use": "Revenue-at-risk review and retention prioritization.",
+      "consumer_surfaces": ["streamlit", "api", "dbt", "sql"]
     }
   ]
 }

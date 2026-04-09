@@ -23,3 +23,14 @@ exposures:
       - ref('action_priority_board')
       - ref('portfolio_semantic_metrics')
     description: Serving layer and downstream write-back workflow consuming curated marts.
+
+  - name: executive_reliability_pack
+    type: analysis
+    maturity: medium
+    owner:
+      name: Revenue Intelligence Operations
+      email: data@example.com
+    depends_on:
+      - ref('portfolio_semantic_metrics')
+      - ref('channel_semantic_metrics')
+    description: Executive and recurring-operations export pack covering scorecards, reliability, and decision support.

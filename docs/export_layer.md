@@ -38,3 +38,4 @@ Expose governed outputs to external consumers without creating a second analytic
 - export contracts must reuse governed processed assets or warehouse outputs
 - every export mode must preserve lineage to a known run and artifact set
 - client adaptation should configure destinations and access patterns, not fork business logic
+- scorecard-style API exports should reuse semantic metrics and governed processed artifacts
