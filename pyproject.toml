@@ -12,6 +12,7 @@ authors = [{ name = "Samuel Maia" }]
 license = "MIT"
 dependencies = [
   "fastapi==0.115.12",
+  "duckdb==1.2.2",
   "joblib==1.4.2",
   "matplotlib==3.10.1",
   "numpy==2.1.3",

@@ -55,6 +55,7 @@ The dbt finance marts are expected to align with:
 - `metrics/semantic_metrics.json`
 - `data/processed/semantic_metrics_catalog.json`
 - API export surfaces that expose executive summary and reliability outputs
+- DuckDB-accelerated curated analytics that still land as the same governed processed artifacts before warehouse persistence
 
 dbt remains downstream of the canonical batch runtime.
 

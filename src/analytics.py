@@ -5,6 +5,7 @@ from typing import TypedDict
 
 import pandas as pd
 
+from src.analytics_duckdb import build_curated_support_frames_duckdb, duckdb_available
 from src.io_utils import atomic_write_csv, atomic_write_json
 from src.metrics import (
     build_business_kpi_snapshot,
@@ -37,9 +38,16 @@ def build_analytics_outputs(
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     ltv_df = calculate_ltv(scored_df)
-    cac_df = calculate_cac(silver_marketing_path, silver_customers_path)
-    rfm_df = rfm_segmentation(silver_orders_path, silver_customers_path)
-    cohort_df = cohort_analysis(silver_orders_path, silver_customers_path)
+    if duckdb_available():
+        cac_df, rfm_df, cohort_df = build_curated_support_frames_duckdb(
+            customers_path=silver_customers_path,
+            orders_path=silver_orders_path,
+            marketing_path=silver_marketing_path,
+        )
+    else:
+        cac_df = calculate_cac(silver_marketing_path, silver_customers_path)
+        rfm_df = rfm_segmentation(silver_orders_path, silver_customers_path)
+        cohort_df = cohort_analysis(silver_orders_path, silver_customers_path)
     unit_df = unit_economics(ltv_df, cac_df)
     recommendations_df = build_recommendations(ltv_df, cac_df)
     kpi_snapshot = build_business_kpi_snapshot(recommendations_df, scored_df, unit_df)

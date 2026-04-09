@@ -14,6 +14,8 @@ Reference dimensional DDL split by table. These files should be the most readabl
 
 Review-friendly analytical queries showing how governed warehouse outputs are consumed downstream.
 
+This folder now also includes a Power BI-oriented scorecard query so BI consumers can reuse governed warehouse semantics instead of rebuilding metrics ad hoc.
+
 ## `create_tables.sql`
 
 Bootstrap script for fast local schema creation. Keep it aligned with the `ddl/` files so the consolidated path does not drift from the table-specific definitions.

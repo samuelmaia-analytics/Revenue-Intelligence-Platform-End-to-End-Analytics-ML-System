@@ -28,6 +28,8 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [demo_walkthrough.md](demo_walkthrough.md): guided commercial and technical walkthrough
 - [semantic_metrics_layer.md](semantic_metrics_layer.md): governed semantic metrics narrative across runtime, API, SQL, and dbt
 - [dbt_semantic_story.md](dbt_semantic_story.md): how dbt extends the platform as a downstream semantic layer
+- [duckdb_analytics_acceleration.md](duckdb_analytics_acceleration.md): why `metrics.curated` now prefers DuckDB-backed SQL execution
+- [power_bi_consumption.md](power_bi_consumption.md): governed Power BI consumption path over warehouse and processed exports
 - [`../app/pages/README.md`](../app/pages/README.md): why the Streamlit multipage folder lives next to the canonical app entrypoint
 - `scripts/smoke_support.py`: shared temporary-runtime helper for downstream smoke checks
 - [adr/README.md](adr/README.md): short decision records for the most important architectural trade-offs

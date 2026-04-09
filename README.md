@@ -59,6 +59,7 @@ The platform converts customer behavior data into assets that support commercial
 - customer-level recommendations with simulated impact
 - executive KPI snapshots, risk scorecards, and monitoring outputs
 - warehouse tables ready for SQL and dbt-style consumption
+- DuckDB-accelerated curated metrics for SQL-native downstream analytics
 
 Supported raw-source patterns:
 
@@ -202,6 +203,7 @@ Primary references:
 - partner-facing payload generated from governed processed exports
 - smoke-tested Streamlit dashboard in CI
 - explicit container separation between dashboard, batch runtime, and API
+- DuckDB-backed SQL acceleration for curated analytics without changing output contracts
 
 ## Streamlit Workspace
 
@@ -242,6 +244,8 @@ Important environment variables:
 - `RIP_MODELING_MAX_TRAINING_ROWS`
 
 For larger raw sources such as the Brazilian E-Commerce Public Dataset (`olist_*`), `RIP_MODELING_MAX_TRAINING_ROWS` can reduce training time while preserving full-corpus scoring and downstream outputs.
+
+Curated analytics also prefer DuckDB when available, which keeps `metrics.curated` SQL-native and faster while preserving the same processed artifacts.
 
 ## Run Commands
 

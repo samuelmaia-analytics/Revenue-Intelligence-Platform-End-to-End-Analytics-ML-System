@@ -18,7 +18,9 @@ build/
 dist/
 .idea/
 dbt/target/
+dbt/logs/
 dbt/dbt_packages/
+pages/
 data/raw/*.csv
 data/raw/*.json
 data/bronze/*.csv
@@ -35,3 +37,6 @@ data/runs/
 data/snapshots/
 *.log
 *.db
+app*.out.log
+app*.err.log
+meu_banco.db
