@@ -81,7 +81,7 @@
     "Ações aprovadas recentemente"
   ],
   "markdown_snippets": [
-    "<div class=\"hero\">\n    <div class=\"hero-grid\">\n        <div>\n            <div class=\"hero-badge\">Dashboard Executivo SaaS</div>\n            <h1>Centro de Comand",
+    "<div class=\"hero\">\n    <div class=\"hero-grid\">\n        <div class=\"hero-copy\">\n            <div>\n            <div class=\"hero-badge\">Dashboard Executivo SaaS</d",
     "<div class=\"section-head\">\n    <div class=\"section-label\">Resumo dos filtros</div>\n    <div class=\"section-title\">Resumo dos filtros</div>\n    <div class=\"secti",
     "<div class=\"status-card\">\n    <div class=\"status-label\">Escopo atual</div>\n    <div class=\"status-value\">Carteira completa</div>\n    <div class=\"status-sub\">Fil",
     "<div class=\"status-card\">\n    <div class=\"status-label\">Segmento selecionado</div>\n    <div class=\"status-value\">Carteira completa</div>\n    <div class=\"status-",

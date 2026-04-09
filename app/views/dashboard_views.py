@@ -172,25 +172,27 @@ def render_header(lang: str, filtered_df: pd.DataFrame, format_currency_fn: Any)
         f"""
         <div class="hero">
             <div class="hero-grid">
-                <div>
+                <div class="hero-copy">
+                    <div>
                     <div class="hero-badge">{st.session_state.get("rip_brand_badge", t(lang, "header_badge"))}</div>
                     <h1>{st.session_state.get("rip_brand_hero_title", t(lang, "header_title"))}</h1>
                     <p>{t(lang, "header_sub")}</p>
                     <div class="hero-support">
-                        Executive decision surface for retention pressure, commercial prioritization and operating trust.
+                        Executive decision surface for revenue pressure, commercial focus and operating trust.
+                    </div>
                     </div>
                     <div class="hero-brief">
                         <div class="hero-brief-card">
                             <div class="hero-brief-label">Revenue Pressure</div>
-                            <div class="hero-brief-value">{high_risk_share} of the current portfolio is in high-risk scope.</div>
+                            <div class="hero-brief-value">{high_risk_share} high-risk share in the current portfolio.</div>
                         </div>
                         <div class="hero-brief-card">
                             <div class="hero-brief-label">Commercial Focus</div>
-                            <div class="hero-brief-value">{top_action} is the dominant recommended action in this cut.</div>
+                            <div class="hero-brief-value">{top_action} is the dominant action in this cut.</div>
                         </div>
                         <div class="hero-brief-card">
                             <div class="hero-brief-label">Efficiency Signal</div>
-                            <div class="hero-brief-value">{strongest_channel} is the strongest channel by LTV/CAC in the active view.</div>
+                            <div class="hero-brief-value">{strongest_channel} leads the active view on LTV/CAC.</div>
                         </div>
                     </div>
                 </div>

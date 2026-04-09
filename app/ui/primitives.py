@@ -127,9 +127,14 @@ def render_global_styles() -> None:
             }}
             .hero-grid {{
                 display: grid;
-                grid-template-columns: 1.5fr 1fr;
-                gap: 1.2rem;
-                align-items: start;
+                grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
+                gap: 1rem;
+                align-items: stretch;
+            }}
+            .hero-copy {{
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
             }}
             .hero-badge {{
                 display: inline-block;
@@ -146,24 +151,24 @@ def render_global_styles() -> None:
             .hero h1 {{
                 margin: 0;
                 font-family: "Georgia", "Times New Roman", serif;
-                font-size: 2.35rem;
+                font-size: 2.2rem;
                 line-height: 1.08;
                 font-weight: 800;
                 letter-spacing: -0.03em;
-                max-width: 10ch;
+                max-width: 12ch;
             }}
             .hero p {{
                 margin: 0.65rem 0 0 0;
                 color: rgba(248, 251, 255, 0.92);
-                font-size: 1rem;
-                line-height: 1.65;
-                max-width: 60ch;
+                font-size: 0.98rem;
+                line-height: 1.55;
+                max-width: 54ch;
             }}
             .hero-support {{
-                margin-top: 1rem;
+                margin-top: 0.9rem;
                 max-width: 64ch;
                 color: rgba(255,255,255,0.78);
-                font-size: 0.84rem;
+                font-size: 0.76rem;
                 text-transform: uppercase;
                 letter-spacing: 0.08em;
                 font-weight: 700;
@@ -171,13 +176,13 @@ def render_global_styles() -> None:
             .hero-brief {{
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 0.8rem;
-                margin-top: 1.15rem;
+                gap: 0.7rem;
+                margin-top: 1rem;
             }}
             .hero-brief-card {{
-                padding: 0.9rem 1rem;
-                border-radius: 18px;
-                background: rgba(255,255,255,0.08);
+                padding: 0.75rem 0.85rem;
+                border-radius: 16px;
+                background: rgba(255,255,255,0.09);
                 border: 1px solid rgba(255,255,255,0.08);
                 backdrop-filter: blur(8px);
             }}
@@ -190,21 +195,22 @@ def render_global_styles() -> None:
             }}
             .hero-brief-value {{
                 margin-top: 0.3rem;
-                font-size: 0.98rem;
+                font-size: 0.88rem;
                 font-weight: 800;
                 color: #ffffff;
-                line-height: 1.25;
+                line-height: 1.3;
             }}
             .hero-meta {{
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 0.8rem;
+                gap: 0.75rem;
                 position: relative;
                 z-index: 1;
+                align-content: start;
             }}
             .hero-stat {{
                 min-width: 150px;
-                padding: 0.95rem 1rem;
+                padding: 0.85rem 0.95rem;
                 border-radius: 18px;
                 background: rgba(255, 255, 255, 0.12);
                 border: 1px solid rgba(255,255,255,0.08);
@@ -218,7 +224,7 @@ def render_global_styles() -> None:
                 font-weight: 800;
             }}
             .hero-stat-value {{
-                font-size: 1.35rem;
+                font-size: 1.25rem;
                 font-weight: 800;
                 margin-top: 0.28rem;
                 line-height: 1.15;
@@ -552,6 +558,7 @@ def render_global_styles() -> None:
                 .hero-grid {{ grid-template-columns: 1fr; }}
                 .hero-meta {{ grid-template-columns: 1fr; }}
                 .hero-brief {{ grid-template-columns: 1fr; }}
+                .hero-copy {{ gap: 0.9rem; }}
                 .status-strip {{ grid-template-columns: 1fr 1fr; }}
                 .panel-head {{ flex-direction: column; }}
                 .section-title {{ font-size: 1.24rem; }}
