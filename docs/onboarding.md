@@ -98,7 +98,7 @@ python -m streamlit run streamlit_app.py
 Windows shortcut:
 
 ```powershell
-.\scripts\dev.ps1 -Target app
+.\scripts\start-demo.ps1
 ```
 
 API:
@@ -110,10 +110,10 @@ python -m uvicorn services.api.main:app --reload
 Windows shortcut:
 
 ```powershell
-.\scripts\dev.ps1 -Target api
-.\scripts\dev.ps1 -Target all
-.\scripts\status-dev.ps1
-.\scripts\stop-dev.ps1 -Target all
+.\scripts\dev\start.ps1 -Target api
+.\scripts\dev\start.ps1 -Target all
+.\scripts\dev\status.ps1
+.\scripts\dev\stop.ps1 -Target all
 ```
 
 dbt:

@@ -43,32 +43,32 @@ Full validation including smoke checks:
 Run pipeline only:
 
 ```powershell
-.\scripts\dev.ps1 -Target pipeline
+.\scripts\dev\start.ps1 -Target pipeline
 ```
 
 Run dashboard:
 
 ```powershell
-.\scripts\dev.ps1 -Target app
+.\scripts\start-demo.ps1
 ```
 
 Run API:
 
 ```powershell
-.\scripts\dev.ps1 -Target api
+.\scripts\dev\start.ps1 -Target api
 ```
 
 Run API and dashboard together:
 
 ```powershell
-.\scripts\dev.ps1 -Target all
+.\scripts\dev\start.ps1 -Target all
 ```
 
 Skip pipeline regeneration when outputs already exist:
 
 ```powershell
-.\scripts\dev.ps1 -Target app -SkipPipeline
-.\scripts\dev.ps1 -Target api -SkipPipeline
+.\scripts\dev\start.ps1 -Target app -SkipPipeline
+.\scripts\dev\start.ps1 -Target api -SkipPipeline
 ```
 
 ## 4. Inspect Running Services
@@ -76,7 +76,7 @@ Skip pipeline regeneration when outputs already exist:
 List running project processes from the local `.venv`:
 
 ```powershell
-.\scripts\status-dev.ps1
+.\scripts\dev\status.ps1
 ```
 
 ## 5. Stop Running Services
@@ -84,14 +84,14 @@ List running project processes from the local `.venv`:
 Stop everything started from the local `.venv`:
 
 ```powershell
-.\scripts\stop-dev.ps1 -Target all
+.\scripts\dev\stop.ps1 -Target all
 ```
 
 Stop only dashboard or API:
 
 ```powershell
-.\scripts\stop-dev.ps1 -Target app
-.\scripts\stop-dev.ps1 -Target api
+.\scripts\dev\stop.ps1 -Target app
+.\scripts\dev\stop.ps1 -Target api
 ```
 
 ## 6. Recommended Daily Flow
@@ -99,9 +99,9 @@ Stop only dashboard or API:
 ```powershell
 .\scripts\bootstrap.ps1
 .\scripts\verify.ps1
-.\scripts\dev.ps1 -Target all
-.\scripts\status-dev.ps1
-.\scripts\stop-dev.ps1 -Target all
+.\scripts\dev\start.ps1 -Target all
+.\scripts\dev\status.ps1
+.\scripts\dev\stop.ps1 -Target all
 ```
 
 ## 7. Common Failure Modes
@@ -113,7 +113,7 @@ Stop only dashboard or API:
   You are probably using the global Python interpreter instead of `.venv`.
 
 - API or dashboard starts with stale data
-  Run `.\scripts\dev.ps1 -Target pipeline` or omit `-SkipPipeline`.
+  Run `.\scripts\dev\start.ps1 -Target pipeline` or omit `-SkipPipeline`.
 
-- Nothing appears in `status-dev.ps1`
+- Nothing appears in `dev\status.ps1`
   No project-bound Python processes are running from `.venv`.

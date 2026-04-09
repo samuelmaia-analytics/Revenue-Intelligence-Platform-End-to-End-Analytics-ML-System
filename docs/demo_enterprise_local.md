@@ -13,7 +13,7 @@ docker compose up --build
 Optional pre-run for a fully refreshed demo:
 
 ```powershell
-.\scripts\demo_enterprise.ps1 -RunPipelineFirst -Build
+.\scripts\demo\enterprise.ps1 -RunPipelineFirst -Build
 ```
 
 ## Surfaces

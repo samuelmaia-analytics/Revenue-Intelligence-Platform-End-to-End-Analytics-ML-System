@@ -1,18 +1,10 @@
+[CmdletBinding()]
 param(
-    [switch]$Build,
-    [switch]$RunPipelineFirst
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$Args
 )
 
 $ErrorActionPreference = "Stop"
-
-if ($RunPipelineFirst) {
-    .\.venv\Scripts\python.exe -m src.pipeline run
-    .\.venv\Scripts\python.exe -m src.pipeline observability --output-path data/processed/observability_summary.json
-}
-
-$composeArgs = @("compose", "up")
-if ($Build) {
-    $composeArgs += "--build"
-}
-
-docker @composeArgs
+$scriptPath = Join-Path $PSScriptRoot "demo\enterprise.ps1"
+& $scriptPath @Args
+exit $LASTEXITCODE

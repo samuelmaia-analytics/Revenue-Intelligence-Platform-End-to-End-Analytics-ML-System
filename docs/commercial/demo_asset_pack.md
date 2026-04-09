@@ -16,8 +16,8 @@ Create a repeatable set of assets for commercial demos, sponsor reviews, and pro
 
 ## Executable Assets
 
-- `scripts/demo_enterprise.ps1`
-- `scripts/demo_api_exports.ps1`
+- `scripts/demo/enterprise.ps1`
+- `scripts/demo/api_exports.ps1`
 - `docker-compose.yml`
 
 ## Recommended Demo Flow

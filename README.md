@@ -322,6 +322,13 @@ Deployment reference:
 
 - [docs/streamlit_private_deploy.md](docs/streamlit_private_deploy.md)
 
+Canonical local scripts:
+
+- `scripts/dev/start.ps1`
+- `scripts/dev/status.ps1`
+- `scripts/dev/stop.ps1`
+- `scripts/start-demo.ps1`
+
 ## Technical Decisions and Trade-offs
 
 - SQLite is the default warehouse because local reproducibility matters more than introducing mandatory external infrastructure.
