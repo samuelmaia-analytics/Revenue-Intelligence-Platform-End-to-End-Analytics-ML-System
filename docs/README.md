@@ -5,6 +5,7 @@ This repository keeps documentation intentionally scoped and operational. Each d
 ## Core Documents
 
 - [architecture.md](architecture.md): system boundary, runtime path, data flow, reliability controls and trade-offs
+- [architecture_decision_summary.md](architecture_decision_summary.md): short architecture summary for sponsors and fast reviews
 - [governance_framework.md](governance_framework.md): source-of-truth rules, ownership surfaces, and change-evidence expectations
 - [runtime_surfaces.md](runtime_surfaces.md): canonical runtime surface, downstream interfaces, and smoke ownership
 - [runbook.md](runbook.md): operational commands, failure investigation, and exported observability evidence
@@ -18,9 +19,25 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [deprecation_policy.md](deprecation_policy.md): how compatibility shims are handled and eventually removed
 - [merge_policy.md](merge_policy.md): labels, merge expectations, and what must be green before merging
 - [sql_examples.md](sql_examples.md): practical downstream SQL examples over warehouse outputs
+- [demo_enterprise_local.md](demo_enterprise_local.md): local enterprise demo path across batch, API, and Streamlit
+- [export_layer.md](export_layer.md): governed export and downstream consumption paths
 - `scripts/smoke_support.py`: shared temporary-runtime helper for downstream smoke checks
 - [adr/README.md](adr/README.md): short decision records for the most important architectural trade-offs
 - [hiring_review.md](hiring_review.md): honest portfolio assessment from a hiring-review perspective
+
+## Executive and Commercial
+
+- [audit/executive_audit_2026-04.md](audit/executive_audit_2026-04.md): current audit of product, architecture, and sellability
+- [executive/one_pager.md](executive/one_pager.md): short executive summary for leadership buyers
+- [executive/technical_one_pager.md](executive/technical_one_pager.md): short technical summary for sponsors and architects
+- [executive/decision_layer.md](executive/decision_layer.md): decisions, users, and operating outputs supported by the system
+- [executive/scorecards.md](executive/scorecards.md): executive scorecard framing for risk, opportunity, and trust
+- [commercial/offers.md](commercial/offers.md): productized service packaging
+- [commercial/evidence_pack.md](commercial/evidence_pack.md): proof-point kit for demos, proposals, and recruiting
+- [client_adaptation/adaptation_framework.md](client_adaptation/adaptation_framework.md): controlled adaptation model for client environments
+- [client_adaptation/implementation_checklist.md](client_adaptation/implementation_checklist.md): new-client implementation checklist
+- [use_case_templates/saas_b2b_revenue.md](use_case_templates/saas_b2b_revenue.md): B2B SaaS template
+- [use_case_templates/omnichannel_retail.md](use_case_templates/omnichannel_retail.md): omnichannel retail template
 
 ## Planning and Maintenance
 

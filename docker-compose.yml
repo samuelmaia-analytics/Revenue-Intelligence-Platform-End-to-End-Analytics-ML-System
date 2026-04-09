@@ -1,0 +1,42 @@
+services:
+  batch:
+    build:
+      context: .
+      dockerfile: Dockerfile.batch
+    container_name: rip-batch
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./metrics:/app/metrics:ro
+    command: ["run"]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: rip-api
+    env_file:
+      - .env
+    depends_on:
+      - batch
+    volumes:
+      - ./data:/app/data
+      - ./metrics:/app/metrics:ro
+    ports:
+      - "8000:8000"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rip-app
+    env_file:
+      - .env
+    depends_on:
+      - batch
+    volumes:
+      - ./data:/app/data
+      - ./metrics:/app/metrics:ro
+    ports:
+      - "8501:8501"

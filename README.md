@@ -9,25 +9,33 @@ Language versions:
 
 ## Executive Summary
 
-This repository is designed to answer the questions a hiring manager, tech lead, or senior reviewer usually asks about data portfolio work:
+This repository is an analytics operating system for revenue teams.
+
+It is designed to be used in three ways:
+
+- as a trusted analytical foundation
+- as an executive revenue command center
+- as a recurring analytics operating model for client delivery
+
+It answers the questions executive buyers and technical sponsors care about:
 
 - Is there one official runtime path?
 - Can the pipeline be reprocessed safely?
 - Are outputs validated and governed?
 - Is there operational evidence when runs fail?
-- Does the dashboard consume trusted artifacts rather than re-implementing business logic?
+- Can leadership consume trusted business outputs without recreating logic in dashboards?
 
 Short answer: yes.
 
-## Reviewer Snapshot
+## Buyer Snapshot
 
-In less than 30 seconds, a reviewer should be able to see that this repository has:
+In less than 30 seconds, a buyer or sponsor should see that this repository has:
 
 - one official batch runtime path
 - governed outputs with contracts and validation
 - operational evidence through manifests, snapshots, and quality reports
-- downstream consumption through Streamlit, API, SQL, and dbt
-- CI coverage that goes beyond unit tests into smoke and build validation
+- downstream consumption through Streamlit, API, SQL, dbt, and governed exports
+- delivery discipline that supports both technical credibility and commercial packaging
 
 ## Why This Repository Exists
 
@@ -49,10 +57,47 @@ The platform converts customer behavior data into assets that support commercial
 - unit economics by acquisition channel
 - cohort retention analysis
 - customer-level recommendations with simulated impact
-- executive KPI snapshots and monitoring outputs
+- executive KPI snapshots, risk scorecards, and monitoring outputs
 - warehouse tables ready for SQL and dbt-style consumption
 
-For a hiring reviewer, the practical signal is simple: this is not a notebook showcase dressed up as a platform. It is a small but disciplined data system with explicit runtime ownership and downstream accountability.
+This is not just a portfolio dashboard. It is a productizable operating layer for revenue analytics with explicit runtime ownership, governed outputs, and downstream accountability.
+
+## Who It Serves
+
+### CEOs and Founders
+
+- understand revenue at risk and quality of growth
+- get a leadership-ready command center instead of fragmented reports
+- inspect whether business decisions are backed by trusted data
+
+### Revenue and Commercial Leaders
+
+- prioritize save, expand, and nurture actions
+- compare segment and channel performance
+- use scenario views to guide intervention
+
+### Operations
+
+- inspect freshness, artifact validity, and active alerts
+- understand whether the current analytical cycle is safe to circulate
+
+### Analytics and Data Teams
+
+- work from one governed runtime
+- preserve lineage from source to dashboard
+- extend downstream consumption through API, SQL, dbt, and exports
+
+## Productized Offers
+
+- Trusted Analytics Foundation
+- Executive Revenue Dashboard
+- Recurring Analytics Operations
+
+Commercial references:
+
+- [docs/commercial/offers.md](docs/commercial/offers.md)
+- [docs/commercial/evidence_pack.md](docs/commercial/evidence_pack.md)
+- [docs/client_adaptation/adaptation_framework.md](docs/client_adaptation/adaptation_framework.md)
 
 ## Official Runtime Path
 
@@ -116,7 +161,9 @@ Key characteristics:
 Primary references:
 
 - [docs/README.md](docs/README.md)
+- [docs/audit/executive_audit_2026-04.md](docs/audit/executive_audit_2026-04.md)
 - [docs/architecture.md](docs/architecture.md)
+- [docs/architecture_decision_summary.md](docs/architecture_decision_summary.md)
 - [docs/governance_framework.md](docs/governance_framework.md)
 - [docs/runtime_surfaces.md](docs/runtime_surfaces.md)
 - [docs/environments.md](docs/environments.md)
@@ -130,6 +177,11 @@ Primary references:
 - [docs/sql_examples.md](docs/sql_examples.md)
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
 - [docs/hiring_review.md](docs/hiring_review.md)
+- [docs/executive/one_pager.md](docs/executive/one_pager.md)
+- [docs/executive/technical_one_pager.md](docs/executive/technical_one_pager.md)
+- [docs/executive/decision_layer.md](docs/executive/decision_layer.md)
+- [docs/executive/scorecards.md](docs/executive/scorecards.md)
+- [docs/demo_enterprise_local.md](docs/demo_enterprise_local.md)
 
 ## Reliability and Data Engineering Signals
 
@@ -246,6 +298,7 @@ Automation surfaces:
 - `.github/workflows/ci.yml` proves dashboard, batch, and API container surfaces independently
 - `.github/workflows/ci.yml` exports an `observability_summary.json` artifact from the official batch runtime evidence
 - downstream smoke scripts share a common temporary-runtime helper in `scripts/smoke_support.py`
+- `docker-compose.yml` packages batch, API, and Streamlit into a local enterprise demo stack
 
 Governance checkpoints:
 
@@ -275,6 +328,17 @@ Deployment reference:
 - The project is batch-first on purpose. It demonstrates disciplined analytics engineering instead of pretending to be a full streaming platform.
 - The Streamlit app consumes artifacts instead of recomputing core business logic, preserving one authoritative runtime path.
 - Compatibility shims exist, but canonical imports remain explicit and documented.
+
+## Decision Outputs
+
+This system is designed to support:
+
+- revenue-at-risk review
+- segment and channel performance review
+- prioritized retention and growth actions
+- forecast and scenario conversations
+- operational reliability review
+- governance and data-trust review
 
 ## Operational Reading Order
 
