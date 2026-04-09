@@ -352,6 +352,19 @@ Reference:
 
 - [docs/ai_governance.md](docs/ai_governance.md)
 
+## Recurring Operations
+
+The repository includes a governed reliability and operating pack for recurring analytics delivery.
+
+- `reliability_report.json` for operational confidence and SLA-oriented review
+- `insight_draft.json` for executive narrative backed by governed evidence
+- API exports for executive summary, reliability, insight draft, and top actions CSV
+
+References:
+
+- [docs/reliability_report.md](docs/reliability_report.md)
+- [docs/recurring_analytics_operating_pack.md](docs/recurring_analytics_operating_pack.md)
+
 ## Operational Reading Order
 
 If you are reviewing the repository for technical depth, read in this order:

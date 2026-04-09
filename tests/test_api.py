@@ -40,6 +40,7 @@ def _build_dummy_pipeline() -> Pipeline:
 
 def _bootstrap_registry(tmp_path: Path) -> None:
     model_dir = tmp_path / "processed"
+    model_dir.mkdir(parents=True, exist_ok=True)
     feature_names = [
         "recency_days",
         "frequency",
@@ -67,6 +68,22 @@ def _bootstrap_registry(tmp_path: Path) -> None:
         metrics={"cv_roc_auc_mean": 0.5},
         input_features=feature_names,
         target_name="next_purchase_30d",
+    )
+    (model_dir / "executive_summary.json").write_text(
+        '{"kpis":{"total_revenue_proxy":1000},"top_20_recommended_actions":[]}',
+        encoding="utf-8",
+    )
+    (model_dir / "insight_draft.json").write_text(
+        '{"headline":"ok","summary":"demo","recommended_actions":["a"]}',
+        encoding="utf-8",
+    )
+    (model_dir / "reliability_report.json").write_text(
+        '{"status":"ok","runtime":{"total_runtime_seconds":1.0},"operational_readout":{"headline":"ok"}}',
+        encoding="utf-8",
+    )
+    (model_dir / "top_10_actions.csv").write_text(
+        "priority_rank,customer_id,action\n1,10,Upsell Offer\n",
+        encoding="utf-8",
     )
 
 
@@ -177,6 +194,31 @@ def test_api_metrics_surface_exposes_prometheus_text(tmp_path: Path) -> None:
     assert (
         'rip_api_request_volume_total{endpoint="/api/v1/health",status_code="200"}' in metrics.text
     )
+
+
+def test_api_exposes_governed_export_surfaces(tmp_path: Path) -> None:
+    _bootstrap_registry(tmp_path)
+    os.environ["RIP_MODEL_DIR"] = str(tmp_path / "processed")
+    os.environ["RIP_API_AUTH_MODE"] = "demo"
+    os.environ["RIP_API_DEMO_TOKEN"] = "test-token"
+    os.environ["RIP_API_RATE_LIMIT_PER_MINUTE"] = "5"
+
+    api_module = importlib.import_module("services.api.main")
+    api_module = importlib.reload(api_module)
+    client = TestClient(api_module.app)
+    headers = {"X-API-Key": "test-token"}
+
+    executive = client.get("/api/v1/executive-summary", headers=headers)
+    insight = client.get("/api/v1/insight-draft", headers=headers)
+    reliability = client.get("/api/v1/reliability-report", headers=headers)
+    export_csv = client.get("/api/v1/exports/top-actions.csv", headers=headers)
+
+    assert executive.status_code == 200
+    assert insight.status_code == 200
+    assert reliability.status_code == 200
+    assert export_csv.status_code == 200
+    assert export_csv.headers["content-disposition"].startswith("attachment;")
+    assert "priority_rank,customer_id,action" in export_csv.text
 
 
 def test_api_requires_token(tmp_path: Path) -> None:

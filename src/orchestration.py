@@ -29,6 +29,7 @@ from src.io_utils import (
 from src.logging_utils import configure_logging
 from src.modeling import train_and_score_models
 from src.monitoring import build_monitoring_report
+from src.observability import build_reliability_report
 from src.persistence import persist_frames
 from src.quality import (
     build_dataset_quality_report,
@@ -740,6 +741,27 @@ class RevenueIntelligencePipeline:
                 lambda: validate_processed_artifacts(
                     self.cfg.processed_dir,
                     output_path=self.cfg.processed_dir / "artifact_validation_report.json",
+                ),
+            )
+            artifact_validation_report = json.loads(
+                (self.cfg.processed_dir / "artifact_validation_report.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self._stage(
+                "reporting.reliability",
+                lambda: build_reliability_report(
+                    run_id=run_context.run_id,
+                    stage_timings=self.stage_timings,
+                    runtime_metrics=runtime_metrics,
+                    quality_report=quality_payload,
+                    freshness_report=freshness_snapshot,
+                    artifact_validation_report=artifact_validation_report,
+                    alerts_report=alerts_payload,
+                    insight_draft=json.loads(
+                        (self.cfg.processed_dir / "insight_draft.json").read_text(encoding="utf-8")
+                    ),
+                    output_path=self.cfg.processed_dir / "reliability_report.json",
                 ),
             )
 

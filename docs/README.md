@@ -22,6 +22,8 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [demo_enterprise_local.md](demo_enterprise_local.md): local enterprise demo path across batch, API, and Streamlit
 - [export_layer.md](export_layer.md): governed export and downstream consumption paths
 - [ai_governance.md](ai_governance.md): governed AI posture for optional insight drafting
+- [reliability_report.md](reliability_report.md): governed operational summary for recurring delivery
+- [recurring_analytics_operating_pack.md](recurring_analytics_operating_pack.md): recurring analytics operating model and artifact pack
 - `scripts/smoke_support.py`: shared temporary-runtime helper for downstream smoke checks
 - [adr/README.md](adr/README.md): short decision records for the most important architectural trade-offs
 - [hiring_review.md](hiring_review.md): honest portfolio assessment from a hiring-review perspective

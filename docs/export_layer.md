@@ -26,6 +26,7 @@ Expose governed outputs to external consumers without creating a second analytic
 ### API
 
 - use the FastAPI layer for external scoring and lightweight operational status
+- expose executive summary, insight draft, reliability report, and governed CSV exports for demos and external consumers
 
 ### Governed CSV
 

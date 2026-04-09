@@ -12,7 +12,7 @@ from uuid import uuid4
 
 import pandas as pd
 from fastapi import FastAPI, Header, HTTPException, Request, Response
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from contracts.data_contract import ScoreInputRecord, ScorePrediction, ScoreRequest, ScoreResponse
 from src.config import load_env_file, resolve_optional_path
@@ -273,7 +273,31 @@ class APIService:
             },
             "telemetry": self.telemetry.snapshot(),
             "input_schema": ScoreInputRecord.model_json_schema()["properties"],
+            "export_surfaces": [
+                "/api/v1/executive-summary",
+                "/api/v1/insight-draft",
+                "/api/v1/reliability-report",
+                "/api/v1/exports/top-actions.csv",
+            ],
         }
+
+    def read_processed_json(self, file_name: str) -> dict[str, Any]:
+        path = self.settings.model_dir / file_name
+        if not path.exists():
+            raise HTTPException(status_code=404, detail=f"Processed artifact not found: {file_name}")
+        import json
+
+        with path.open("r", encoding="utf-8") as file:
+            payload = json.load(file)
+        if not isinstance(payload, dict):
+            raise HTTPException(status_code=500, detail=f"Artifact {file_name} must be a JSON object.")
+        return payload
+
+    def read_processed_csv_text(self, file_name: str) -> str:
+        path = self.settings.model_dir / file_name
+        if not path.exists():
+            raise HTTPException(status_code=404, detail=f"Processed artifact not found: {file_name}")
+        return path.read_text(encoding="utf-8")
 
 
 def _extract_auth_token(
@@ -362,6 +386,67 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         body = "\n".join(_service(request).telemetry.prometheus_lines()) + "\n"
         response = PlainTextResponse(body)
         response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
+        return response
+
+    @app.get(f"{API_VERSION_PREFIX}/executive-summary")
+    @app.get("/executive-summary")
+    def executive_summary(
+        request: Request,
+        x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+        x_api_token: str | None = Header(default=None, alias="X-API-Token"),
+        authorization: str | None = Header(default=None, alias="Authorization"),
+    ) -> JSONResponse:
+        service = _service(request)
+        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        service.check_auth(api_key=api_key)
+        response = JSONResponse(service.read_processed_json("executive_summary.json"))
+        response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
+        return response
+
+    @app.get(f"{API_VERSION_PREFIX}/insight-draft")
+    @app.get("/insight-draft")
+    def insight_draft(
+        request: Request,
+        x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+        x_api_token: str | None = Header(default=None, alias="X-API-Token"),
+        authorization: str | None = Header(default=None, alias="Authorization"),
+    ) -> JSONResponse:
+        service = _service(request)
+        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        service.check_auth(api_key=api_key)
+        response = JSONResponse(service.read_processed_json("insight_draft.json"))
+        response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
+        return response
+
+    @app.get(f"{API_VERSION_PREFIX}/reliability-report")
+    @app.get("/reliability-report")
+    def reliability_report(
+        request: Request,
+        x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+        x_api_token: str | None = Header(default=None, alias="X-API-Token"),
+        authorization: str | None = Header(default=None, alias="Authorization"),
+    ) -> JSONResponse:
+        service = _service(request)
+        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        service.check_auth(api_key=api_key)
+        response = JSONResponse(service.read_processed_json("reliability_report.json"))
+        response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
+        return response
+
+    @app.get(f"{API_VERSION_PREFIX}/exports/top-actions.csv", response_class=PlainTextResponse)
+    @app.get("/exports/top-actions.csv", response_class=PlainTextResponse)
+    def top_actions_export(
+        request: Request,
+        x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+        x_api_token: str | None = Header(default=None, alias="X-API-Token"),
+        authorization: str | None = Header(default=None, alias="Authorization"),
+    ) -> PlainTextResponse:
+        service = _service(request)
+        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        service.check_auth(api_key=api_key)
+        response = PlainTextResponse(service.read_processed_csv_text("top_10_actions.csv"))
+        response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
+        response.headers["Content-Disposition"] = 'attachment; filename="top_10_actions.csv"'
         return response
 
     @app.post(f"{API_VERSION_PREFIX}/score", response_model=ScoreResponse)
