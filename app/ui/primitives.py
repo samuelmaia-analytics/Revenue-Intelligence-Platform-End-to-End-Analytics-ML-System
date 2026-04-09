@@ -586,7 +586,13 @@ def render_dataframe_panel(
     height: int | None = None,
 ) -> None:
     render_panel_header(eyebrow, title, caption)
-    st.dataframe(frame, use_container_width=True, hide_index=True, height=height)
+    dataframe_kwargs: dict[str, object] = {
+        "use_container_width": True,
+        "hide_index": True,
+    }
+    if height is not None:
+        dataframe_kwargs["height"] = height
+    st.dataframe(frame, **dataframe_kwargs)
 
 
 def _badge_tone(value: str) -> str:
