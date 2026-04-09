@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.dashboard_data import filter_recommendations, load_processed_assets
 from app.dashboard_i18n import translate as t
+from app.branding import resolve_branding
 from app.dashboard_metrics import format_currency, potential_impact
 from app.ui.primitives import render_global_styles, render_spacer
 from app.views.dashboard_views import (
@@ -41,12 +42,21 @@ if LANG_MODE not in {"bilingual", "international"}:
 
 def main() -> None:
     default_lang = "en" if LANG_MODE == "international" else "pt-br"
+    branding = resolve_branding(
+        default_app_name=t(default_lang, "page_title"),
+        default_badge=t(default_lang, "header_badge"),
+        default_footer_body=t(default_lang, "footer_body"),
+    )
     st.set_page_config(
-        page_title=t(default_lang, "page_title"),
+        page_title=branding.app_name,
         page_icon=":material/monitoring:",
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    st.session_state["rip_brand_badge"] = branding.hero_badge
+    st.session_state["rip_brand_hero_title"] = branding.hero_title
+    st.session_state["rip_brand_footer_title"] = branding.footer_title
+    st.session_state["rip_brand_footer_body"] = branding.footer_body
     render_global_styles()
 
     processed_dir = PROJECT_ROOT / "data" / "processed"

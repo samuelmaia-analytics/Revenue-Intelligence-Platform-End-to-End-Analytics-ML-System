@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from app.branding import resolve_branding
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
@@ -25,12 +26,21 @@ if LANG_MODE not in {"bilingual", "international"}:
 
 def prepare_page(page_title_key: str = "page_title") -> tuple[str, dict[str, Any], pd.DataFrame]:
     default_lang = "en" if LANG_MODE == "international" else "pt-br"
+    branding = resolve_branding(
+        default_app_name=t(default_lang, page_title_key),
+        default_badge=t(default_lang, "header_badge"),
+        default_footer_body=t(default_lang, "footer_body"),
+    )
     st.set_page_config(
-        page_title=t(default_lang, page_title_key),
+        page_title=branding.app_name,
         page_icon=":material/monitoring:",
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    st.session_state["rip_brand_badge"] = branding.hero_badge
+    st.session_state["rip_brand_hero_title"] = branding.hero_title
+    st.session_state["rip_brand_footer_title"] = branding.footer_title
+    st.session_state["rip_brand_footer_body"] = branding.footer_body
     render_global_styles()
 
     processed_dir = PROJECT_ROOT / "data" / "processed"

@@ -166,8 +166,8 @@ def render_header(lang: str, filtered_df: pd.DataFrame, format_currency_fn: Any)
         <div class="hero">
             <div class="hero-grid">
                 <div>
-                    <div class="hero-badge">{t(lang, "header_badge")}</div>
-                    <h1>{t(lang, "header_title")}</h1>
+                    <div class="hero-badge">{st.session_state.get("rip_brand_badge", t(lang, "header_badge"))}</div>
+                    <h1>{st.session_state.get("rip_brand_hero_title", t(lang, "header_title"))}</h1>
                     <p>{t(lang, "header_sub")}</p>
                 </div>
                 <div class="hero-meta">
@@ -1318,4 +1318,8 @@ def render_empty_dashboard(lang: str) -> None:
 
 
 def render_dashboard_footer(lang: str) -> None:
-    render_footer(t(lang, "footer_title"), t(lang, "footer_body"), t(lang, "footer_timestamp"))
+    render_footer(
+        st.session_state.get("rip_brand_footer_title", t(lang, "footer_title")),
+        st.session_state.get("rip_brand_footer_body", t(lang, "footer_body")),
+        t(lang, "footer_timestamp"),
+    )
