@@ -329,6 +329,61 @@ def test_olist_dataset_parsing_creates_curated_raw_tables(tmp_path: Path) -> Non
     assert set(marketing["channel"]).issubset({"Credit Card", "Boleto", "Voucher", "Debit Card", "Other"})
 
 
+def test_olist_normalization_is_reused_when_sources_do_not_change(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    (raw_dir / "olist_customers_dataset.csv").write_text(
+        "\n".join(
+            [
+                "customer_id,customer_unique_id,customer_zip_code_prefix,customer_city,customer_state",
+                "c1,u1,12345,sao paulo,SP",
+                "c2,u2,54321,recife,PE",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (raw_dir / "olist_orders_dataset.csv").write_text(
+        "\n".join(
+            [
+                "order_id,customer_id,order_status,order_purchase_timestamp,order_approved_at,order_delivered_carrier_date,order_delivered_customer_date,order_estimated_delivery_date",
+                "o1,c1,delivered,2018-01-10 10:00:00,2018-01-10 10:05:00,2018-01-11 10:00:00,2018-01-15 10:00:00,2018-01-20 00:00:00",
+                "o2,c1,delivered,2018-03-12 11:00:00,2018-03-12 11:05:00,2018-03-13 11:00:00,2018-03-17 11:00:00,2018-03-24 00:00:00",
+                "o3,c2,delivered,2018-02-05 09:00:00,2018-02-05 09:05:00,2018-02-06 09:00:00,2018-02-10 09:00:00,2018-02-18 00:00:00",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (raw_dir / "olist_order_items_dataset.csv").write_text(
+        "\n".join(
+            [
+                "order_id,order_item_id,product_id,seller_id,shipping_limit_date,price,freight_value",
+                "o1,1,p1,s1,2018-01-09 00:00:00,100,10",
+                "o2,1,p2,s1,2018-03-11 00:00:00,120,12",
+                "o3,1,p3,s2,2018-02-04 00:00:00,80,8",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (raw_dir / "olist_order_payments_dataset.csv").write_text(
+        "\n".join(
+            [
+                "order_id,payment_sequential,payment_type,payment_installments,payment_value",
+                "o1,1,credit_card,1,110",
+                "o2,1,voucher,1,132",
+                "o3,1,boleto,1,88",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    customers_path, _, _ = save_raw_datasets(raw_dir)
+    first_mtime = customers_path.stat().st_mtime_ns
+    customers_path_second, _, _ = save_raw_datasets(raw_dir)
+    second_mtime = customers_path_second.stat().st_mtime_ns
+
+    assert first_mtime == second_mtime
+
+
 def test_data_dictionary_generation_from_contracts(tmp_path: Path) -> None:
     output_path = tmp_path / "dictionary.json"
 

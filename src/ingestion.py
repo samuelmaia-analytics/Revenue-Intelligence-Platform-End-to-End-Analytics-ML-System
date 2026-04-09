@@ -4,7 +4,8 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
-from src.io_utils import atomic_write_csv
+from src.io_utils import atomic_write_csv, atomic_write_json
+from src.runtime import compute_file_fingerprint
 
 CHANNELS = ["Organic", "Paid Search", "Social Ads", "Referral", "Partnership"]
 KAGGLE_FILE = "E-commerce Customer Behavior - Sheet1.csv"
@@ -18,6 +19,7 @@ OLIST_REQUIRED_FILES = [
     OLIST_ORDER_ITEMS_FILE,
     OLIST_ORDER_PAYMENTS_FILE,
 ]
+OLIST_NORMALIZATION_MANIFEST = "olist_normalization_manifest.json"
 
 
 def _coerce_signup_date(value: Any) -> pd.Timestamp:
@@ -209,6 +211,29 @@ def _olist_files_present(raw_dir: Path) -> bool:
     return all((raw_dir / file_name).exists() for file_name in OLIST_REQUIRED_FILES)
 
 
+def _olist_source_paths(raw_dir: Path) -> list[Path]:
+    return [raw_dir / file_name for file_name in OLIST_REQUIRED_FILES]
+
+
+def _olist_outputs_exist(raw_dir: Path) -> bool:
+    return all(
+        (raw_dir / file_name).exists()
+        for file_name in ["customers.csv", "orders.csv", "marketing_spend.csv"]
+    )
+
+
+def _can_reuse_olist_normalization(raw_dir: Path) -> bool:
+    manifest_path = raw_dir / OLIST_NORMALIZATION_MANIFEST
+    if not manifest_path.exists() or not _olist_outputs_exist(raw_dir):
+        return False
+    try:
+        manifest = pd.read_json(manifest_path, typ="series")
+    except ValueError:
+        return False
+    expected_fingerprint = compute_file_fingerprint(_olist_source_paths(raw_dir))
+    return str(manifest.get("source_fingerprint", "")) == expected_fingerprint
+
+
 def _normalize_payment_channel(value: Any) -> str:
     mapping = {
         "credit_card": "Credit Card",
@@ -373,6 +398,11 @@ def save_raw_datasets(raw_dir: Path, seed: int = 42) -> tuple[Path, Path, Path]:
     raw_dir.mkdir(parents=True, exist_ok=True)
     kaggle_path = raw_dir / KAGGLE_FILE
     if _olist_files_present(raw_dir):
+        customers_path = raw_dir / "customers.csv"
+        orders_path = raw_dir / "orders.csv"
+        marketing_path = raw_dir / "marketing_spend.csv"
+        if _can_reuse_olist_normalization(raw_dir):
+            return customers_path, orders_path, marketing_path
         customers, orders, marketing = _build_from_olist_dataset(raw_dir)
     elif kaggle_path.exists():
         customers, orders, marketing = _build_from_kaggle_dataset(kaggle_path, seed=seed)
@@ -386,6 +416,19 @@ def save_raw_datasets(raw_dir: Path, seed: int = 42) -> tuple[Path, Path, Path]:
     atomic_write_csv(customers_path, customers)
     atomic_write_csv(orders_path, orders)
     atomic_write_csv(marketing_path, marketing)
+
+    if _olist_files_present(raw_dir):
+        atomic_write_json(
+            raw_dir / OLIST_NORMALIZATION_MANIFEST,
+            {
+                "source_fingerprint": compute_file_fingerprint(_olist_source_paths(raw_dir)),
+                "normalized_outputs": [
+                    customers_path.name,
+                    orders_path.name,
+                    marketing_path.name,
+                ],
+            },
+        )
 
     return customers_path, orders_path, marketing_path
 
