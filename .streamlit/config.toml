@@ -1,7 +1,7 @@
 [server]
 headless = true
 runOnSave = false
-enableCORS = false
+enableCORS = true
 enableXsrfProtection = true
 
 [browser]

@@ -26,6 +26,8 @@ data/silver/*.csv
 data/gold/*.csv
 data/processed/*.csv
 data/processed/*.json
+data/processed/*.jsonl
+data/processed/*.joblib
 data/processed/registry/
 data/warehouse/*.db
 data/manifests/*.json

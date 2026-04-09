@@ -18,6 +18,7 @@ from src.config import PipelineConfig
 from src.exceptions import PipelineStageError
 from src.governance import build_data_dictionary
 from src.ingestion import build_bronze_layer, save_raw_datasets
+from src.insight_drafting import build_insight_draft
 from src.io_utils import (
     atomic_copy_file,
     atomic_copy_tree,
@@ -222,27 +223,28 @@ def _write_executive_outputs(
     unit_df: pd.DataFrame,
     scored_df: pd.DataFrame,
     kpi_snapshot: dict,
-) -> None:
-    build_executive_report(
+) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    executive_report = build_executive_report(
         recommendations_df=recommendations_df,
         churn_results=churn_results,
         next_purchase_results=next_purchase_results,
         kpi_snapshot=kpi_snapshot,
         output_path=cfg.processed_dir / "executive_report.json",
     )
-    build_executive_summary(
+    executive_summary = build_executive_summary(
         recommendations_df=recommendations_df,
         scored_df=scored_df,
         unit_economics_df=unit_df,
         kpi_snapshot=kpi_snapshot,
         output_path=cfg.processed_dir / "executive_summary.json",
     )
-    build_business_outcomes(
+    business_outcomes = build_business_outcomes(
         recommendations_df=recommendations_df,
         unit_economics_df=unit_df,
         outcomes_path=cfg.processed_dir / "business_outcomes.json",
         top_actions_path=cfg.processed_dir / "top_10_actions.csv",
     )
+    return executive_report, executive_summary, business_outcomes
 
 
 def _load_warehouse_frames(processed_dir: Path) -> dict[str, pd.DataFrame]:
@@ -678,7 +680,7 @@ class RevenueIntelligencePipeline:
             )
             dispatch_alerts(alerts_payload, webhook_url=self.cfg.alert_webhook_url)
 
-            self._stage(
+            executive_report, _, business_outcomes = self._stage(
                 "reporting.executive",
                 lambda: _write_executive_outputs(
                     self.cfg,
@@ -688,6 +690,22 @@ class RevenueIntelligencePipeline:
                     unit_df=unit_df,
                     scored_df=scored_df,
                     kpi_snapshot=kpi_snapshot,
+                ),
+            )
+            self._stage(
+                "reporting.insight_draft",
+                lambda: build_insight_draft(
+                    output_path=self.cfg.processed_dir / "insight_draft.json",
+                    executive_report=executive_report,
+                    business_outcomes=business_outcomes,
+                    monitoring_report=monitoring_payload,
+                    alerts_report=alerts_payload,
+                    freshness_report=freshness_snapshot,
+                    quality_report=quality_payload,
+                    run_id=run_context.run_id,
+                    mode_requested=self.cfg.insight_draft_mode,
+                    llm_provider=self.cfg.llm_provider,
+                    llm_model=self.cfg.llm_model,
                 ),
             )
             current_outputs = sorted(

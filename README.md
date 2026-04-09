@@ -340,6 +340,18 @@ This system is designed to support:
 - operational reliability review
 - governance and data-trust review
 
+## Governed AI Assist
+
+The repository includes a governed insight-drafting layer for executive summaries.
+
+- deterministic by default
+- optional assistive mode with explicit fallback
+- versioned as a pipeline artifact instead of ad hoc app prompting
+
+Reference:
+
+- [docs/ai_governance.md](docs/ai_governance.md)
+
 ## Operational Reading Order
 
 If you are reviewing the repository for technical depth, read in this order:

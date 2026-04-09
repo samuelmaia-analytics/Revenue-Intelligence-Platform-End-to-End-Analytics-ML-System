@@ -315,7 +315,12 @@ def render_filter_summary(
     render_spacer()
 
 
-def render_leadership_notes(lang: str, filtered_df: pd.DataFrame, format_currency_fn: Any) -> None:
+def render_leadership_notes(
+    lang: str,
+    filtered_df: pd.DataFrame,
+    format_currency_fn: Any,
+    insight_draft: dict[str, Any] | None = None,
+) -> None:
     risk_row = (
         filtered_df.groupby("segment")["churn_probability"]
         .mean()
@@ -338,18 +343,20 @@ def render_leadership_notes(lang: str, filtered_df: pd.DataFrame, format_currenc
     render_panel_header(
         t(lang, "notes"), t(lang, "board_read"), t(lang, "portfolio_health_caption")
     )
-    st.markdown(
-        f"""
-        <div class="panel">
-            <ul class="insight-list">
-                <li>{t(lang, "risk_line", segment=risk_row["segment"], risk=risk_row["churn_probability"])}</li>
-                <li>{t(lang, "opp_line", customer=int(top_customer["customer_id"]), impact=format_currency_fn(float(top_customer["potential_impact"]), lang))}</li>
-                <li>{t(lang, "prio_line", action=top_action["action"], pct=top_action["pct"])}</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    lines = [
+        t(lang, "risk_line", segment=risk_row["segment"], risk=risk_row["churn_probability"]),
+        t(
+            lang,
+            "opp_line",
+            customer=int(top_customer["customer_id"]),
+            impact=format_currency_fn(float(top_customer["potential_impact"]), lang),
+        ),
+        t(lang, "prio_line", action=top_action["action"], pct=top_action["pct"]),
+    ]
+    if insight_draft:
+        lines = [str(insight_draft.get("headline", "")), *insight_draft.get("recommended_actions", []), *insight_draft.get("anomalies", [])[:1]]
+    bullets = "".join(f"<li>{line}</li>" for line in lines if line)
+    st.markdown(f"""<div class="panel"><ul class="insight-list">{bullets}</ul></div>""", unsafe_allow_html=True)
 
 
 def render_runtime_health(

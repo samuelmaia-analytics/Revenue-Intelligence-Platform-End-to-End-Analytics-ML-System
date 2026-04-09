@@ -165,6 +165,18 @@ JSON_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
         "status",
         "alerts",
     ),
+    "insight_draft.json": (
+        "generated_at_utc",
+        "run_id",
+        "mode_requested",
+        "mode_applied",
+        "headline",
+        "summary",
+        "kpi_highlights",
+        "anomalies",
+        "recommended_actions",
+        "evidence.revenue_proxy",
+    ),
     "runtime_metrics.json": (
         "run_id",
         "environment",

@@ -21,6 +21,7 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [sql_examples.md](sql_examples.md): practical downstream SQL examples over warehouse outputs
 - [demo_enterprise_local.md](demo_enterprise_local.md): local enterprise demo path across batch, API, and Streamlit
 - [export_layer.md](export_layer.md): governed export and downstream consumption paths
+- [ai_governance.md](ai_governance.md): governed AI posture for optional insight drafting
 - `scripts/smoke_support.py`: shared temporary-runtime helper for downstream smoke checks
 - [adr/README.md](adr/README.md): short decision records for the most important architectural trade-offs
 - [hiring_review.md](hiring_review.md): honest portfolio assessment from a hiring-review perspective

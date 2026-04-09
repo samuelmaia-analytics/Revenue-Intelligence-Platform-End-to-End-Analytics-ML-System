@@ -119,6 +119,9 @@ class PipelineConfig:
     alert_null_count_warn: int = 0
     alert_brier_score_warn: float = 0.25
     alert_webhook_url: str | None = None
+    insight_draft_mode: str = "deterministic"
+    llm_provider: str | None = None
+    llm_model: str | None = None
     backfill_start_date: date | None = None
     backfill_end_date: date | None = None
 
@@ -202,6 +205,11 @@ class PipelineConfig:
         log_format = os.getenv("RIP_LOG_FORMAT", "text").strip().lower()
         if log_format not in {"text", "json"}:
             raise ConfigurationError("RIP_LOG_FORMAT must be one of: text, json.")
+        insight_draft_mode = os.getenv("RIP_INSIGHT_DRAFT_MODE", "deterministic").strip().lower()
+        if insight_draft_mode not in {"deterministic", "assistive"}:
+            raise ConfigurationError(
+                "RIP_INSIGHT_DRAFT_MODE must be one of: deterministic, assistive."
+            )
         backfill_start_date = _resolve_optional_date("RIP_BACKFILL_START_DATE")
         backfill_end_date = _resolve_optional_date("RIP_BACKFILL_END_DATE")
         if backfill_start_date and backfill_end_date and backfill_start_date > backfill_end_date:
@@ -267,6 +275,9 @@ class PipelineConfig:
                 minimum=0.0,
             ),
             alert_webhook_url=os.getenv("RIP_ALERT_WEBHOOK_URL", "").strip() or None,
+            insight_draft_mode=insight_draft_mode,
+            llm_provider=os.getenv("RIP_LLM_PROVIDER", "").strip() or None,
+            llm_model=os.getenv("RIP_LLM_MODEL", "").strip() or None,
             backfill_start_date=backfill_start_date,
             backfill_end_date=backfill_end_date,
         )

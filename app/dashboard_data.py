@@ -32,6 +32,7 @@ def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
         "pipeline_manifest.json",
         "artifact_validation_report.json",
         "freshness_report.json",
+        "insight_draft.json",
     ]
     if not all((processed_dir / name).exists() for name in required):
         run_pipeline(PipelineConfig.from_env(PROJECT_ROOT))
@@ -53,6 +54,8 @@ def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
         artifact_validation = json.load(file)
     with (processed_dir / "freshness_report.json").open("r", encoding="utf-8") as file:
         freshness = json.load(file)
+    with (processed_dir / "insight_draft.json").open("r", encoding="utf-8") as file:
+        insight_draft = json.load(file)
 
     return {
         "recommendations": pd.read_csv(processed_dir / "recommendations.csv"),
@@ -67,6 +70,7 @@ def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
         "manifest": manifest,
         "artifact_validation": artifact_validation,
         "freshness": freshness,
+        "insight_draft": insight_draft,
         "approved_actions": (
             pd.read_csv(approvals_path) if approvals_path.exists() else pd.DataFrame()
         ),

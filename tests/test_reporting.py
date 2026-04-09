@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.insight_drafting import build_insight_draft
 from src.reporting import build_business_outcomes, build_executive_report, build_executive_summary
 
 
@@ -144,3 +145,35 @@ def test_business_outcomes_generates_kpis_and_top_actions(tmp_path: Path) -> Non
     assert {"customer_id", "action", "expected_uplift", "action_cost", "net_impact"}.issubset(
         top_actions.columns
     )
+
+
+def test_insight_draft_builds_deterministic_governed_output(tmp_path: Path) -> None:
+    output = tmp_path / "insight_draft.json"
+    payload = build_insight_draft(
+        output_path=output,
+        executive_report={
+            "top_kpis": {"avg_churn_probability": 0.22, "avg_next_purchase_probability": 0.51},
+            "business_context": {"revenue_proxy": 12000.0},
+            "model_performance": {
+                "churn": {"temporal_test_roc_auc": 0.81},
+                "next_purchase_30d": {"temporal_test_roc_auc": 0.72},
+            },
+        },
+        business_outcomes={
+            "kpis": {"high_churn_risk_pct": 0.12},
+            "simulation_summary_top10": {"delta_revenue_90d": 1800.0},
+            "top_10_actions": [{"action": "Retention Campaign", "customer_id": 7, "net_impact": 550.0}],
+        },
+        monitoring_report={"drift_status": "stable"},
+        alerts_report={"alert_count": 1, "status": "warning", "alerts": [{"message": "Test alert"}]},
+        freshness_report={"status": "ok"},
+        quality_report={"datasets": [{"null_counts": {"col_a": 2}}]},
+        run_id="run-123",
+        mode_requested="assistive",
+    )
+
+    assert output.exists()
+    assert payload["mode_applied"] == "deterministic"
+    assert payload["llm"]["enabled"] is False
+    assert payload["run_id"] == "run-123"
+    assert payload["recommended_actions"]

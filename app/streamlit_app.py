@@ -99,7 +99,12 @@ def main() -> None:
         render_summary(lang, filtered_df, format_currency)
     render_spacer("lg")
     with st.container():
-        render_leadership_notes(lang, filtered_df, format_currency)
+        render_leadership_notes(
+            lang,
+            filtered_df,
+            format_currency,
+            assets.get("insight_draft"),
+        )
     render_spacer("lg")
 
     overview_tab, risk_tab, segment_tab, forecast_tab, reliability_tab, governance_tab, action_tab = st.tabs(
