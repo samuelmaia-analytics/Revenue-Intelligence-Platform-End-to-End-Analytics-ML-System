@@ -20,14 +20,17 @@ from app.ui.primitives import render_global_styles, render_spacer
 from app.views.dashboard_views import (
     build_sidebar,
     render_action_tab,
-    render_business_tab,
     render_dashboard_footer,
     render_empty_dashboard,
     render_filter_summary,
+    render_forecast_tab,
+    render_governance_tab,
     render_header,
     render_leadership_notes,
     render_overview_tab,
+    render_reliability_tab,
     render_risk_tab,
+    render_segment_performance_tab,
     render_summary,
 )
 
@@ -99,12 +102,15 @@ def main() -> None:
         render_leadership_notes(lang, filtered_df, format_currency)
     render_spacer("lg")
 
-    overview_tab, risk_tab, action_tab, business_tab = st.tabs(
+    overview_tab, risk_tab, segment_tab, forecast_tab, reliability_tab, governance_tab, action_tab = st.tabs(
         [
             t(lang, "tab_overview"),
-            t(lang, "tab_risk_growth"),
+            t(lang, "tab_revenue_risk"),
+            t(lang, "tab_segment_performance"),
+            t(lang, "tab_forecast"),
+            t(lang, "tab_reliability"),
+            t(lang, "tab_governance"),
             t(lang, "tab_action_list"),
-            t(lang, "tab_business"),
         ]
     )
 
@@ -125,7 +131,44 @@ def main() -> None:
     with risk_tab:
         with st.container():
             render_risk_tab(
-                lang, filtered_df, assets["report"], assets["monitoring"], assets["alerts"]
+                lang,
+                filtered_df,
+                assets["report"],
+                assets["monitoring"],
+                assets["alerts"],
+                format_currency,
+            )
+    with segment_tab:
+        with st.container():
+            render_segment_performance_tab(
+                lang, filtered_df, assets["outcomes"], format_currency
+            )
+    with forecast_tab:
+        with st.container():
+            render_forecast_tab(
+                lang=lang,
+                filtered_df=filtered_df,
+                outcomes=assets["outcomes"],
+                top10=assets["top10"],
+                format_currency_fn=format_currency,
+            )
+    with reliability_tab:
+        with st.container():
+            render_reliability_tab(
+                lang,
+                assets["manifest"],
+                assets["artifact_validation"],
+                assets["freshness"],
+                assets["alerts"],
+            )
+    with governance_tab:
+        with st.container():
+            render_governance_tab(
+                lang,
+                assets["report"],
+                assets["monitoring"],
+                assets["alerts"],
+                assets["semantic_metrics"],
             )
     with action_tab:
         with st.container():
@@ -134,16 +177,6 @@ def main() -> None:
                 filtered_df=filtered_df,
                 approved_actions=assets["approved_actions"],
                 project_root=PROJECT_ROOT,
-            )
-    with business_tab:
-        with st.container():
-            render_business_tab(
-                lang=lang,
-                filtered_df=filtered_df,
-                outcomes=assets["outcomes"],
-                top10=assets["top10"],
-                semantic_metrics=assets["semantic_metrics"],
-                format_currency_fn=format_currency,
             )
 
     render_dashboard_footer(lang)

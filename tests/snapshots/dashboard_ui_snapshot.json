@@ -17,9 +17,12 @@
   ],
   "tabs": [
     "Visão Geral",
-    "Risco & Crescimento",
-    "Board de Ações",
-    "Impacto de Negócio"
+    "Receita em Risco",
+    "Performance por Segmento",
+    "Forecast & Cenários",
+    "Confiabilidade Operacional",
+    "Governança & Data Trust",
+    "Board de Ações"
   ],
   "tab_summaries": [
     {
@@ -31,12 +34,36 @@
       "markdown_count": 17
     },
     {
-      "label": "Risco & Crescimento",
-      "dataframe_count": 3,
+      "label": "Receita em Risco",
+      "dataframe_count": 0,
+      "expander_labels": [],
+      "markdown_count": 9
+    },
+    {
+      "label": "Performance por Segmento",
+      "dataframe_count": 0,
+      "expander_labels": [],
+      "markdown_count": 9
+    },
+    {
+      "label": "Forecast & Cenários",
+      "dataframe_count": 1,
+      "expander_labels": [],
+      "markdown_count": 13
+    },
+    {
+      "label": "Confiabilidade Operacional",
+      "dataframe_count": 2,
       "expander_labels": [
-        "Drivers do modelo"
+        "Validação de artefatos"
       ],
-      "markdown_count": 16
+      "markdown_count": 19
+    },
+    {
+      "label": "Governança & Data Trust",
+      "dataframe_count": 2,
+      "expander_labels": [],
+      "markdown_count": 11
     },
     {
       "label": "Board de Ações",
@@ -45,24 +72,13 @@
         "Ações aprovadas recentemente"
       ],
       "markdown_count": 7
-    },
-    {
-      "label": "Impacto de Negócio",
-      "dataframe_count": 2,
-      "expander_labels": [
-        "Controles de cenário",
-        "Catálogo de métricas semânticas"
-      ],
-      "markdown_count": 23
     }
   ],
   "dataframe_count": 7,
   "expander_labels": [
     "Validação de artefatos",
-    "Drivers do modelo",
-    "Ações aprovadas recentemente",
-    "Controles de cenário",
-    "Catálogo de métricas semânticas"
+    "Validação de artefatos",
+    "Ações aprovadas recentemente"
   ],
   "markdown_snippets": [
     "<div class=\"hero\">\n    <div class=\"hero-grid\">\n        <div>\n            <div class=\"hero-badge\">Dashboard Executivo SaaS</div>\n            <h1>Centro de Comand",

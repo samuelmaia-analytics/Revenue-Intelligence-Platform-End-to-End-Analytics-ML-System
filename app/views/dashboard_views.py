@@ -71,6 +71,13 @@ def _status_tone(status: str | None) -> str:
     return "neutral"
 
 
+def _portfolio_with_risk(filtered_df: pd.DataFrame) -> pd.DataFrame:
+    portfolio = filtered_df.copy()
+    portfolio["revenue_at_risk"] = portfolio["ltv"] * portfolio["churn_probability"]
+    portfolio["growth_headroom"] = portfolio["ltv"] * portfolio["next_purchase_probability"]
+    return portfolio
+
+
 def build_sidebar(
     *,
     lang: str,
@@ -550,6 +557,359 @@ def render_risk_tab(
     report: dict[str, Any],
     monitoring: dict[str, Any],
     alerts: dict[str, Any],
+    format_currency_fn: Any,
+) -> None:
+    portfolio = _portfolio_with_risk(filtered_df)
+    high_risk = portfolio[portfolio["churn_probability"] >= 0.7].copy()
+    if high_risk.empty:
+        high_risk = portfolio.sort_values("revenue_at_risk", ascending=False).head(10).copy()
+    risk_by_segment = (
+        portfolio.groupby("segment", as_index=False)
+        .agg(
+            revenue_at_risk=("revenue_at_risk", "sum"),
+            avg_churn_probability=("churn_probability", "mean"),
+            customers=("customer_id", "nunique"),
+        )
+        .sort_values("revenue_at_risk", ascending=False)
+    )
+    risk_by_channel = (
+        portfolio.groupby("channel", as_index=False)
+        .agg(
+            revenue_at_risk=("revenue_at_risk", "sum"),
+            avg_churn_probability=("churn_probability", "mean"),
+        )
+        .sort_values("revenue_at_risk", ascending=False)
+    )
+    render_status_strip(
+        [
+            {
+                "label": t(lang, "revenue_at_risk"),
+                "value": format_currency_fn(float(portfolio["revenue_at_risk"].sum()), lang),
+                "subtitle": t(lang, "risk_caption"),
+            },
+            {
+                "label": t(lang, "high_risk_customers"),
+                "value": f"{int((portfolio['churn_probability'] >= 0.7).sum()):,}",
+                "subtitle": t(lang, "business_risk_customers"),
+            },
+            {
+                "label": t(lang, "top_segment"),
+                "value": str(risk_by_segment.iloc[0]["segment"]),
+                "subtitle": f"{risk_by_segment.iloc[0]['avg_churn_probability']:.1%}",
+            },
+            {
+                "label": t(lang, "risk_priority_action"),
+                "value": str(high_risk["recommended_action"].mode().iat[0]),
+                "subtitle": t(lang, "action_board_caption"),
+            },
+        ]
+    )
+    render_spacer()
+    charts = st.columns(2, gap="large")
+    with charts[0]:
+        fig_churn = px.bar(
+            risk_by_segment,
+            x="segment",
+            y="revenue_at_risk",
+            color="segment",
+            title=t(lang, "revenue_at_risk_by_segment"),
+            color_discrete_sequence=px.colors.sequential.Blues_r,
+        )
+        fig_churn.update_layout(showlegend=False)
+        render_chart_panel(
+            eyebrow=t(lang, "chart_context"),
+            title=t(lang, "revenue_at_risk_by_segment"),
+            caption=t(lang, "risk_caption"),
+            fig=fig_churn,
+        )
+    with charts[1]:
+        fig_next = px.bar(
+            risk_by_channel,
+            x="channel",
+            y="revenue_at_risk",
+            color="channel",
+            title=t(lang, "revenue_at_risk_by_channel"),
+            color_discrete_sequence=px.colors.sequential.Teal_r,
+        )
+        fig_next.update_layout(showlegend=False)
+        render_chart_panel(
+            eyebrow=t(lang, "chart_context"),
+            title=t(lang, "revenue_at_risk_by_channel"),
+            caption=t(lang, "risk_caption"),
+            fig=fig_next,
+        )
+
+    top_accounts = high_risk[
+        [
+            "customer_id",
+            "segment",
+            "channel",
+            "recommended_action",
+            "churn_probability",
+            "revenue_at_risk",
+            "potential_impact",
+        ]
+    ].sort_values("revenue_at_risk", ascending=False)
+    render_badge_table_panel(
+        eyebrow=t(lang, "table_context"),
+        title=t(lang, "top_accounts_at_risk"),
+        caption=t(lang, "risk_caption"),
+        frame=top_accounts,
+        badge_columns=["recommended_action", "segment"],
+    )
+
+def render_segment_performance_tab(
+    lang: str,
+    filtered_df: pd.DataFrame,
+    outcomes: dict[str, Any],
+    format_currency_fn: Any,
+) -> None:
+    portfolio = _portfolio_with_risk(filtered_df)
+    segment_perf = (
+        portfolio.groupby("segment", as_index=False)
+        .agg(
+            customers=("customer_id", "nunique"),
+            avg_ltv=("ltv", "mean"),
+            avg_churn_probability=("churn_probability", "mean"),
+            avg_next_purchase_probability=("next_purchase_probability", "mean"),
+            revenue_at_risk=("revenue_at_risk", "sum"),
+            potential_impact=("potential_impact", "sum"),
+        )
+        .sort_values("potential_impact", ascending=False)
+    )
+    channel_eff = pd.DataFrame(outcomes.get("ltv_cac_by_channel", []))
+    render_status_strip(
+        [
+            {
+                "label": t(lang, "top_segment"),
+                "value": str(segment_perf.iloc[0]["segment"]),
+                "subtitle": format_currency_fn(float(segment_perf.iloc[0]["potential_impact"]), lang),
+            },
+            {
+                "label": t(lang, "avg_ltv"),
+                "value": format_currency_fn(float(portfolio["ltv"].mean()), lang),
+                "subtitle": t(lang, "per_customer"),
+            },
+            {
+                "label": t(lang, "avg_risk"),
+                "value": f"{portfolio['churn_probability'].mean():.1%}",
+                "subtitle": t(lang, "segment_performance_caption"),
+            },
+            {
+                "label": t(lang, "best_channel"),
+                "value": str(channel_eff.sort_values("ltv_cac_ratio", ascending=False).iloc[0]["channel"]),
+                "subtitle": f"{float(channel_eff['ltv_cac_ratio'].max()):.2f}",
+            },
+        ]
+    )
+    render_spacer()
+    charts = st.columns(2, gap="large")
+    with charts[0]:
+        fig_segment = px.bar(
+            segment_perf,
+            x="segment",
+            y="potential_impact",
+            color="segment",
+            title=t(lang, "performance_by_segment"),
+            color_discrete_sequence=px.colors.sequential.Blues_r,
+        )
+        fig_segment.update_layout(showlegend=False)
+        render_chart_panel(
+            eyebrow=t(lang, "chart_context"),
+            title=t(lang, "performance_by_segment"),
+            caption=t(lang, "segment_performance_caption"),
+            fig=fig_segment,
+        )
+    with charts[1]:
+        fig_channel = px.bar(
+            channel_eff,
+            x="channel",
+            y="ltv_cac_ratio",
+            color="channel",
+            title=t(lang, "channel_efficiency"),
+            color_discrete_sequence=px.colors.sequential.Teal_r,
+        )
+        fig_channel.update_layout(showlegend=False)
+        render_chart_panel(
+            eyebrow=t(lang, "chart_context"),
+            title=t(lang, "channel_efficiency"),
+            caption=t(lang, "segment_performance_caption"),
+            fig=fig_channel,
+        )
+    render_badge_table_panel(
+        eyebrow=t(lang, "table_context"),
+        title=t(lang, "performance_by_segment"),
+        caption=t(lang, "segment_performance_caption"),
+        frame=segment_perf,
+        badge_columns=["segment"],
+    )
+
+
+def render_forecast_tab(
+    *,
+    lang: str,
+    filtered_df: pd.DataFrame,
+    outcomes: dict[str, Any],
+    top10: pd.DataFrame,
+    format_currency_fn: Any,
+) -> None:
+    simulation = outcomes.get("simulation_summary_top10", {})
+    policy_defaults = outcomes.get("simulation_assumptions", {})
+    render_status_strip(
+        [
+            {
+                "label": t(lang, "baseline"),
+                "value": format_currency_fn(float(simulation.get("baseline_revenue_90d", 0)), lang),
+                "subtitle": t(lang, "forecast_caption"),
+            },
+            {
+                "label": t(lang, "scenario"),
+                "value": format_currency_fn(float(simulation.get("scenario_revenue_90d", 0)), lang),
+                "subtitle": t(lang, "forecast_caption"),
+            },
+            {
+                "label": t(lang, "delta_revenue"),
+                "value": format_currency_fn(float(simulation.get("delta_revenue_90d", 0)), lang),
+                "subtitle": t(lang, "forecast_caption"),
+            },
+            {
+                "label": t(lang, "roi"),
+                "value": f"{float(simulation.get('roi_simulated', 0)):.2f}x",
+                "subtitle": t(lang, "business_net_impact_sub"),
+            },
+        ]
+    )
+    render_spacer()
+    overrides: dict[str, dict[str, float | str]] = {}
+    controls = st.columns(2, gap="large")
+    for idx, (action_name, policy) in enumerate(policy_defaults.items()):
+        with controls[idx % 2]:
+            st.markdown(f"**{action_name}**")
+            overrides[action_name] = {
+                "uplift_rate": st.slider(
+                    f"{action_name} | {t(lang, 'uplift_rate')}",
+                    0.0,
+                    1.0,
+                    float(policy.get("uplift_rate", 0.1)),
+                    0.01,
+                    key=f"forecast_uplift_{action_name}",
+                ),
+                "cost_rate": st.slider(
+                    f"{action_name} | {t(lang, 'cost_rate')}",
+                    0.0,
+                    0.5,
+                    float(policy.get("cost_rate", 0.05)),
+                    0.01,
+                    key=f"forecast_cost_{action_name}",
+                ),
+                "base": str(policy.get("base", "ltv")),
+            }
+    scenario_actions = simulate_action_portfolio(
+        recommendations_df=filtered_df, top_n=10, policy_overrides=overrides
+    )
+    fig_forecast = go.Figure(
+        data=[
+            go.Bar(name=t(lang, "baseline"), x=["90d"], y=[scenario_actions["baseline_revenue_90d"].sum()], marker_color="#94a3b8"),
+            go.Bar(name=t(lang, "scenario"), x=["90d"], y=[scenario_actions["scenario_revenue_90d"].sum()], marker_color="#0f5bd7"),
+        ]
+    )
+    fig_forecast.update_layout(barmode="group", title=t(lang, "forecast_and_scenarios"))
+    render_chart_panel(
+        eyebrow=t(lang, "chart_context"),
+        title=t(lang, "forecast_and_scenarios"),
+        caption=t(lang, "forecast_caption"),
+        fig=fig_forecast,
+    )
+    render_badge_table_panel(
+        eyebrow=t(lang, "table_context"),
+        title=t(lang, "scenario"),
+        caption=t(lang, "forecast_caption"),
+        frame=scenario_actions[
+            [
+                "customer_id",
+                "recommended_action",
+                "expected_uplift",
+                "action_cost",
+                "net_impact",
+                "roi_simulated",
+            ]
+        ],
+        badge_columns=["recommended_action"],
+    )
+    if not top10.empty:
+        render_dataframe_panel(
+            eyebrow=t(lang, "table_context"),
+            title=t(lang, "top_actions"),
+            caption=t(lang, "forecast_caption"),
+            frame=top10,
+            height=360,
+        )
+
+
+def render_reliability_tab(
+    lang: str,
+    manifest: dict[str, Any],
+    artifact_validation: dict[str, Any],
+    freshness: dict[str, Any],
+    alerts: dict[str, Any],
+) -> None:
+    render_runtime_health(lang, manifest, artifact_validation, freshness, alerts)
+    stage_timings = pd.DataFrame(
+        [
+            {"stage": stage_name, "seconds": seconds}
+            for stage_name, seconds in manifest.get("stage_timings_seconds", {}).items()
+        ]
+    ).sort_values("seconds", ascending=False)
+    freshness_checks = pd.DataFrame(freshness.get("checks", []))
+    quality_snapshot = manifest.get("quality_snapshot", {})
+    render_status_strip(
+        [
+            {
+                "label": t(lang, "duplicate_rows"),
+                "value": str(int(quality_snapshot.get("duplicate_rows", 0))),
+                "subtitle": t(lang, "reliability_caption"),
+            },
+            {
+                "label": t(lang, "null_count"),
+                "value": str(int(quality_snapshot.get("null_count_total", 0))),
+                "subtitle": t(lang, "reliability_caption"),
+            },
+            {
+                "label": t(lang, "freshness_status"),
+                "value": str(freshness.get("status", "n/a")).upper(),
+                "subtitle": t(lang, "reliability_caption"),
+            },
+            {
+                "label": t(lang, "alerts_count"),
+                "value": str(int(alerts.get("alert_count", 0))),
+                "subtitle": t(lang, "alerts"),
+            },
+        ]
+    )
+    render_spacer()
+    if not stage_timings.empty:
+        render_dataframe_panel(
+            eyebrow=t(lang, "table_context"),
+            title=t(lang, "run_stage_timings"),
+            caption=t(lang, "reliability_caption"),
+            frame=stage_timings,
+        )
+    if not freshness_checks.empty:
+        render_badge_table_panel(
+            eyebrow=t(lang, "table_context"),
+            title=t(lang, "freshness_checks"),
+            caption=t(lang, "reliability_caption"),
+            frame=freshness_checks[["dataset_name", "row_count", "age_hours", "status"]],
+            badge_columns=["status"],
+        )
+
+
+def render_governance_tab(
+    lang: str,
+    report: dict[str, Any],
+    monitoring: dict[str, Any],
+    alerts: dict[str, Any],
+    semantic_metrics: dict[str, Any],
 ) -> None:
     model_report = report.get("model_performance", report)
     churn_calibration = monitoring.get("calibration", {}).get("churn", {})
@@ -558,7 +918,7 @@ def render_risk_tab(
             {
                 "label": t(lang, "drift_status"),
                 "value": str(monitoring.get("drift_status", "n/a")).upper(),
-                "subtitle": t(lang, "monitoring"),
+                "subtitle": t(lang, "governance_caption"),
             },
             {
                 "label": t(lang, "calibration"),
@@ -570,6 +930,11 @@ def render_risk_tab(
                 "subtitle": str(churn_calibration.get("status", "n/a")).upper(),
             },
             {
+                "label": t(lang, "semantic_metrics"),
+                "value": str(len(semantic_metrics.get("metrics", []))),
+                "subtitle": t(lang, "governance_caption"),
+            },
+            {
                 "label": t(lang, "alerts_count"),
                 "value": str(len(alerts.get("alerts", []))),
                 "subtitle": t(lang, "alerts"),
@@ -577,9 +942,6 @@ def render_risk_tab(
         ]
     )
     render_spacer()
-    render_section_header(
-        t(lang, "governance"), t(lang, "governance"), t(lang, "governance_caption")
-    )
     governance_frame = pd.DataFrame(
         [
             {
@@ -592,9 +954,7 @@ def render_risk_tab(
             },
             {
                 "Model": t(lang, "next_model"),
-                t(lang, "split"): model_report.get("next_purchase_30d", {}).get(
-                    "split_strategy", "n/a"
-                ),
+                t(lang, "split"): model_report.get("next_purchase_30d", {}).get("split_strategy", "n/a"),
                 t(lang, "cv_auc"): auc_text(
                     model_report.get("next_purchase_30d", {}).get("cv_roc_auc_mean")
                 ),
@@ -607,79 +967,8 @@ def render_risk_tab(
     render_dataframe_panel(
         eyebrow=t(lang, "governance"),
         title=t(lang, "governance"),
-        caption=t(lang, "model_source"),
+        caption=t(lang, "governance_caption"),
         frame=governance_frame,
-    )
-
-    charts = st.columns(2, gap="large")
-    with charts[0]:
-        churn_seg = (
-            filtered_df.groupby("segment", as_index=False)["churn_probability"]
-            .mean()
-            .sort_values("churn_probability", ascending=False)
-        )
-        fig_churn = px.bar(
-            churn_seg,
-            x="segment",
-            y="churn_probability",
-            color="segment",
-            title=t(lang, "churn_by_segment"),
-            color_discrete_sequence=px.colors.sequential.Blues_r,
-        )
-        fig_churn.update_layout(showlegend=False, yaxis_tickformat=".0%")
-        render_chart_panel(
-            eyebrow=t(lang, "chart_context"),
-            title=t(lang, "churn_by_segment"),
-            caption=t(lang, "monitoring_caption"),
-            fig=fig_churn,
-        )
-    with charts[1]:
-        next_channel = (
-            filtered_df.groupby("channel", as_index=False)["next_purchase_probability"]
-            .mean()
-            .sort_values("next_purchase_probability", ascending=False)
-        )
-        fig_next = px.bar(
-            next_channel,
-            x="channel",
-            y="next_purchase_probability",
-            color="channel",
-            title=t(lang, "next_by_channel"),
-            color_discrete_sequence=px.colors.sequential.Teal_r,
-        )
-        fig_next.update_layout(showlegend=False, yaxis_tickformat=".0%")
-        render_chart_panel(
-            eyebrow=t(lang, "chart_context"),
-            title=t(lang, "next_by_channel"),
-            caption=t(lang, "monitoring_caption"),
-            fig=fig_next,
-        )
-
-    with st.expander(t(lang, "model_drivers")):
-        for column, model_key in zip(
-            st.columns(2, gap="large"), ["churn", "next_purchase_30d"], strict=False
-        ):
-            with column:
-                drivers = pd.DataFrame(
-                    model_report.get(model_key, {}).get("top_business_drivers", [])
-                )
-                if drivers.empty:
-                    st.caption(t(lang, "drivers_empty"))
-                else:
-                    render_dataframe_panel(
-                        eyebrow=t(lang, "table_context"),
-                        title=f"{t(lang, 'model_drivers')} | {model_key}",
-                        caption=t(lang, "governance_caption"),
-                        frame=drivers.rename(
-                            columns={
-                                "feature": t(lang, "driver_feature"),
-                                "importance": t(lang, "driver_importance"),
-                            }
-                        ),
-                    )
-
-    render_section_header(
-        t(lang, "monitoring"), t(lang, "monitoring"), t(lang, "monitoring_caption")
     )
     drift_rows = [
         {
@@ -692,11 +981,21 @@ def render_risk_tab(
         render_badge_table_panel(
             eyebrow=t(lang, "table_context"),
             title=t(lang, "drift_status"),
-            caption=t(lang, "monitoring_caption"),
+            caption=t(lang, "governance_caption"),
             frame=pd.DataFrame(drift_rows),
             badge_columns=[t(lang, "drift_status")],
         )
-    render_spacer()
+    semantic_rows = pd.DataFrame(semantic_metrics.get("metrics", []))
+    if not semantic_rows.empty:
+        render_dataframe_panel(
+            eyebrow=t(lang, "table_context"),
+            title=t(lang, "semantic_metrics"),
+            caption=t(lang, "governance_caption"),
+            frame=semantic_rows.rename(
+                columns={"label": "Metric", "owner": t(lang, "owner"), "expression": t(lang, "expression")}
+            ),
+            height=320,
+        )
     alert_rows = pd.DataFrame(alerts.get("alerts", []))
     if alert_rows.empty:
         st.info(t(lang, "alerts_empty"))
@@ -704,9 +1003,9 @@ def render_risk_tab(
         render_badge_table_panel(
             eyebrow=t(lang, "table_context"),
             title=t(lang, "alerts"),
-            caption=t(lang, "monitoring_caption"),
+            caption=t(lang, "governance_caption"),
             frame=alert_rows,
-            badge_columns=["severity", "status"],
+            badge_columns=["severity"],
         )
 
 
