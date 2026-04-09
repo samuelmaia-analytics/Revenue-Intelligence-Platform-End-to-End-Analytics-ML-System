@@ -30,7 +30,11 @@ function Matches-Target {
         return $true
     }
     if ($SelectedTarget -eq "app") {
-        return $commandLine -like "*streamlit*" -or $commandLine -like "*app/streamlit_app.py*"
+        return (
+            $commandLine -like "*streamlit*" -or
+            $commandLine -like "*streamlit_app.py*" -or
+            $commandLine -like "*app/streamlit_app.py*"
+        )
     }
     if ($SelectedTarget -eq "api") {
         return $commandLine -like "*uvicorn*" -or $commandLine -like "*services.api.main:app*"

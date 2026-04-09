@@ -251,10 +251,10 @@ python -m src.pipeline run --start-date 2025-01-01 --end-date 2025-03-31
 Streamlit:
 
 ```powershell
-streamlit run app/streamlit_app.py
+streamlit run streamlit_app.py
 ```
 
-Private-deploy friendly entrypoint:
+Official entrypoint for local and private deploy:
 
 ```powershell
 streamlit run streamlit_app.py

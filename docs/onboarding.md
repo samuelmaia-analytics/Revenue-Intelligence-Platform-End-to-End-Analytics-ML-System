@@ -92,7 +92,7 @@ python -m src.pipeline --help
 Dashboard:
 
 ```powershell
-python -m streamlit run app/streamlit_app.py
+python -m streamlit run streamlit_app.py
 ```
 
 Windows shortcut:

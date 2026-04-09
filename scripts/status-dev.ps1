@@ -12,7 +12,11 @@ function Resolve-ProcessRole {
         [string]$CommandLine
     )
 
-    if ($CommandLine -like "*streamlit*" -or $CommandLine -like "*app/streamlit_app.py*") {
+    if (
+        $CommandLine -like "*streamlit*" -or
+        $CommandLine -like "*streamlit_app.py*" -or
+        $CommandLine -like "*app/streamlit_app.py*"
+    ) {
         return "app"
     }
     if ($CommandLine -like "*uvicorn*" -or $CommandLine -like "*services.api.main:app*") {
