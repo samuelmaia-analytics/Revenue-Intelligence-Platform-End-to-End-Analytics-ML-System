@@ -226,10 +226,36 @@ def _segment_from_customer_value(customer_value: pd.Series) -> pd.Series:
 
 
 def _build_from_olist_dataset(raw_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    customers_raw = pd.read_csv(raw_dir / OLIST_CUSTOMERS_FILE, low_memory=False)
-    orders_raw = pd.read_csv(raw_dir / OLIST_ORDERS_FILE, low_memory=False)
-    order_items_raw = pd.read_csv(raw_dir / OLIST_ORDER_ITEMS_FILE, low_memory=False)
-    order_payments_raw = pd.read_csv(raw_dir / OLIST_ORDER_PAYMENTS_FILE, low_memory=False)
+    customers_raw = pd.read_csv(
+        raw_dir / OLIST_CUSTOMERS_FILE,
+        usecols=[
+            "customer_id",
+            "customer_unique_id",
+            "customer_city",
+            "customer_state",
+        ],
+        low_memory=False,
+    )
+    orders_raw = pd.read_csv(
+        raw_dir / OLIST_ORDERS_FILE,
+        usecols=[
+            "order_id",
+            "customer_id",
+            "order_status",
+            "order_purchase_timestamp",
+        ],
+        low_memory=False,
+    )
+    order_items_raw = pd.read_csv(
+        raw_dir / OLIST_ORDER_ITEMS_FILE,
+        usecols=["order_id", "price", "freight_value"],
+        low_memory=False,
+    )
+    order_payments_raw = pd.read_csv(
+        raw_dir / OLIST_ORDER_PAYMENTS_FILE,
+        usecols=["order_id", "payment_type", "payment_value"],
+        low_memory=False,
+    )
 
     orders_raw["order_purchase_timestamp"] = pd.to_datetime(
         orders_raw["order_purchase_timestamp"], errors="coerce"

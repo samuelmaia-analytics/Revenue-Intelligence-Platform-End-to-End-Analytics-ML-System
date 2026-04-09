@@ -124,6 +124,7 @@ class PipelineConfig:
     llm_model: str | None = None
     backfill_start_date: date | None = None
     backfill_end_date: date | None = None
+    modeling_max_training_rows: int | None = None
 
     def ensure_directories(self) -> None:
         for directory in [
@@ -280,4 +281,7 @@ class PipelineConfig:
             llm_model=os.getenv("RIP_LLM_MODEL", "").strip() or None,
             backfill_start_date=backfill_start_date,
             backfill_end_date=backfill_end_date,
+            modeling_max_training_rows=(
+                _resolve_int("RIP_MODELING_MAX_TRAINING_ROWS", 0, minimum=0) or None
+            ),
         )

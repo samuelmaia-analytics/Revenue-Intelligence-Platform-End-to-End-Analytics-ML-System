@@ -239,6 +239,9 @@ Important environment variables:
 - `RIP_QUALITY_MAX_NULL_FRACTION`
 - `RIP_BACKFILL_START_DATE`
 - `RIP_BACKFILL_END_DATE`
+- `RIP_MODELING_MAX_TRAINING_ROWS`
+
+For larger raw sources such as the Brazilian E-Commerce Public Dataset (`olist_*`), `RIP_MODELING_MAX_TRAINING_ROWS` can reduce training time while preserving full-corpus scoring and downstream outputs.
 
 ## Run Commands
 

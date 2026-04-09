@@ -204,10 +204,41 @@ def _build_business_model_summary(
     }
 
 
+def _cap_training_frame(
+    frame: pd.DataFrame,
+    target_col: str,
+    *,
+    max_rows: int | None,
+    seed: int,
+) -> pd.DataFrame:
+    if max_rows is None or len(frame) <= max_rows:
+        return frame
+    target = frame[target_col]
+    if target.nunique() >= 2:
+        sampled = (
+            frame.groupby(target_col, group_keys=False)
+            .apply(
+                lambda group: group.sample(
+                    n=max(1, int(round(max_rows * len(group) / len(frame)))),
+                    random_state=seed,
+                    replace=False,
+                )
+            )
+            .reset_index(drop=True)
+        )
+        if len(sampled) > max_rows:
+            sampled = sampled.sample(n=max_rows, random_state=seed).reset_index(drop=True)
+        return sampled
+    return frame.sample(n=max_rows, random_state=seed).reset_index(drop=True)
+
+
 def train_and_score_models(
     df: pd.DataFrame,
     output_dir: Path,
     run_id: str | None = None,
+    *,
+    max_training_rows: int | None = None,
+    seed: int = 42,
 ) -> tuple[dict, dict, pd.DataFrame]:
     output_dir.mkdir(parents=True, exist_ok=True)
     work_df = df.copy().dropna(subset=["signup_date"])
@@ -217,6 +248,12 @@ def train_and_score_models(
 
     churn_df = eval_df.dropna(subset=["is_churned"]).copy()
     churn_df["is_churned"] = churn_df["is_churned"].astype(int)
+    churn_df = _cap_training_frame(
+        churn_df,
+        "is_churned",
+        max_rows=max_training_rows,
+        seed=seed,
+    )
     _validate_binary_target(churn_df["is_churned"], "is_churned")
     x_churn = churn_df[feature_cols]
 
@@ -239,6 +276,12 @@ def train_and_score_models(
 
     next_df = eval_df.dropna(subset=["next_purchase_30d"]).copy()
     next_df["next_purchase_30d"] = next_df["next_purchase_30d"].astype(int)
+    next_df = _cap_training_frame(
+        next_df,
+        "next_purchase_30d",
+        max_rows=max_training_rows,
+        seed=seed,
+    )
     _validate_binary_target(next_df["next_purchase_30d"], "next_purchase_30d")
     x_next = next_df[feature_cols]
 

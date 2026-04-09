@@ -626,6 +626,8 @@ class RevenueIntelligencePipeline:
                     features_df,
                     self.cfg.processed_dir,
                     run_id=run_context.run_id,
+                    max_training_rows=self.cfg.modeling_max_training_rows,
+                    seed=self.cfg.seed,
                 ),
             )
 

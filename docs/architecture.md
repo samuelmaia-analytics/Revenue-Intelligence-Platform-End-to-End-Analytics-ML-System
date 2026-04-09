@@ -52,7 +52,7 @@ That command resolves runtime policy from [`src/config.py`](../src/config.py) an
 5. `gold`
    Curated star schema with `dim_customers`, `dim_date`, `dim_channel`, and `fact_orders`.
 6. `modeling`
-   Churn and next-purchase model training, scoring, and model registry updates.
+   Churn and next-purchase model training, scoring, and model registry updates. For larger sources, training volume can be capped with `RIP_MODELING_MAX_TRAINING_ROWS` while preserving full-corpus scoring and downstream contracts.
 7. `analytics`
    Recommendations, unit economics, KPI snapshots, and downstream business outputs.
 8. `monitoring`
