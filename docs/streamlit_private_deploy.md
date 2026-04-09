@@ -10,14 +10,14 @@ Recommended controls:
 
 - keep deployment secrets in the Streamlit app settings, not in the repository
 - keep `.env` and `.streamlit/secrets.toml` local-only
-- use the root entrypoint `streamlit_app.py` for a simpler deployment target
+- use the canonical entrypoint `app/streamlit_app.py`
 
 ## Deployment Target
 
 Main file for Streamlit deployment:
 
 ```text
-streamlit_app.py
+app/streamlit_app.py
 ```
 
 Python version:
@@ -36,7 +36,7 @@ requirements.txt
 
 1. Connect Streamlit to the same GitHub account that can read this private repository.
 2. Create a new app and select the repository.
-3. Set the main file path to `streamlit_app.py`.
+3. Set the main file path to `app/streamlit_app.py`.
 4. Add any required runtime secrets in the Streamlit secrets panel.
 5. Deploy the app.
 

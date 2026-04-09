@@ -14,7 +14,6 @@ function Resolve-ProcessRole {
 
     if (
         $CommandLine -like "*streamlit*" -or
-        $CommandLine -like "*streamlit_app.py*" -or
         $CommandLine -like "*app/streamlit_app.py*"
     ) {
         return "app"

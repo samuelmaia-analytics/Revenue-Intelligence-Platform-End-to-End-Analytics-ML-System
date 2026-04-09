@@ -28,7 +28,7 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [demo_walkthrough.md](demo_walkthrough.md): guided commercial and technical walkthrough
 - [semantic_metrics_layer.md](semantic_metrics_layer.md): governed semantic metrics narrative across runtime, API, SQL, and dbt
 - [dbt_semantic_story.md](dbt_semantic_story.md): how dbt extends the platform as a downstream semantic layer
-- [`../pages/README.md`](../pages/README.md): why the Streamlit multipage folder stays at the repository root
+- [`../app/pages/README.md`](../app/pages/README.md): why the Streamlit multipage folder lives next to the canonical app entrypoint
 - `scripts/smoke_support.py`: shared temporary-runtime helper for downstream smoke checks
 - [adr/README.md](adr/README.md): short decision records for the most important architectural trade-offs
 - [hiring_review.md](hiring_review.md): honest portfolio assessment from a hiring-review perspective

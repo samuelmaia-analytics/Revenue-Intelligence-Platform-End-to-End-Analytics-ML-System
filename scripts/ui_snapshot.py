@@ -8,7 +8,7 @@ from typing import Any
 from streamlit.testing.v1 import AppTest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-APP_PATH = PROJECT_ROOT / "streamlit_app.py"
+APP_PATH = PROJECT_ROOT / "app" / "streamlit_app.py"
 SNAPSHOT_PATH = PROJECT_ROOT / "tests" / "snapshots" / "dashboard_ui_snapshot.json"
 
 

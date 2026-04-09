@@ -32,7 +32,6 @@ function Matches-Target {
     if ($SelectedTarget -eq "app") {
         return (
             $commandLine -like "*streamlit*" -or
-            $commandLine -like "*streamlit_app.py*" -or
             $commandLine -like "*app/streamlit_app.py*"
         )
     }

@@ -48,7 +48,7 @@ function Invoke-ManagedCommand {
 
 function Start-App {
     Start-ManagedProcess -Name "streamlit" -Arguments @(
-        "-m", "streamlit", "run", "streamlit_app.py",
+        "-m", "streamlit", "run", "app/streamlit_app.py",
         "--server.address", $BindHost,
         "--server.port", "$AppPort"
     ) | Out-Null

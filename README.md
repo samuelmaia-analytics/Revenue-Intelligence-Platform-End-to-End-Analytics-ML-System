@@ -251,13 +251,13 @@ python -m src.pipeline run --start-date 2025-01-01 --end-date 2025-03-31
 Streamlit:
 
 ```powershell
-streamlit run streamlit_app.py
+streamlit run app/streamlit_app.py
 ```
 
 Official entrypoint for local and private deploy:
 
 ```powershell
-streamlit run streamlit_app.py
+streamlit run app/streamlit_app.py
 ```
 
 Make-based workflow:
@@ -314,7 +314,7 @@ See [docs/sql_examples.md](docs/sql_examples.md) for practical warehouse queries
 
 The repository is compatible with a private GitHub operating model and a Streamlit deployment surface for controlled demos.
 
-- use the root Streamlit entrypoint `streamlit_app.py`
+- use the canonical Streamlit entrypoint `app/streamlit_app.py`
 - keep environment-specific values in Streamlit secrets, not in Git
 - retain `python -m src.pipeline run` as the canonical runtime even when the app is the demo surface
 
