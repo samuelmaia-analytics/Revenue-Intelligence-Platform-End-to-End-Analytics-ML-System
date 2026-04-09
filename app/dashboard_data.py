@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -12,24 +13,32 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from src.config import PipelineConfig  # noqa: E402
+
+def _canonical_runtime_python(project_root: Path) -> str:
+    venv_python = project_root / ".venv" / "Scripts" / "python.exe"
+    if venv_python.exists():
+        return str(venv_python)
+    return sys.executable
 
 
 def _run_pipeline(project_root: Path) -> None:
-    # Delay the pipeline import so the Streamlit app can still render from existing
-    # processed artifacts even if the active interpreter is missing ML dependencies.
+    runtime_python = _canonical_runtime_python(project_root)
+    cmd = [runtime_python, "-m", "src.pipeline", "run"]
     try:
-        from main import run_pipeline  # noqa: E402
-    except ModuleNotFoundError as error:
-        if error.name and error.name.startswith("sklearn"):
-            raise RuntimeError(
-                "The active Streamlit interpreter is missing scikit-learn. "
-                "Run the app with .venv\\Scripts\\streamlit.exe or start it via "
-                ".\\scripts\\start-demo.ps1."
-            ) from error
-        raise
-
-    run_pipeline(PipelineConfig.from_env(project_root))
+        subprocess.run(
+            cmd,
+            cwd=project_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as error:
+        details = (error.stderr or error.stdout or "").strip()
+        raise RuntimeError(
+            "Failed to refresh the pipeline via the canonical runtime. "
+            f"Command: {' '.join(cmd)}. "
+            f"Details: {details or 'no additional output'}"
+        ) from error
 
 
 @st.cache_data(show_spinner=False)
