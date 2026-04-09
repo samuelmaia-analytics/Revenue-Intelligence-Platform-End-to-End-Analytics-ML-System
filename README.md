@@ -380,6 +380,22 @@ References:
 - [docs/demo_walkthrough.md](docs/demo_walkthrough.md)
 - [docs/lineage_and_traceability.md](docs/lineage_and_traceability.md)
 
+## Proposal And Handoff Assets
+
+The repository now includes commercial and delivery-closeout assets for proposal support and client handoff.
+
+- proposal template
+- executive acceptance checklist
+- client handoff checklist
+- executive transformation summary
+
+References:
+
+- [docs/commercial/proposal_template.md](docs/commercial/proposal_template.md)
+- [docs/executive/acceptance_checklist.md](docs/executive/acceptance_checklist.md)
+- [docs/client_adaptation/handoff_checklist.md](docs/client_adaptation/handoff_checklist.md)
+- [docs/executive_transformation_summary.md](docs/executive_transformation_summary.md)
+
 ## Operational Reading Order
 
 If you are reviewing the repository for technical depth, read in this order:

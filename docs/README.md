@@ -41,10 +41,14 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [executive/scorecards.md](executive/scorecards.md): executive scorecard framing for risk, opportunity, and trust
 - [commercial/offers.md](commercial/offers.md): productized service packaging
 - [commercial/evidence_pack.md](commercial/evidence_pack.md): proof-point kit for demos, proposals, and recruiting
+- [commercial/proposal_template.md](commercial/proposal_template.md): proposal-ready template for premium consulting packaging
 - [client_adaptation/adaptation_framework.md](client_adaptation/adaptation_framework.md): controlled adaptation model for client environments
 - [client_adaptation/implementation_checklist.md](client_adaptation/implementation_checklist.md): new-client implementation checklist
+- [client_adaptation/handoff_checklist.md](client_adaptation/handoff_checklist.md): client handoff checklist for delivery closeout
 - [use_case_templates/saas_b2b_revenue.md](use_case_templates/saas_b2b_revenue.md): B2B SaaS template
 - [use_case_templates/omnichannel_retail.md](use_case_templates/omnichannel_retail.md): omnichannel retail template
+- [executive/acceptance_checklist.md](executive/acceptance_checklist.md): executive acceptance criteria and handoff checks
+- [executive_transformation_summary.md](executive_transformation_summary.md): short summary of the repository transformation for sponsors
 
 ## Planning and Maintenance
 
