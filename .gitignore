@@ -9,7 +9,9 @@ __pycache__/
 coverage.xml
 htmlcov/
 .ipynb_checkpoints/
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
+!.streamlit/secrets.toml.example
 *.pyc
 *.egg-info/
 build/

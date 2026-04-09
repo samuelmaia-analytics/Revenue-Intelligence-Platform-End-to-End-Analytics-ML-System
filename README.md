@@ -202,6 +202,12 @@ Streamlit:
 streamlit run app/streamlit_app.py
 ```
 
+Private-deploy friendly entrypoint:
+
+```powershell
+streamlit run streamlit_app.py
+```
+
 Make-based workflow:
 
 ```powershell
@@ -250,6 +256,18 @@ Governance checkpoints:
 ## SQL Consumption Examples
 
 See [docs/sql_examples.md](docs/sql_examples.md) for practical warehouse queries covering channel economics, recommendation ranking, cohort retention, and executive segment views.
+
+## Private GitHub and Streamlit Deployment
+
+The repository is compatible with a private GitHub operating model and a Streamlit deployment surface for controlled demos.
+
+- use the root Streamlit entrypoint `streamlit_app.py`
+- keep environment-specific values in Streamlit secrets, not in Git
+- retain `python -m src.pipeline run` as the canonical runtime even when the app is the demo surface
+
+Deployment reference:
+
+- [docs/streamlit_private_deploy.md](docs/streamlit_private_deploy.md)
 
 ## Technical Decisions and Trade-offs
 
