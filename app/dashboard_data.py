@@ -12,8 +12,24 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from main import run_pipeline  # noqa: E402
 from src.config import PipelineConfig  # noqa: E402
+
+
+def _run_pipeline(project_root: Path) -> None:
+    # Delay the pipeline import so the Streamlit app can still render from existing
+    # processed artifacts even if the active interpreter is missing ML dependencies.
+    try:
+        from main import run_pipeline  # noqa: E402
+    except ModuleNotFoundError as error:
+        if error.name and error.name.startswith("sklearn"):
+            raise RuntimeError(
+                "The active Streamlit interpreter is missing scikit-learn. "
+                "Run the app with .venv\\Scripts\\streamlit.exe or start it via "
+                ".\\scripts\\start-demo.ps1."
+            ) from error
+        raise
+
+    run_pipeline(PipelineConfig.from_env(project_root))
 
 
 @st.cache_data(show_spinner=False)
@@ -36,7 +52,7 @@ def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
         "reliability_report.json",
     ]
     if not all((processed_dir / name).exists() for name in required):
-        run_pipeline(PipelineConfig.from_env(PROJECT_ROOT))
+        _run_pipeline(PROJECT_ROOT)
 
     approvals_path = processed_dir / "approved_actions.csv"
     with (processed_dir / "executive_report.json").open("r", encoding="utf-8") as file:
@@ -105,5 +121,5 @@ def filter_recommendations(
 
 
 def refresh_pipeline_outputs(project_root: Path) -> None:
-    run_pipeline(PipelineConfig.from_env(project_root))
+    _run_pipeline(project_root)
     load_processed_assets.clear()
