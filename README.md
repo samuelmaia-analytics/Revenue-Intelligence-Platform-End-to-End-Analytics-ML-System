@@ -365,6 +365,21 @@ References:
 - [docs/reliability_report.md](docs/reliability_report.md)
 - [docs/recurring_analytics_operating_pack.md](docs/recurring_analytics_operating_pack.md)
 
+## Executive Command Center
+
+The Streamlit surface now supports dedicated executive pages in addition to the main command-center dashboard.
+
+- executive overview
+- revenue at risk
+- forecast and scenarios
+- operational reliability
+- governance and data trust
+
+References:
+
+- [docs/demo_walkthrough.md](docs/demo_walkthrough.md)
+- [docs/lineage_and_traceability.md](docs/lineage_and_traceability.md)
+
 ## Operational Reading Order
 
 If you are reviewing the repository for technical depth, read in this order:

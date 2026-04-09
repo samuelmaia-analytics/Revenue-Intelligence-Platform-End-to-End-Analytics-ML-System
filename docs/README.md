@@ -24,6 +24,8 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [ai_governance.md](ai_governance.md): governed AI posture for optional insight drafting
 - [reliability_report.md](reliability_report.md): governed operational summary for recurring delivery
 - [recurring_analytics_operating_pack.md](recurring_analytics_operating_pack.md): recurring analytics operating model and artifact pack
+- [lineage_and_traceability.md](lineage_and_traceability.md): source-to-consumer lineage and runtime traceability
+- [demo_walkthrough.md](demo_walkthrough.md): guided commercial and technical walkthrough
 - `scripts/smoke_support.py`: shared temporary-runtime helper for downstream smoke checks
 - [adr/README.md](adr/README.md): short decision records for the most important architectural trade-offs
 - [hiring_review.md](hiring_review.md): honest portfolio assessment from a hiring-review perspective
