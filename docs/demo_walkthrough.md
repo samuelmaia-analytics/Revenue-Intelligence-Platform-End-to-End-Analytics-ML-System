@@ -14,6 +14,7 @@ Provide a structured commercial and technical walkthrough for client demos, inte
 6. Open `Governance And Trust` and show drift, calibration, and semantic metrics.
 7. Call the API export surfaces for executive summary and reliability report.
 8. Close with the commercial offers and recurring operating pack.
+9. Show the proposal and SOW assets to explain implementation shape.
 
 ## Key Messages
 

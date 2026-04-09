@@ -14,9 +14,12 @@
 - root `README.md` for the executive-technical overview
 - `docs/executive/one_pager.md` for leadership conversations
 - `docs/executive/technical_one_pager.md` for architecture sponsors
+- `docs/executive/board_readout_template.md` for sponsor and board-style narrative
 - `docs/audit/executive_audit_2026-04.md` for maturity assessment
 - `docs/architecture.md` and `docs/runtime_surfaces.md` for solution design reviews
 - Streamlit demo surface and API for live walkthroughs
+- `docs/commercial/demo_asset_pack.md` for demo-ready packaging
+- `docs/commercial/sow_outline.md` for scope framing
 
 ## Proof Points
 
@@ -33,3 +36,4 @@
 3. Show the executive command center and action prioritization workflow.
 4. Show the API and explain external consumption paths.
 5. Show runbooks, ADRs, release notes, and audit documentation to prove reliability.
+6. Close with the proposal template, SOW outline, and recurring operating pack.
