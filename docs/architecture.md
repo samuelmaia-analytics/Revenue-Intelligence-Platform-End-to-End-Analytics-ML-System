@@ -42,7 +42,7 @@ That command resolves runtime policy from [`src/config.py`](../src/config.py) an
 ## Layered Flow
 
 1. `raw`
-   Optional source CSV is read from `data/raw/`. If no source is present, deterministic synthetic data is generated.
+   Supported source patterns are read from `data/raw/`. The runtime currently accepts normalized raw tables, the legacy single-file customer-behavior sample, and the Brazilian E-Commerce Public Dataset (`olist_*`). If no source is present, deterministic synthetic data is generated.
 2. `bronze`
    Raw tables are copied with source lineage metadata and ingestion timestamps.
 3. `silver`
@@ -64,7 +64,7 @@ That command resolves runtime policy from [`src/config.py`](../src/config.py) an
 
 ```mermaid
 flowchart LR
-    A[Source CSV or synthetic generator] --> B[data/raw]
+    A[Supported raw source, Olist ecommerce dataset, or synthetic generator] --> B[data/raw]
     B --> C[data/bronze]
     C --> D[data/silver]
     D --> E[processed/customer_features.csv]

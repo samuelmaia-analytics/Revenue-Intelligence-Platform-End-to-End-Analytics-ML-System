@@ -60,6 +60,12 @@ The platform converts customer behavior data into assets that support commercial
 - executive KPI snapshots, risk scorecards, and monitoring outputs
 - warehouse tables ready for SQL and dbt-style consumption
 
+Supported raw-source patterns:
+
+- normalized local raw tables under `data/raw/`
+- the prior single-file Kaggle customer-behavior sample
+- the Brazilian E-Commerce Public Dataset (`olist_*`) now mapped into the platform's governed raw contracts
+
 This is not just a portfolio dashboard. It is a productizable operating layer for revenue analytics with explicit runtime ownership, governed outputs, and downstream accountability.
 
 ## Who It Serves
@@ -111,7 +117,7 @@ The batch pipeline is the system of record. The Streamlit app, API layer, wareho
 
 ```mermaid
 flowchart LR
-    A[Raw inputs or synthetic source] --> B[Bronze]
+    A[Raw inputs, Olist ecommerce source, or synthetic source] --> B[Bronze]
     B --> C[Silver]
     C --> D[Features and scoring]
     D --> E[Curated analytics]

@@ -8,6 +8,16 @@ from src.io_utils import atomic_write_csv
 
 CHANNELS = ["Organic", "Paid Search", "Social Ads", "Referral", "Partnership"]
 KAGGLE_FILE = "E-commerce Customer Behavior - Sheet1.csv"
+OLIST_CUSTOMERS_FILE = "olist_customers_dataset.csv"
+OLIST_ORDERS_FILE = "olist_orders_dataset.csv"
+OLIST_ORDER_ITEMS_FILE = "olist_order_items_dataset.csv"
+OLIST_ORDER_PAYMENTS_FILE = "olist_order_payments_dataset.csv"
+OLIST_REQUIRED_FILES = [
+    OLIST_CUSTOMERS_FILE,
+    OLIST_ORDERS_FILE,
+    OLIST_ORDER_ITEMS_FILE,
+    OLIST_ORDER_PAYMENTS_FILE,
+]
 
 
 def _coerce_signup_date(value: Any) -> pd.Timestamp:
@@ -195,10 +205,150 @@ def _build_from_kaggle_dataset(
     return customers, orders, marketing
 
 
+def _olist_files_present(raw_dir: Path) -> bool:
+    return all((raw_dir / file_name).exists() for file_name in OLIST_REQUIRED_FILES)
+
+
+def _normalize_payment_channel(value: Any) -> str:
+    mapping = {
+        "credit_card": "Credit Card",
+        "boleto": "Boleto",
+        "voucher": "Voucher",
+        "debit_card": "Debit Card",
+        "not_defined": "Other",
+    }
+    return mapping.get(str(value).strip().lower(), "Other")
+
+
+def _segment_from_customer_value(customer_value: pd.Series) -> pd.Series:
+    ranked = customer_value.rank(method="first")
+    return pd.qcut(ranked, q=3, labels=["SMB", "Mid-Market", "Enterprise"]).astype(str)
+
+
+def _build_from_olist_dataset(raw_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    customers_raw = pd.read_csv(raw_dir / OLIST_CUSTOMERS_FILE, low_memory=False)
+    orders_raw = pd.read_csv(raw_dir / OLIST_ORDERS_FILE, low_memory=False)
+    order_items_raw = pd.read_csv(raw_dir / OLIST_ORDER_ITEMS_FILE, low_memory=False)
+    order_payments_raw = pd.read_csv(raw_dir / OLIST_ORDER_PAYMENTS_FILE, low_memory=False)
+
+    orders_raw["order_purchase_timestamp"] = pd.to_datetime(
+        orders_raw["order_purchase_timestamp"], errors="coerce"
+    )
+    delivered_orders = orders_raw.loc[
+        orders_raw["order_purchase_timestamp"].notna()
+        & orders_raw["order_status"].isin(["delivered", "shipped", "invoiced", "processing"])
+    ].copy()
+
+    payment_agg = (
+        order_payments_raw.groupby("order_id")
+        .agg(
+            order_value=("payment_value", "sum"),
+            payment_type=("payment_type", lambda values: values.mode().iat[0]),
+        )
+        .reset_index()
+    )
+    item_agg = (
+        order_items_raw.assign(
+            item_total=lambda frame: pd.to_numeric(frame["price"], errors="coerce").fillna(0.0)
+            + pd.to_numeric(frame["freight_value"], errors="coerce").fillna(0.0)
+        )
+        .groupby("order_id")["item_total"]
+        .sum()
+        .reset_index(name="item_total")
+    )
+
+    orders_enriched = (
+        delivered_orders.merge(payment_agg, on="order_id", how="left")
+        .merge(item_agg, on="order_id", how="left")
+        .merge(
+            customers_raw[
+                [
+                    "customer_id",
+                    "customer_unique_id",
+                    "customer_city",
+                    "customer_state",
+                ]
+            ],
+            on="customer_id",
+            how="left",
+        )
+    )
+    orders_enriched["order_value"] = orders_enriched["order_value"].fillna(
+        orders_enriched["item_total"]
+    )
+    orders_enriched["payment_type"] = orders_enriched["payment_type"].fillna("not_defined")
+    orders_enriched = orders_enriched.loc[
+        orders_enriched["customer_unique_id"].notna() & (orders_enriched["order_value"] > 0)
+    ].copy()
+    orders_enriched["channel"] = orders_enriched["payment_type"].map(_normalize_payment_channel)
+    orders_enriched["order_date"] = orders_enriched["order_purchase_timestamp"].dt.normalize()
+
+    customer_summary = (
+        orders_enriched.groupby("customer_unique_id")
+        .agg(
+            signup_date=("order_purchase_timestamp", "min"),
+            total_spend=("order_value", "sum"),
+            order_count=("order_id", "nunique"),
+            channel=("channel", lambda values: values.mode().iat[0]),
+            customer_city=("customer_city", lambda values: values.dropna().iat[0]),
+            customer_state=("customer_state", lambda values: values.dropna().iat[0]),
+        )
+        .reset_index()
+        .sort_values("customer_unique_id")
+        .reset_index(drop=True)
+    )
+    customer_summary["customer_id"] = customer_summary.index + 1
+    customer_summary["signup_date"] = pd.to_datetime(customer_summary["signup_date"]).dt.normalize()
+    customer_summary["segment"] = _segment_from_customer_value(customer_summary["total_spend"])
+
+    customer_id_map = customer_summary[["customer_unique_id", "customer_id"]]
+    customers = customer_summary[
+        [
+            "customer_id",
+            "signup_date",
+            "channel",
+            "segment",
+            "customer_city",
+            "customer_state",
+            "customer_unique_id",
+            "total_spend",
+            "order_count",
+        ]
+    ].copy()
+
+    orders = (
+        orders_enriched.merge(customer_id_map, on="customer_unique_id", how="inner")
+        .rename(columns={"customer_id_y": "customer_id"})[
+            ["order_id", "customer_id", "order_date", "order_value", "payment_type", "order_status"]
+        ]
+        .drop_duplicates(subset=["order_id"])
+        .sort_values(["order_date", "order_id"])
+        .reset_index(drop=True)
+    )
+
+    acquired = (
+        customers.groupby("channel")["customer_id"].count().reset_index(name="customers_acquired")
+    )
+    acquired["base_cac"] = acquired["channel"].map(
+        {
+            "Credit Card": 150,
+            "Boleto": 110,
+            "Voucher": 75,
+            "Debit Card": 95,
+            "Other": 120,
+        }
+    ).fillna(120)
+    acquired["marketing_spend"] = (acquired["customers_acquired"] * acquired["base_cac"]).round(0)
+    marketing = acquired[["channel", "marketing_spend"]].copy()
+    return customers, orders, marketing
+
+
 def save_raw_datasets(raw_dir: Path, seed: int = 42) -> tuple[Path, Path, Path]:
     raw_dir.mkdir(parents=True, exist_ok=True)
     kaggle_path = raw_dir / KAGGLE_FILE
-    if kaggle_path.exists():
+    if _olist_files_present(raw_dir):
+        customers, orders, marketing = _build_from_olist_dataset(raw_dir)
+    elif kaggle_path.exists():
         customers, orders, marketing = _build_from_kaggle_dataset(kaggle_path, seed=seed)
     else:
         customers, orders, marketing = generate_synthetic_data(seed=seed)
