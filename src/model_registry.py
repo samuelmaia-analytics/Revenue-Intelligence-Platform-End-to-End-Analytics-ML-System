@@ -172,3 +172,28 @@ def load_registered_model(base_dir: Path, model_name: str) -> tuple[Pipeline, di
     with metadata_path.open("r", encoding="utf-8") as metadata_file:
         metadata = json.load(metadata_file)
     return model, metadata
+
+
+def load_registered_model_by_data_version(
+    base_dir: Path, model_name: str, data_version: str
+) -> tuple[Pipeline, dict]:
+    registry_root, layout = _resolve_registry_layout(base_dir, model_name)
+    if layout != "versioned" or not registry_root.exists():
+        raise FileNotFoundError(
+            f"Versioned model registry not found for '{model_name}' in {registry_root.resolve()}"
+        )
+
+    existing_version = _find_existing_version_by_data_version(registry_root, data_version)
+    if existing_version is None:
+        raise FileNotFoundError(
+            f"No registered model found for '{model_name}' and data_version='{data_version}'."
+        )
+
+    _, version_label = existing_version
+    registry_dir = registry_root / version_label
+    model_path = registry_dir / "model.pkl"
+    metadata_path = registry_dir / "model_metadata.json"
+    model = _load_model(model_path)
+    with metadata_path.open("r", encoding="utf-8") as metadata_file:
+        metadata = json.load(metadata_file)
+    return model, metadata

@@ -204,6 +204,23 @@ def test_pipeline_is_idempotent_for_curated_outputs(tmp_path: Path) -> None:
     pd.testing.assert_frame_equal(first_features, second_features)
 
 
+def test_pipeline_reuses_registered_models_when_training_data_is_unchanged(tmp_path: Path) -> None:
+    cfg = _build_config(tmp_path)
+
+    run_pipeline(cfg)
+    first_metrics = json.loads((cfg.processed_dir / "metrics_report.json").read_text(encoding="utf-8"))
+
+    run_pipeline(cfg)
+    second_metrics = json.loads(
+        (cfg.processed_dir / "metrics_report.json").read_text(encoding="utf-8")
+    )
+
+    assert second_metrics["churn"]["split_strategy"].endswith("_cached")
+    assert second_metrics["next_purchase_30d"]["split_strategy"].endswith("_cached")
+    assert first_metrics["churn"]["temporal_test_roc_auc"] == second_metrics["churn"]["temporal_test_roc_auc"]
+    assert first_metrics["next_purchase_30d"]["temporal_test_roc_auc"] == second_metrics["next_purchase_30d"]["temporal_test_roc_auc"]
+
+
 def test_pipeline_manifest_captures_runtime_evidence(tmp_path: Path) -> None:
     cfg = _build_config(tmp_path)
 

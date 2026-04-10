@@ -46,6 +46,7 @@ Most data portfolio projects stop at notebooks, ad hoc scripts, or a standalone 
 - runtime manifests, logs, snapshots, and retention rules
 - governed processed artifacts with validation and contracts
 - downstream consumers that read the batch core instead of replacing it
+- registry-backed model reuse when feature inputs have not changed
 
 The goal is not to simulate an enterprise platform without substance. The goal is to demonstrate sound engineering judgment in a repository small enough to inspect end-to-end.
 
@@ -246,6 +247,7 @@ Important environment variables:
 For larger raw sources such as the Brazilian E-Commerce Public Dataset (`olist_*`), `RIP_MODELING_MAX_TRAINING_ROWS` can reduce training time while preserving full-corpus scoring and downstream outputs.
 
 Curated analytics also prefer DuckDB when available, which keeps `metrics.curated` SQL-native and faster while preserving the same processed artifacts.
+Model training also reuses registered models when the feature dataset fingerprint is unchanged, which keeps repeated local and demo runs materially faster.
 
 ## Run Commands
 

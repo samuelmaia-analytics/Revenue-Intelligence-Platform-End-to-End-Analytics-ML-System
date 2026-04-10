@@ -28,3 +28,5 @@ Use DuckDB as the SQL execution engine for `metrics.curated` while keeping the b
 ## Result
 
 In the Olist-backed local run used during this upgrade, `metrics.curated` dropped to roughly 4 seconds while preserving the same output contract surface.
+
+That improvement compounds with model-registry reuse in `modeling.ml`, so repeated local/demo reruns can skip retraining when features are unchanged.

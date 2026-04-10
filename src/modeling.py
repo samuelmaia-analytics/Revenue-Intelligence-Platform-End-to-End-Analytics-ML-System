@@ -14,7 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.io_utils import atomic_write_csv, atomic_write_json
-from src.model_registry import register_model
+from src.model_registry import load_registered_model_by_data_version, register_model
 
 try:
     import joblib
@@ -204,6 +204,51 @@ def _build_business_model_summary(
     }
 
 
+def _build_cached_results(metadata: dict) -> dict:
+    metrics = metadata.get("metrics", {})
+    return {
+        "split_strategy": metrics.get("split_strategy", "registry_cache"),
+        "cv_roc_auc_mean": metrics.get("cv_roc_auc_mean"),
+        "cv_roc_auc_std": metrics.get("cv_roc_auc_std"),
+        "temporal_test_roc_auc": metrics.get("temporal_test_roc_auc"),
+        "train_size": metrics.get("train_size", 0),
+        "test_size": metrics.get("test_size", 0),
+        "fpr": [],
+        "tpr": [],
+        "precision": [],
+        "recall": [],
+    }
+
+
+def _train_or_load_model(
+    *,
+    model_name: str,
+    pipeline: Pipeline,
+    x: pd.DataFrame,
+    y: pd.Series,
+    ordered_df: pd.DataFrame,
+    output_dir: Path,
+    data_version: str,
+) -> tuple[Pipeline, dict]:
+    try:
+        cached_model, cached_metadata = load_registered_model_by_data_version(
+            output_dir,
+            model_name,
+            data_version,
+        )
+        cached_results = _build_cached_results(cached_metadata)
+        cached_results["model"] = cached_model
+        cached_results["split_strategy"] = (
+            f"{cached_results['split_strategy']}_cached"
+            if cached_results["split_strategy"]
+            else "registry_cache"
+        )
+        return cached_model, cached_results
+    except FileNotFoundError:
+        results = _evaluate_pipeline_temporal(pipeline, x, y, ordered_df)
+        return results["model"], results
+
+
 def _cap_training_frame(
     frame: pd.DataFrame,
     target_col: str,
@@ -263,15 +308,25 @@ def train_and_score_models(
             (
                 "clf",
                 RandomForestClassifier(
-                    n_estimators=280, min_samples_leaf=5, random_state=42, class_weight="balanced"
+                    n_estimators=180,
+                    min_samples_leaf=5,
+                    random_state=42,
+                    class_weight="balanced",
+                    n_jobs=-1,
                 ),
             ),
         ]
     )
-    churn_results = _evaluate_pipeline_temporal(
-        churn_pipeline, x_churn, churn_df["is_churned"], churn_df
+    churn_data_version = _compute_data_version(churn_df[feature_cols + ["is_churned"]])
+    churn_model, churn_results = _train_or_load_model(
+        model_name="churn",
+        pipeline=churn_pipeline,
+        x=x_churn,
+        y=churn_df["is_churned"],
+        ordered_df=churn_df,
+        output_dir=output_dir,
+        data_version=churn_data_version,
     )
-    churn_model = churn_results["model"]
     work_df["churn_probability"] = _positive_class_probability(churn_model, work_df[feature_cols])
 
     next_df = eval_df.dropna(subset=["next_purchase_30d"]).copy()
@@ -291,10 +346,16 @@ def train_and_score_models(
             ("clf", LogisticRegression(max_iter=1200, solver="liblinear")),
         ]
     )
-    next_purchase_results = _evaluate_pipeline_temporal(
-        next_purchase_pipeline, x_next, next_df["next_purchase_30d"], next_df
+    next_data_version = _compute_data_version(next_df[feature_cols + ["next_purchase_30d"]])
+    next_purchase_model, next_purchase_results = _train_or_load_model(
+        model_name="next_purchase_30d",
+        pipeline=next_purchase_pipeline,
+        x=x_next,
+        y=next_df["next_purchase_30d"],
+        ordered_df=next_df,
+        output_dir=output_dir,
+        data_version=next_data_version,
     )
-    next_purchase_model = next_purchase_results["model"]
     work_df["next_purchase_probability"] = _positive_class_probability(
         next_purchase_model,
         work_df[feature_cols],
@@ -302,8 +363,6 @@ def train_and_score_models(
 
     _persist_model(churn_model, output_dir / "churn_model.joblib")
     _persist_model(next_purchase_model, output_dir / "next_purchase_model.joblib")
-    churn_data_version = _compute_data_version(churn_df[feature_cols + ["is_churned"]])
-    next_data_version = _compute_data_version(next_df[feature_cols + ["next_purchase_30d"]])
 
     register_model(
         model_name="churn",
