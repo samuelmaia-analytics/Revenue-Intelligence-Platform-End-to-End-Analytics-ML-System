@@ -860,12 +860,17 @@ def _render_payments_geography(assets: dict) -> None:
 def _render_operations(assets: dict) -> None:
     logistics = assets.get("operations_scorecard", assets["logistics"])
     cohort = assets.get("retention_scorecard", assets["cohort"]).copy()
-    cohort["cohort_month"] = cohort["cohort_month"].astype(str)
+    if "cohort_month" in cohort.columns:
+        cohort["cohort_month"] = cohort["cohort_month"].astype(str)
 
     _section_band(
         "Entrega e retenção",
         "A leitura operacional não fica mais restrita ao churn. Eficiência de entrega, retenção por coorte e tendência de atraso agora convivem na mesma superfície decisória.",
     )
+    if logistics.empty:
+        st.info("Não há séries operacionais publicadas para este ciclo.")
+        _render_sql_reference()
+        return
 
     cols = st.columns(2)
     with cols[0]:
@@ -902,7 +907,16 @@ def _render_operations(assets: dict) -> None:
             fig.update_layout(title="", legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0))
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
-            st.info("Sem variação de prazo no período publicado.")
+            avg_real = float(pd.to_numeric(logistics.get("avg_delivery_days", pd.Series(dtype=float)), errors="coerce").fillna(0).mean())
+            avg_est = float(pd.to_numeric(logistics.get("estimated_delivery_days", pd.Series(dtype=float)), errors="coerce").fillna(0).mean())
+            metric_cols = st.columns(3)
+            with metric_cols[0]:
+                st.metric("Prazo real médio", f"{avg_real:.1f} dias")
+            with metric_cols[1]:
+                st.metric("Prazo prometido médio", f"{avg_est:.1f} dias")
+            with metric_cols[2]:
+                st.metric("Meses analisados", f"{len(logistics):,}")
+            st.caption("Série sem variação relevante no período publicado.")
     with cols[1]:
         st.markdown("### Taxa de atraso ao longo do tempo")
         late_series = pd.to_numeric(logistics.get("late_delivery_rate", pd.Series(dtype=float)), errors="coerce").dropna()
@@ -919,25 +933,37 @@ def _render_operations(assets: dict) -> None:
             fig.update_layout(title="")
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
-            st.info("Taxa de atraso zerada em todo o período publicado.")
+            late_mean = float(late_series.mean()) if not late_series.empty else 0.0
+            late_max = float(late_series.max()) if not late_series.empty else 0.0
+            metric_cols = st.columns(3)
+            with metric_cols[0]:
+                st.metric("Taxa média", f"{late_mean:.1%}")
+            with metric_cols[1]:
+                st.metric("Pico de atraso", f"{late_max:.1%}")
+            with metric_cols[2]:
+                st.metric("Meses analisados", f"{len(logistics):,}")
+            st.caption("Taxa de atraso estável (zerada) no período publicado.")
 
     bottom = st.columns(2)
     with bottom[0]:
         st.markdown("### Curvas de retenção por coorte")
-        fig = px.line(
-            cohort,
-            x="cohort_index",
-            y="retention_rate",
-            color="cohort_month",
-            color_discrete_sequence=px.colors.qualitative.Safe,
-            labels={
-                "cohort_index": "Mês da coorte",
-                "retention_rate": "Retenção",
-                "cohort_month": "Coorte",
-            },
-        )
-        fig.update_layout(title="", showlegend=False, margin={"l": 24, "r": 24, "t": 24, "b": 24})
-        st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        if {"cohort_index", "retention_rate", "cohort_month"}.issubset(cohort.columns) and not cohort.empty:
+            fig = px.line(
+                cohort,
+                x="cohort_index",
+                y="retention_rate",
+                color="cohort_month",
+                color_discrete_sequence=px.colors.qualitative.Safe,
+                labels={
+                    "cohort_index": "Mês da coorte",
+                    "retention_rate": "Retenção",
+                    "cohort_month": "Coorte",
+                },
+            )
+            fig.update_layout(title="", showlegend=False, margin={"l": 24, "r": 24, "t": 24, "b": 24})
+            st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        else:
+            st.info("Sem curvas de retenção por coorte disponíveis nesta publicação.")
     with bottom[1]:
         st.markdown("### Scorecard operacional mensal")
         st.dataframe(
