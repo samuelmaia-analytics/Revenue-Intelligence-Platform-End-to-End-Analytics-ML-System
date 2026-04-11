@@ -85,6 +85,9 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [releases/v1.3.2.md](releases/v1.3.2.md): partner payload consumer, incident playbooks, and stronger downstream portfolio evidence
 - [releases/v1.3.3.md](releases/v1.3.3.md): secondary export contracts, semantic warehouse coverage, and label-governance alignment
 - [releases/v1.4.0.md](releases/v1.4.0.md): governance topology, CI discipline, and SQLite-first reviewer story
+- [releases/v1.5.0.md](releases/v1.5.0.md): executive command-center expansion and recurring operational artifacts
+- [releases/v1.6.0.md](releases/v1.6.0.md): commercial packaging and handoff asset consolidation
+- [releases/v1.7.0.md](releases/v1.7.0.md): workflow governance, Streamlit deploy hardening, and LGPD-oriented privacy controls
 
 ## Reading Order
 

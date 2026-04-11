@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-04-11
+
+### Added
+
+- `docs/github_actions_workflows.md` with workflow triggers, ownership, and triage guidance
+- `docs/lgpd_data_governance.md` with LGPD-oriented privacy controls for repository and deployment operations
+- release note `docs/releases/v1.7.0.md`
+
+### Changed
+
+- governance and CI documentation now link workflow and privacy policy surfaces explicitly
+- Streamlit private deployment documentation now includes runtime pinning, linked-account checks, and access-error troubleshooting
+- issue and PR templates now request explicit privacy/LGPD impact review when relevant
+- repository governance tests now validate the new docs and the current Streamlit runtime version baseline
+
 ### Added
 
 - versioned runtime baseline in `metrics/runtime_baseline.json`

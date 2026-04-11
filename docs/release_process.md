@@ -105,3 +105,7 @@ Existing release notes live in:
 - [docs/releases/v1.3.1.md](releases/v1.3.1.md)
 - [docs/releases/v1.3.2.md](releases/v1.3.2.md)
 - [docs/releases/v1.3.3.md](releases/v1.3.3.md)
+- [docs/releases/v1.4.0.md](releases/v1.4.0.md)
+- [docs/releases/v1.5.0.md](releases/v1.5.0.md)
+- [docs/releases/v1.6.0.md](releases/v1.6.0.md)
+- [docs/releases/v1.7.0.md](releases/v1.7.0.md)
