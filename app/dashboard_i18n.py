@@ -7,7 +7,7 @@ PT_BR_I18N: dict[str, str] = {
         "Workspace executiva de analytics de receita para retenção, crescimento "
         "e orquestração de ações."
     ),
-    "header_badge": "Dashboard Executivo SaaS",
+    "header_badge": "Painel Executivo SaaS",
     "header_updated": "Atualizado em {dt}",
     "header_scope": "{customers} clientes no recorte atual",
     "filters_title": "Controles da Workspace",
@@ -37,7 +37,7 @@ PT_BR_I18N: dict[str, str] = {
     "runtime_caption": "Leitura rápida da confiabilidade do pipeline e da validade dos artefatos.",
     "manifest_status": "Status do run",
     "artifact_validation": "Validação de artefatos",
-    "freshness_status": "Freshness",
+    "freshness_status": "Atualidade dos dados",
     "retry_policy": "Política de retry",
     "backfill_window": "Janela de backfill",
     "alerts_count": "Alertas ativos",
@@ -50,10 +50,10 @@ PT_BR_I18N: dict[str, str] = {
     "tab_revenue_risk": "Receita em Risco",
     "tab_risk_growth": "Receita em Risco",
     "tab_segment_performance": "Performance por Segmento",
-    "tab_forecast": "Forecast & Cenários",
+    "tab_forecast": "Projeções e Cenários",
     "tab_reliability": "Confiabilidade Operacional",
-    "tab_governance": "Governança & Data Trust",
-    "tab_action_list": "Board de Ações",
+    "tab_governance": "Governança e Confiança de Dados",
+    "tab_action_list": "Quadro de Ações",
     "tab_business": "Impacto de Negócio",
     "revenue_at_risk": "Receita em risco",
     "revenue_at_risk_by_segment": "Receita em risco por segmento",
@@ -64,7 +64,7 @@ PT_BR_I18N: dict[str, str] = {
     "performance_by_segment": "Performance por segmento",
     "segment_performance_caption": "Leitura comparativa de valor, risco e upside por segmento.",
     "forecast_and_scenarios": "Forecast e cenários",
-    "forecast_caption": "Simulação executiva para testar impacto antes da decisão.",
+    "forecast_caption": "Simulação executiva da carteira priorizada para testar impacto antes da decisão.",
     "duplicate_rows": "Linhas duplicadas",
     "null_count": "Nulos totais",
     "run_stage_timings": "Tempos por estágio do run",
@@ -92,15 +92,17 @@ PT_BR_I18N: dict[str, str] = {
     "business_risk_customers": "clientes acima de 70% de risco",
     "business_net_impact": "Impacto simulado Top-10",
     "business_net_impact_sub": "impacto líquido em 90 dias",
-    "simulation": "Simulação de Cenário",
-    "baseline": "Baseline 90d",
-    "scenario": "Cenário 90d",
+    "simulation": "Simulação de cenário",
+    "baseline": "Base 90 dias",
+    "scenario": "Cenário 90 dias",
+    "comparison_view": "Impacto simulado em 90 dias",
+    "commercial_policy": "Política comercial",
     "delta_revenue": "Delta de receita",
     "roi": "ROI simulado",
     "ltv_cac_channel": "LTV / CAC por canal",
     "impact_customer": "Top clientes por impacto líquido simulado",
     "top_actions": "Principais ações priorizadas",
-    "revenue_proxy": "Proxy de receita",
+    "revenue_proxy": "Receita simulada (Top 10 ações)",
     "portfolio_size": "Tamanho da carteira",
     "best_channel": "Melhor canal",
     "model_drivers": "Drivers do modelo",
@@ -174,6 +176,15 @@ PT_BR_I18N: dict[str, str] = {
     "action_board_caption": "Priorize, aprove e exporte ações sem quebrar o fluxo analítico.",
     "business_caption": "Conecte performance analítica com impacto financeiro e governança semântica.",
     "refresh_hint": "Atualize os artefatos quando quiser sincronizar o dashboard com o último run.",
+    "hero_support": "Superfície executiva para pressão de receita, foco comercial e confiança operacional.",
+    "hero_revenue_pressure": "Pressão de Receita",
+    "hero_revenue_pressure_value": "{share} da carteira está em alto risco no recorte atual.",
+    "hero_commercial_focus": "Foco Comercial",
+    "hero_commercial_focus_value": "{action} é a ação dominante neste recorte.",
+    "hero_efficiency_signal": "Sinal de Eficiência",
+    "hero_efficiency_signal_value": "{channel} lidera a visão atual em LTV/CAC.",
+    "cohort_readability_caption": "Exibe de M0 a M12, com coortes de baixo sinal filtradas para melhorar a leitura.",
+    "forecast_scope_caption": "Comparação entre base e cenário aplicada apenas à carteira priorizada de 10 ações.",
 }
 
 PT_PT_I18N: dict[str, str] = {
@@ -188,9 +199,9 @@ PT_PT_I18N: dict[str, str] = {
     "tab_revenue_risk": "Receita em Risco",
     "tab_risk_growth": "Receita em Risco",
     "tab_segment_performance": "Performance por Segmento",
-    "tab_forecast": "Forecast & Cenários",
+    "tab_forecast": "Projeções e Cenários",
     "tab_reliability": "Confiabilidade Operacional",
-    "tab_governance": "Governança & Data Trust",
+    "tab_governance": "Governança e Confiança de Dados",
     "download": "Transferir ações priorizadas",
     "monitoring": "Monitorização",
     "monitoring_caption": "Confiabilidade operacional e qualidade dos modelos numa leitura rápida.",
@@ -376,6 +387,13 @@ EN_I18N: dict[str, str] = {
     "action_board_caption": "Prioritize, approve and export actions without breaking the workflow.",
     "business_caption": "Connect analytics performance to financial impact and semantic governance.",
     "refresh_hint": "Refresh the artifacts whenever you want the dashboard to reflect the latest run.",
+    "hero_support": "Executive surface for revenue pressure, commercial focus and operational confidence.",
+    "hero_revenue_pressure": "Revenue Pressure",
+    "hero_revenue_pressure_value": "{share} of the portfolio is high-risk in the current scope.",
+    "hero_commercial_focus": "Commercial Focus",
+    "hero_commercial_focus_value": "{action} is the dominant action in this scope.",
+    "hero_efficiency_signal": "Efficiency Signal",
+    "hero_efficiency_signal_value": "{channel} leads the current LTV/CAC view.",
 }
 
 I18N: dict[str, dict[str, str]] = {
@@ -386,7 +404,8 @@ I18N: dict[str, dict[str, str]] = {
 
 
 def translate(lang: str, key: str, **kwargs: object) -> str:
-    text = I18N[lang][key]
+    language_pack = I18N.get(lang, EN_I18N)
+    text = language_pack.get(key, PT_BR_I18N.get(key, key))
     return text.format(**kwargs) if kwargs else text
 
 
