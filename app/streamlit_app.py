@@ -870,41 +870,56 @@ def _render_operations(assets: dict) -> None:
     cols = st.columns(2)
     with cols[0]:
         st.markdown("### Prazo real versus prazo prometido")
-        fig = px.line(
-            logistics,
-            x="order_month",
-            y=["avg_delivery_days", "estimated_delivery_days"],
-            color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY],
-            labels={
-                "order_month": "Mês",
-                "value": "Dias",
-                "variable": "Indicador",
-                "avg_delivery_days": "Prazo real",
-                "estimated_delivery_days": "Prazo prometido",
-            },
-        )
-        fig.for_each_trace(
-            lambda trace: trace.update(
-                name={
+        delivery_cols = [col for col in ["avg_delivery_days", "estimated_delivery_days"] if col in logistics.columns]
+        has_delivery_signal = False
+        for col in delivery_cols:
+            series = pd.to_numeric(logistics[col], errors="coerce").dropna()
+            if not series.empty and not (series == 0).all():
+                has_delivery_signal = True
+                break
+        if delivery_cols and has_delivery_signal:
+            fig = px.line(
+                logistics,
+                x="order_month",
+                y=delivery_cols,
+                color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY],
+                labels={
+                    "order_month": "Mês",
+                    "value": "Dias",
+                    "variable": "Indicador",
                     "avg_delivery_days": "Prazo real",
                     "estimated_delivery_days": "Prazo prometido",
-                }.get(trace.name, trace.name)
+                },
             )
-        )
-        fig.update_layout(title="", legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0))
-        st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+            fig.for_each_trace(
+                lambda trace: trace.update(
+                    name={
+                        "avg_delivery_days": "Prazo real",
+                        "estimated_delivery_days": "Prazo prometido",
+                    }.get(trace.name, trace.name)
+                )
+            )
+            fig.update_layout(title="", legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0))
+            st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        else:
+            st.info("Sem variação de prazo no período publicado.")
     with cols[1]:
         st.markdown("### Taxa de atraso ao longo do tempo")
-        fig = px.line(
-            logistics,
-            x="order_month",
-            y="late_delivery_rate",
-            markers=True,
-            labels={"order_month": "Mês", "late_delivery_rate": "Taxa de atraso"},
-        )
-        fig.update_traces(line_color=COLOR_DANGER)
-        fig.update_layout(title="")
-        st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        late_series = pd.to_numeric(logistics.get("late_delivery_rate", pd.Series(dtype=float)), errors="coerce").dropna()
+        has_late_signal = not late_series.empty and not (late_series == 0).all()
+        if has_late_signal:
+            fig = px.line(
+                logistics,
+                x="order_month",
+                y="late_delivery_rate",
+                markers=True,
+                labels={"order_month": "Mês", "late_delivery_rate": "Taxa de atraso"},
+            )
+            fig.update_traces(line_color=COLOR_DANGER)
+            fig.update_layout(title="")
+            st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        else:
+            st.info("Taxa de atraso zerada em todo o período publicado.")
 
     bottom = st.columns(2)
     with bottom[0]:
