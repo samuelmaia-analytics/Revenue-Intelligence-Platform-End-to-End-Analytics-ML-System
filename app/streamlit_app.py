@@ -1218,18 +1218,18 @@ def main() -> None:
             f"""
             <div class="sidebar-block">
                 <div class="sidebar-title">Recorte atual</div>
-                <div class="sidebar-caption">A workspace reflete a carteira filtrada de clientes, enquanto os gráficos continuam ancorados nos marts governados.</div>
+                <div class="sidebar-caption">A visão reflete a carteira filtrada de clientes, enquanto os gráficos permanecem ancorados nos dados governados.</div>
                 <div class="sidebar-stat">
                     <div class="sidebar-stat-label">Clientes</div>
                     <div class="sidebar-stat-value">{customers['customer_id'].nunique():,}</div>
                 </div>
                 <div class="sidebar-stat">
                     <div class="sidebar-stat-label">Estado líder</div>
-                    <div class="sidebar-stat-value">{assets['executive_kpis'].get('top_state', {}).get('state', 'n/a')}</div>
+                    <div class="sidebar-stat-value">{_display_label(assets['executive_kpis'].get('top_state', {}).get('state', 'n/a'))}</div>
                 </div>
                 <div class="sidebar-stat">
                     <div class="sidebar-stat-label">Categoria líder</div>
-                    <div class="sidebar-stat-value">{assets['executive_kpis'].get('top_category', {}).get('category', 'n/a')}</div>
+                    <div class="sidebar-stat-value">{_display_label(assets['executive_kpis'].get('top_category', {}).get('category', 'n/a'))}</div>
                 </div>
             </div>
             """,
