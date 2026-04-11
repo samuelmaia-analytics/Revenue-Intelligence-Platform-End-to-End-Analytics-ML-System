@@ -8,18 +8,19 @@ import plotly.graph_objects as go
 import streamlit as st
 
 DEFAULT_THEME = {
-    "bg": "#f3f6fb",
+    "bg": "#eef3f7",
     "surface": "#ffffff",
-    "surface_alt": "#f4f8fc",
+    "surface_alt": "#f6f9fc",
     "surface_dark": "#0f172a",
-    "border": "#c7d4e5",
-    "text": "#0f172a",
-    "muted": "#2f4057",
-    "primary": "#0f5bd7",
-    "primary_dark": "#0a3f97",
+    "border": "#d6e0ea",
+    "text": "#142033",
+    "muted": "#516174",
+    "primary": "#0d5e54",
+    "primary_dark": "#083f39",
     "success": "#0f766e",
-    "warning": "#b45309",
+    "warning": "#b26a15",
     "danger": "#b91c1c",
+    "accent": "#c48a3a",
 }
 
 
@@ -32,6 +33,7 @@ def apply_chart_style(fig: go.Figure) -> go.Figure:
         paper_bgcolor=DEFAULT_THEME["surface"],
         margin={"l": 24, "r": 24, "t": 56, "b": 24},
         title_x=0.02,
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "x": 0},
     )
     fig.update_xaxes(gridcolor="#edf2f7")
     fig.update_yaxes(gridcolor="#edf2f7")
@@ -44,9 +46,9 @@ def render_global_styles() -> None:
         <style>
             .stApp {{
                 background:
-                    radial-gradient(circle at top right, rgba(15, 91, 215, 0.12), transparent 26%),
-                    radial-gradient(circle at bottom left, rgba(10, 63, 151, 0.07), transparent 28%),
-                    linear-gradient(180deg, {DEFAULT_THEME["bg"]} 0%, #e9f0f7 100%);
+                    radial-gradient(circle at top right, rgba(13, 94, 84, 0.14), transparent 24%),
+                    radial-gradient(circle at 12% 22%, rgba(196, 138, 58, 0.10), transparent 18%),
+                    linear-gradient(180deg, {DEFAULT_THEME["bg"]} 0%, #e8eef4 100%);
                 color: {DEFAULT_THEME["text"]};
                 font-family: "Aptos", "Segoe UI", sans-serif;
             }}
@@ -108,12 +110,13 @@ def render_global_styles() -> None:
                 padding: 1.6rem 1.8rem;
                 border-radius: 28px;
                 background:
-                    radial-gradient(circle at top right, rgba(255,255,255,0.14), transparent 26%),
-                    linear-gradient(135deg, rgba(10, 63, 151, 0.98), rgba(15, 91, 215, 0.92)),
-                    linear-gradient(180deg, #0b1b35, #143259);
+                    radial-gradient(circle at top right, rgba(255,255,255,0.10), transparent 24%),
+                    radial-gradient(circle at bottom left, rgba(196,138,58,0.20), transparent 18%),
+                    linear-gradient(135deg, rgba(8, 26, 41, 0.98), rgba(13, 94, 84, 0.92)),
+                    linear-gradient(180deg, #0d1826, #123646);
                 color: #f8fbff;
                 border: 1px solid rgba(255,255,255,0.08);
-                box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+                box-shadow: 0 28px 70px rgba(11, 20, 32, 0.22);
             }}
             .hero::after {{
                 content: "";
@@ -151,11 +154,11 @@ def render_global_styles() -> None:
             .hero h1 {{
                 margin: 0;
                 font-family: "Georgia", "Times New Roman", serif;
-                font-size: 2.2rem;
+                font-size: 2.45rem;
                 line-height: 1.08;
                 font-weight: 800;
                 letter-spacing: -0.03em;
-                max-width: 12ch;
+                max-width: 13ch;
             }}
             .hero p {{
                 margin: 0.65rem 0 0 0;
@@ -232,9 +235,9 @@ def render_global_styles() -> None:
             .panel {{
                 background: rgba(255,255,255,0.97);
                 border: 1px solid {DEFAULT_THEME["border"]};
-                border-radius: 20px;
-                padding: 1.15rem;
-                box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+                border-radius: 24px;
+                padding: 1.2rem;
+                box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06);
             }}
             .panel-head {{
                 display: flex;
@@ -317,14 +320,16 @@ def render_global_styles() -> None:
                 border-color: rgba(185, 28, 28, 0.18);
             }}
             .kpi-card {{
-                background: linear-gradient(180deg, {DEFAULT_THEME["surface"]}, {DEFAULT_THEME["surface_alt"]});
+                background:
+                    radial-gradient(circle at top right, rgba(13, 94, 84, 0.06), transparent 30%),
+                    linear-gradient(180deg, {DEFAULT_THEME["surface"]}, {DEFAULT_THEME["surface_alt"]});
                 border: 1px solid {DEFAULT_THEME["border"]};
-                border-radius: 20px;
-                padding: 1.05rem;
-                min-height: 126px;
-                box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+                border-radius: 24px;
+                padding: 1.15rem;
+                min-height: 138px;
+                box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
             }}
-            .kpi-title {{
+            .kpi-title, .kpi-label {{
                 color: {DEFAULT_THEME["muted"]};
                 font-size: 0.78rem;
                 text-transform: uppercase;
@@ -333,12 +338,66 @@ def render_global_styles() -> None:
             }}
             .kpi-value {{
                 color: {DEFAULT_THEME["text"]};
-                font-size: 1.85rem;
+                font-size: 2rem;
                 font-weight: 800;
                 margin-top: 0.45rem;
                 line-height: 1.1;
             }}
-            .kpi-sub {{ color: {DEFAULT_THEME["muted"]}; font-size: 0.86rem; margin-top: 0.35rem; }}
+            .kpi-sub, .kpi-caption {{ color: {DEFAULT_THEME["muted"]}; font-size: 0.86rem; margin-top: 0.35rem; line-height: 1.45; }}
+            .story-grid {{
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.9rem;
+                margin: 1rem 0 1.35rem 0;
+            }}
+            .story-card {{
+                padding: 1rem 1.05rem;
+                border-radius: 20px;
+                background: rgba(255,255,255,0.97);
+                border: 1px solid {DEFAULT_THEME["border"]};
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+            }}
+            .story-card.kicker {{
+                background: linear-gradient(180deg, rgba(13,94,84,0.10), rgba(255,255,255,0.98));
+            }}
+            .story-label {{
+                color: {DEFAULT_THEME["muted"]};
+                font-size: 0.74rem;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                font-weight: 800;
+            }}
+            .story-value {{
+                color: {DEFAULT_THEME["text"]};
+                font-size: 1.2rem;
+                font-weight: 800;
+                margin-top: 0.28rem;
+                line-height: 1.2;
+            }}
+            .story-copy {{
+                color: {DEFAULT_THEME["muted"]};
+                font-size: 0.88rem;
+                margin-top: 0.3rem;
+                line-height: 1.45;
+            }}
+            .section-band {{
+                padding: 1rem 1.15rem;
+                border-radius: 22px;
+                border: 1px solid {DEFAULT_THEME["border"]};
+                background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,248,251,0.98));
+                margin: 0.9rem 0 1.2rem 0;
+            }}
+            .section-band-title {{
+                font-size: 1rem;
+                font-weight: 800;
+                color: {DEFAULT_THEME["text"]};
+            }}
+            .section-band-copy {{
+                margin-top: 0.2rem;
+                color: {DEFAULT_THEME["muted"]};
+                line-height: 1.5;
+                font-size: 0.9rem;
+            }}
             .insight-list {{ margin: 0; padding-left: 1rem; color: {DEFAULT_THEME["text"]}; }}
             .insight-list li {{ margin-bottom: 0.55rem; line-height: 1.45; }}
             .empty-state {{
@@ -421,6 +480,7 @@ def render_global_styles() -> None:
             [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
                 background: {DEFAULT_THEME["primary"]} !important;
                 border-color: {DEFAULT_THEME["primary"]} !important;
+                box-shadow: 0 12px 24px rgba(13, 94, 84, 0.18);
             }}
             [data-testid="stTabs"] button[role="tab"][aria-selected="true"] p {{ color: #ffffff !important; }}
             .stButton > button, .stDownloadButton > button {{
@@ -476,8 +536,9 @@ def render_global_styles() -> None:
             }}
             [data-testid="stDataFrame"] {{
                 border: 1px solid {DEFAULT_THEME["border"]};
-                border-radius: 18px;
+                border-radius: 20px;
                 overflow: hidden;
+                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
             }}
             [data-testid="stDataFrame"] * {{
                 color: {DEFAULT_THEME["text"]} !important;
@@ -558,6 +619,7 @@ def render_global_styles() -> None:
                 .hero-grid {{ grid-template-columns: 1fr; }}
                 .hero-meta {{ grid-template-columns: 1fr; }}
                 .hero-brief {{ grid-template-columns: 1fr; }}
+                .story-grid {{ grid-template-columns: 1fr; }}
                 .hero-copy {{ gap: 0.9rem; }}
                 .status-strip {{ grid-template-columns: 1fr 1fr; }}
                 .panel-head {{ flex-direction: column; }}
@@ -692,18 +754,22 @@ def render_badge_table_panel(
     caption: str,
     frame: pd.DataFrame,
     badge_columns: list[str] | None = None,
+    max_rows: int = 200,
 ) -> None:
     render_panel_header(eyebrow, title, caption)
     badge_columns = badge_columns or []
     if frame.empty:
         st.caption("No rows available.")
         return
+    display_frame = frame.head(max_rows)
+    if len(frame) > len(display_frame):
+        st.caption(f"Rows displayed: {len(display_frame):,} / {len(frame):,}")
 
-    header_html = "".join(f"<th>{escape(str(column))}</th>" for column in frame.columns)
+    header_html = "".join(f"<th>{escape(str(column))}</th>" for column in display_frame.columns)
     rows_html: list[str] = []
-    for _, row in frame.iterrows():
+    for _, row in display_frame.iterrows():
         cells: list[str] = []
-        for column in frame.columns:
+        for column in display_frame.columns:
             value = "" if pd.isna(row[column]) else str(row[column])
             if column in badge_columns:
                 tone_class = _badge_tone(value)

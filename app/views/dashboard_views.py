@@ -30,6 +30,28 @@ from src.config import PipelineConfig
 from src.reporting import simulate_action_portfolio
 from src.writeback import append_approved_actions
 
+VALUE_TRANSLATIONS = {
+    "Upsell Offer": "Oferta de Upsell",
+    "Nurture": "Nutrição",
+    "Retention Campaign": "Campanha de Retenção",
+    "Reduce Acquisition Spend": "Reduzir Aquisição",
+    "Credit Card": "Cartão de Crédito",
+    "Debit Card": "Cartão de Débito",
+    "Other": "Outros",
+}
+
+
+def _translate_value(value: object) -> object:
+    if isinstance(value, str):
+        return VALUE_TRANSLATIONS.get(value, value)
+    return value
+
+
+def _display_value(lang: str, value: object) -> object:
+    if lang == "pt-br":
+        return _translate_value(value)
+    return value
+
 
 def _style_priority_board(board: pd.DataFrame) -> pd.io.formats.style.Styler:
     styled = board.style
@@ -144,7 +166,7 @@ def build_sidebar(
                 </div>
                 <div class="sidebar-stat">
                     <div class="sidebar-stat-label">{t(lang, "top_action_mix")}</div>
-                    <div class="sidebar-stat-value">{recommendations["recommended_action"].mode().iat[0]}</div>
+                    <div class="sidebar-stat-value">{_display_value(lang, recommendations["recommended_action"].mode().iat[0])}</div>
                 </div>
             </div>
             """,
@@ -168,6 +190,8 @@ def render_header(lang: str, filtered_df: pd.DataFrame, format_currency_fn: Any)
     strongest_channel = (
         filtered_df.groupby("channel")["ltv_cac_ratio"].mean().sort_values(ascending=False).index[0]
     )
+    top_action_display = _display_value(lang, top_action)
+    strongest_channel_display = _display_value(lang, strongest_channel)
     st.markdown(
         f"""
         <div class="hero">
@@ -178,21 +202,21 @@ def render_header(lang: str, filtered_df: pd.DataFrame, format_currency_fn: Any)
                     <h1>{st.session_state.get("rip_brand_hero_title", t(lang, "header_title"))}</h1>
                     <p>{t(lang, "header_sub")}</p>
                     <div class="hero-support">
-                        Executive decision surface for revenue pressure, commercial focus and operating trust.
+                        {t(lang, "hero_support")}
                     </div>
                     </div>
                     <div class="hero-brief">
                         <div class="hero-brief-card">
-                            <div class="hero-brief-label">Revenue Pressure</div>
-                            <div class="hero-brief-value">{high_risk_share} high-risk share in the current portfolio.</div>
+                            <div class="hero-brief-label">{t(lang, "hero_revenue_pressure")}</div>
+                            <div class="hero-brief-value">{t(lang, "hero_revenue_pressure_value", share=high_risk_share)}</div>
                         </div>
                         <div class="hero-brief-card">
-                            <div class="hero-brief-label">Commercial Focus</div>
-                            <div class="hero-brief-value">{top_action} is the dominant action in this cut.</div>
+                            <div class="hero-brief-label">{t(lang, "hero_commercial_focus")}</div>
+                            <div class="hero-brief-value">{t(lang, "hero_commercial_focus_value", action=top_action_display)}</div>
                         </div>
                         <div class="hero-brief-card">
-                            <div class="hero-brief-label">Efficiency Signal</div>
-                            <div class="hero-brief-value">{strongest_channel} leads the active view on LTV/CAC.</div>
+                            <div class="hero-brief-label">{t(lang, "hero_efficiency_signal")}</div>
+                            <div class="hero-brief-value">{t(lang, "hero_efficiency_signal_value", channel=strongest_channel_display)}</div>
                         </div>
                     </div>
                 </div>
@@ -377,7 +401,7 @@ def render_leadership_notes(
             customer=int(top_customer["customer_id"]),
             impact=format_currency_fn(float(top_customer["potential_impact"]), lang),
         ),
-        t(lang, "prio_line", action=top_action["action"], pct=top_action["pct"]),
+        t(lang, "prio_line", action=_display_value(lang, top_action["action"]), pct=top_action["pct"]),
     ]
     if insight_draft:
         lines = [str(insight_draft.get("headline", "")), *insight_draft.get("recommended_actions", []), *insight_draft.get("anomalies", [])[:1]]
@@ -515,7 +539,7 @@ def render_overview_tab(
                 },
                 {
                     "label": t(lang, "best_channel"),
-                    "value": str(best_channel.get("channel", "n/a")),
+                    "value": str(_display_value(lang, best_channel.get("channel", "n/a"))),
                     "subtitle": f"{float(best_channel.get('ltv_cac_ratio', 0)):.2f}",
                 },
             ]
@@ -560,26 +584,45 @@ def render_overview_tab(
         )
 
     cohort_view = cohort.copy()
-    cohort_view["retention_pct"] = cohort_view["retention_rate"] * 100
+    cohort_view = cohort_view.copy()
+    cohort_view = cohort_view[cohort_view["cohort_index"].between(0, 12)].copy()
+    if "cohort_size" in cohort_view.columns:
+        cohort_view = cohort_view[cohort_view["cohort_size"] >= 25].copy()
+    cohort_view["retention_pct"] = (cohort_view["retention_rate"] * 100).round(1)
     heatmap_frame = cohort_view.pivot(
         index="cohort_month", columns="cohort_index", values="retention_pct"
     ).sort_index()
-    fig_heatmap = px.imshow(
-        heatmap_frame,
-        aspect="auto",
-        text_auto=".0f",
+    heatmap_text = heatmap_frame.apply(
+        lambda column: column.map(lambda value: "" if pd.isna(value) or value < 0.1 else f"{value:.1f}%")
+    )
+    fig_heatmap = go.Figure(
+        data=[
+            go.Heatmap(
+                z=heatmap_frame.values,
+                x=heatmap_frame.columns.tolist(),
+                y=heatmap_frame.index.tolist(),
+                text=heatmap_text.values,
+                texttemplate="%{text}",
+                textfont={"size": 10},
+                colorscale=[[0.0, "#eef3f7"], [0.08, "#d9e7f5"], [0.2, "#7dd3fc"], [1.0, "#0a3f97"]],
+                colorbar={"title": t(lang, "retention")},
+                hovertemplate=(
+                    f"{t(lang, 'cohort_label')}: %{{y}}<br>"
+                    f"{t(lang, 'months_since')}: %{{x}}<br>"
+                    f"{t(lang, 'retention')}: %{{z:.1f}}%<extra></extra>"
+                ),
+            )
+        ]
+    )
+    fig_heatmap.update_layout(
         title=t(lang, "cohort_retention"),
-        labels={
-            "x": t(lang, "months_since"),
-            "y": t(lang, "cohort_label"),
-            "color": t(lang, "retention"),
-        },
-        color_continuous_scale=[[0, "#e2e8f0"], [0.5, "#7dd3fc"], [1, "#0a3f97"]],
+        xaxis_title=t(lang, "months_since"),
+        yaxis_title=t(lang, "cohort_label"),
     )
     render_chart_panel(
         eyebrow=t(lang, "chart_context"),
         title=t(lang, "cohort_retention"),
-        caption=t(lang, "summary_caption"),
+        caption=t(lang, "cohort_readability_caption"),
         fig=fig_heatmap,
     )
 
@@ -632,7 +675,7 @@ def render_risk_tab(
             },
             {
                 "label": t(lang, "risk_priority_action"),
-                "value": str(high_risk["recommended_action"].mode().iat[0]),
+                "value": str(_display_value(lang, high_risk["recommended_action"].mode().iat[0])),
                 "subtitle": t(lang, "action_board_caption"),
             },
         ]
@@ -672,7 +715,35 @@ def render_risk_tab(
             fig=fig_next,
         )
 
-    top_accounts = high_risk[
+    controls = st.columns(3, gap="medium")
+    with controls[0]:
+        max_rows = st.selectbox(
+            "Top rows" if lang == "en" else "Top linhas",
+            [50, 100, 200, 500],
+            index=1,
+            key="risk_top_accounts_max_rows",
+        )
+    with controls[1]:
+        min_risk = st.slider(
+            "Minimum churn probability" if lang == "en" else "Probabilidade mínima de churn",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.7,
+            step=0.05,
+            key="risk_top_accounts_min_churn",
+        )
+    with controls[2]:
+        customer_query = st.text_input(
+            "Customer ID filter" if lang == "en" else "Filtro por ID do cliente",
+            value="",
+            key="risk_top_accounts_customer_query",
+            placeholder="25422",
+        ).strip()
+
+    top_accounts = portfolio[portfolio["churn_probability"] >= min_risk].copy()
+    if top_accounts.empty:
+        top_accounts = portfolio.copy()
+    top_accounts = top_accounts[
         [
             "customer_id",
             "segment",
@@ -683,12 +754,17 @@ def render_risk_tab(
             "potential_impact",
         ]
     ].sort_values("revenue_at_risk", ascending=False)
+    if customer_query:
+        top_accounts = top_accounts[
+            top_accounts["customer_id"].astype(str).str.contains(customer_query, na=False)
+        ]
     render_badge_table_panel(
         eyebrow=t(lang, "table_context"),
         title=t(lang, "top_accounts_at_risk"),
         caption=t(lang, "risk_caption"),
         frame=top_accounts,
         badge_columns=["recommended_action", "segment"],
+        max_rows=int(max_rows),
     )
 
 def render_segment_performance_tab(
@@ -730,7 +806,9 @@ def render_segment_performance_tab(
             },
             {
                 "label": t(lang, "best_channel"),
-                "value": str(channel_eff.sort_values("ltv_cac_ratio", ascending=False).iloc[0]["channel"]),
+                "value": str(
+                    _display_value(lang, channel_eff.sort_values("ltv_cac_ratio", ascending=False).iloc[0]["channel"])
+                ),
                 "subtitle": f"{float(channel_eff['ltv_cac_ratio'].max()):.2f}",
             },
         ]
@@ -817,10 +895,11 @@ def render_forecast_tab(
     controls = st.columns(2, gap="large")
     for idx, (action_name, policy) in enumerate(policy_defaults.items()):
         with controls[idx % 2]:
-            st.markdown(f"**{action_name}**")
+            display_action_name = str(_translate_value(action_name)) if lang == "pt-br" else action_name
+            st.markdown(f"**{display_action_name}**")
             overrides[action_name] = {
                 "uplift_rate": st.slider(
-                    f"{action_name} | {t(lang, 'uplift_rate')}",
+                    f"{display_action_name} | {t(lang, 'uplift_rate')}",
                     0.0,
                     1.0,
                     float(policy.get("uplift_rate", 0.1)),
@@ -828,7 +907,7 @@ def render_forecast_tab(
                     key=f"forecast_uplift_{action_name}",
                 ),
                 "cost_rate": st.slider(
-                    f"{action_name} | {t(lang, 'cost_rate')}",
+                    f"{display_action_name} | {t(lang, 'cost_rate')}",
                     0.0,
                     0.5,
                     float(policy.get("cost_rate", 0.05)),
@@ -840,24 +919,46 @@ def render_forecast_tab(
     scenario_actions = simulate_action_portfolio(
         recommendations_df=filtered_df, top_n=10, policy_overrides=overrides
     )
+    comparison_frame = pd.DataFrame(
+        {
+            "cenario": [t(lang, "baseline"), t(lang, "scenario")],
+            "receita": [
+                float(scenario_actions["baseline_revenue_90d"].sum()),
+                float(scenario_actions["scenario_revenue_90d"].sum()),
+            ],
+        }
+    )
     fig_forecast = go.Figure(
         data=[
-            go.Bar(name=t(lang, "baseline"), x=["90d"], y=[scenario_actions["baseline_revenue_90d"].sum()], marker_color="#94a3b8"),
-            go.Bar(name=t(lang, "scenario"), x=["90d"], y=[scenario_actions["scenario_revenue_90d"].sum()], marker_color="#0f5bd7"),
+            go.Bar(
+                x=comparison_frame["cenario"],
+                y=comparison_frame["receita"],
+                marker_color=["#94a3b8", "#0f5bd7"],
+                text=[format_currency_fn(value, lang) for value in comparison_frame["receita"]],
+                textposition="outside",
+            ),
         ]
     )
-    fig_forecast.update_layout(barmode="group", title=t(lang, "forecast_and_scenarios"))
+    fig_forecast.update_layout(
+        showlegend=False,
+        title=t(lang, "comparison_view"),
+        xaxis_title=t(lang, "simulation"),
+        yaxis_title=t(lang, "revenue_proxy"),
+    )
     render_chart_panel(
         eyebrow=t(lang, "chart_context"),
-        title=t(lang, "forecast_and_scenarios"),
-        caption=t(lang, "forecast_caption"),
+        title=t(lang, "comparison_view"),
+        caption=t(lang, "forecast_scope_caption") if lang == "pt-br" else t(lang, "forecast_caption"),
         fig=fig_forecast,
     )
+    scenario_actions_view = scenario_actions.copy()
+    if lang == "pt-br" and "recommended_action" in scenario_actions_view.columns:
+        scenario_actions_view["recommended_action"] = scenario_actions_view["recommended_action"].map(_translate_value)
     render_badge_table_panel(
         eyebrow=t(lang, "table_context"),
-        title=t(lang, "scenario"),
+        title=t(lang, "commercial_policy"),
         caption=t(lang, "forecast_caption"),
-        frame=scenario_actions[
+        frame=scenario_actions_view[
             [
                 "customer_id",
                 "recommended_action",
@@ -870,11 +971,14 @@ def render_forecast_tab(
         badge_columns=["recommended_action"],
     )
     if not top10.empty:
+        top10_view = top10.copy()
+        if lang == "pt-br" and "action" in top10_view.columns:
+            top10_view["action"] = top10_view["action"].map(_translate_value)
         render_dataframe_panel(
             eyebrow=t(lang, "table_context"),
             title=t(lang, "top_actions"),
             caption=t(lang, "forecast_caption"),
-            frame=top10,
+            frame=top10_view,
             height=360,
         )
 
@@ -1062,7 +1166,7 @@ def render_action_tab(
             },
             {
                 "label": t(lang, "top_action_mix"),
-                "value": str(filtered_df["recommended_action"].mode().iat[0]),
+                "value": str(_display_value(lang, filtered_df["recommended_action"].mode().iat[0])),
                 "subtitle": t(lang, "actions_help"),
             },
         ]
