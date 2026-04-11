@@ -16,6 +16,13 @@ from app.dashboard_data import filter_customers, load_processed_assets, refresh_
 from app.dashboard_metrics import format_currency
 from app.ui.primitives import apply_chart_style, render_global_styles
 
+COLOR_PRIMARY = "#0F766E"
+COLOR_SECONDARY = "#0F5BD7"
+COLOR_NEUTRAL = "#64748B"
+COLOR_ACCENT = "#F59E0B"
+COLOR_DANGER = "#B91C1C"
+COLOR_SURFACE_BLUE = "#DDEAFB"
+
 SQL_SNIPPETS = {
     "overview": [
         ("Board de Receita", PROJECT_ROOT / "sql" / "olist" / "views" / "revenue_board.sql"),
@@ -374,7 +381,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
                 y="total_revenue",
                 title="Trajetória de receita ao longo do ciclo do marketplace",
             )
-            fig.update_traces(line_color="#0d5e54", fillcolor="rgba(13,94,84,0.18)")
+            fig.update_traces(line_color=COLOR_SECONDARY, fillcolor="rgba(15, 91, 215, 0.16)")
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
             st.info("Série mensal indisponível no artefato publicado.")
@@ -403,7 +410,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             }
             if "avg_review_score" in categories.columns:
                 chart_kwargs["color"] = "avg_review_score"
-                chart_kwargs["color_continuous_scale"] = ["#d9ede8", "#0d5e54"]
+                chart_kwargs["color_continuous_scale"] = [COLOR_SURFACE_BLUE, COLOR_PRIMARY]
             fig = px.bar(**chart_kwargs)
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
@@ -418,7 +425,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             }
             if "late_delivery_rate" in states.columns:
                 chart_kwargs["color"] = "late_delivery_rate"
-                chart_kwargs["color_continuous_scale"] = ["#e6f2ef", "#c48a3a", "#8c2f2f"]
+                chart_kwargs["color_continuous_scale"] = [COLOR_SURFACE_BLUE, COLOR_ACCENT, COLOR_DANGER]
             fig = px.bar(**chart_kwargs)
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
@@ -433,7 +440,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
                 y="revenue_proxy",
                 color="churn_risk_band",
                 title="Exposição de receita por ação e faixa de churn",
-                color_discrete_map={"Baixo": "#0d5e54", "Médio": "#c48a3a", "Alto": "#8c2f2f"},
+                color_discrete_map={"Baixo": COLOR_PRIMARY, "Médio": COLOR_ACCENT, "Alto": COLOR_DANGER},
             )
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
@@ -477,7 +484,7 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
             size="ltv_proxy",
             hover_data=["customer_state", "segment", "avg_review_score"],
             title="Valor, recência e prioridade de ação",
-            color_discrete_sequence=["#0d5e54", "#c48a3a", "#194a8d", "#8c2f2f"],
+            color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY, COLOR_NEUTRAL, COLOR_DANGER],
         )
         fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
@@ -488,7 +495,7 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
             y="customers",
             title="Distribuição dos segmentos comportamentais",
             color="customers",
-            color_continuous_scale=["#edf5f3", "#0d5e54"],
+            color_continuous_scale=[COLOR_SURFACE_BLUE, COLOR_SECONDARY],
         )
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
 
@@ -554,7 +561,7 @@ def _render_commercial(assets: dict) -> None:
             names="channel",
             title="Revenue mix by payment channel",
             hole=0.62,
-            color_discrete_sequence=["#0d5e54", "#c48a3a", "#194a8d", "#8d6e63", "#d3dde6"],
+            color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY, COLOR_NEUTRAL, COLOR_ACCENT, "#D3DDE6"],
         )
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
@@ -564,7 +571,7 @@ def _render_commercial(assets: dict) -> None:
             y="revenue_share_pct",
             title="Category participation in total revenue",
             color="avg_review_score",
-            color_continuous_scale=["#e6f2ef", "#0d5e54"],
+            color_continuous_scale=[COLOR_SURFACE_BLUE, COLOR_PRIMARY],
         )
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
 
@@ -698,7 +705,7 @@ def _render_payments_geography(assets: dict) -> None:
                 y="total_revenue",
                 color="on_time_delivery_rate",
                 title="Receita por meio de pagamento com qualidade de entrega",
-                color_continuous_scale=["#8c2f2f", "#c48a3a", "#0d5e54"],
+                color_continuous_scale=[COLOR_DANGER, COLOR_ACCENT, COLOR_PRIMARY],
             )
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
@@ -745,7 +752,7 @@ def _render_operations(assets: dict) -> None:
             x="order_month",
             y=["avg_delivery_days", "estimated_delivery_days"],
             title="Prazo real versus prazo prometido",
-            color_discrete_sequence=["#0d5e54", "#c48a3a"],
+            color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY],
         )
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
@@ -756,7 +763,7 @@ def _render_operations(assets: dict) -> None:
             title="Taxa de atraso ao longo do tempo",
             markers=True,
         )
-        fig.update_traces(line_color="#8c2f2f")
+        fig.update_traces(line_color=COLOR_DANGER)
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
 
     bottom = st.columns(2)

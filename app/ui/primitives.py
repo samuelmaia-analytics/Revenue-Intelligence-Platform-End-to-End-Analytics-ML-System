@@ -17,10 +17,11 @@ DEFAULT_THEME = {
     "muted": "#516174",
     "primary": "#0d5e54",
     "primary_dark": "#083f39",
+    "secondary": "#0f5bd7",
     "success": "#0f766e",
     "warning": "#b26a15",
     "danger": "#b91c1c",
-    "accent": "#c48a3a",
+    "accent": "#f59e0b",
 }
 
 
@@ -47,7 +48,7 @@ def render_global_styles() -> None:
             .stApp {{
                 background:
                     radial-gradient(circle at top right, rgba(13, 94, 84, 0.14), transparent 24%),
-                    radial-gradient(circle at 12% 22%, rgba(196, 138, 58, 0.10), transparent 18%),
+                    radial-gradient(circle at 12% 22%, rgba(15, 91, 215, 0.10), transparent 18%),
                     linear-gradient(180deg, {DEFAULT_THEME["bg"]} 0%, #e8eef4 100%);
                 color: {DEFAULT_THEME["text"]};
                 font-family: "Aptos", "Segoe UI", sans-serif;
@@ -111,7 +112,7 @@ def render_global_styles() -> None:
                 border-radius: 28px;
                 background:
                     radial-gradient(circle at top right, rgba(255,255,255,0.10), transparent 24%),
-                    radial-gradient(circle at bottom left, rgba(196,138,58,0.20), transparent 18%),
+                    radial-gradient(circle at bottom left, rgba(15,91,215,0.20), transparent 18%),
                     linear-gradient(135deg, rgba(8, 26, 41, 0.98), rgba(13, 94, 84, 0.92)),
                     linear-gradient(180deg, #0d1826, #123646);
                 color: #f8fbff;
