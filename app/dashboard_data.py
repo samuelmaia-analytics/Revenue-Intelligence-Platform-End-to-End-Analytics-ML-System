@@ -73,6 +73,35 @@ def _normalize_columns(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
+def _apply_aliases(
+    frame: pd.DataFrame,
+    alias_map: dict[str, tuple[str, ...]],
+) -> pd.DataFrame:
+    for canonical, aliases in alias_map.items():
+        frame = _ensure_column_alias(frame, canonical, aliases)
+    return frame
+
+
+def _ensure_columns(
+    frame: pd.DataFrame,
+    columns: tuple[str, ...],
+) -> pd.DataFrame:
+    for column in columns:
+        if column not in frame.columns:
+            frame[column] = pd.Series(dtype="object")
+    return frame
+
+
+def _coerce_numeric_columns(
+    frame: pd.DataFrame,
+    columns: tuple[str, ...],
+) -> pd.DataFrame:
+    for column in columns:
+        if column in frame.columns:
+            frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    return frame
+
+
 @st.cache_data(show_spinner=False)
 def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
     processed_dir = Path(processed_dir_str)
@@ -125,24 +154,6 @@ def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
         "cohort": pd.read_csv(processed_dir / "cohort_retention.csv"),
     }
 
-    # Keep dashboard consumers resilient to schema drift in processed artifacts.
-    assets["customers"] = _normalize_columns(assets["customers"])
-    assets["customers"] = _ensure_column_alias(
-        assets["customers"],
-        "customer_state",
-        ("state", "customer_uf", "uf", "customer_region"),
-    )
-    assets["customers"] = _ensure_column_alias(
-        assets["customers"],
-        "segment",
-        ("customer_segment", "rfm_segment", "segmento"),
-    )
-    assets["customers"] = _ensure_column_alias(
-        assets["customers"],
-        "recommended_action",
-        ("action", "next_best_action", "recommendation", "recommended_actions"),
-    )
-
     optional_frames = {
         "sellers": "seller_analytics.csv",
         "products": "product_analytics.csv",
@@ -175,6 +186,98 @@ def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
     assets["approved_actions"] = (
         pd.read_csv(approved_actions_path) if approved_actions_path.exists() else pd.DataFrame()
     )
+
+    # Keep dashboard consumers resilient to schema drift in processed artifacts.
+    frame_aliases: dict[str, dict[str, tuple[str, ...]]] = {
+        "customers": {
+            "customer_state": ("state", "customer_uf", "uf", "customer_region"),
+            "segment": ("customer_segment", "rfm_segment", "segmento"),
+            "recommended_action": ("action", "next_best_action", "recommendation", "recommended_actions"),
+        },
+        "summary_layer": {
+            "order_month": ("month", "period", "snapshot_month"),
+        },
+        "payments": {
+            "channel": ("payment_type", "payment_channel", "payment_method"),
+        },
+        "payment_scorecard": {
+            "channel": ("payment_type", "payment_channel", "payment_method"),
+        },
+        "geography": {
+            "state": ("customer_state", "uf", "state_code"),
+        },
+        "state_scorecard": {
+            "state": ("customer_state", "uf", "state_code"),
+        },
+        "cohort": {
+            "cohort_month": ("cohort", "cohort_period"),
+        },
+        "retention_scorecard": {
+            "cohort_month": ("cohort", "cohort_period"),
+        },
+    }
+    frame_required_columns: dict[str, tuple[str, ...]] = {
+        "customers": (
+            "customer_id",
+            "customer_state",
+            "segment",
+            "recommended_action",
+            "recency_days",
+            "frequency",
+            "monetary",
+            "ltv_proxy",
+            "churn_probability",
+            "next_purchase_probability",
+            "avg_review_score",
+        ),
+        "summary_layer": ("order_month", "total_revenue"),
+        "categories": ("category", "total_revenue", "total_orders", "avg_ticket", "avg_review_score", "late_delivery_rate", "revenue_share_pct", "category_tier"),
+        "category_scorecard": ("category", "total_revenue", "total_orders", "avg_ticket", "avg_review_score", "late_delivery_rate", "revenue_share_pct", "category_tier"),
+        "sellers": ("seller_id", "seller_state", "seller_tier", "total_revenue", "total_orders", "avg_review_score", "late_delivery_rate"),
+        "seller_scorecard": ("seller_id", "seller_state", "seller_tier", "total_revenue", "total_orders", "avg_review_score", "late_delivery_rate"),
+        "products": ("product_id", "category_name_english", "total_revenue", "total_orders", "avg_ticket", "avg_review_score"),
+        "payments": ("channel", "total_revenue", "on_time_delivery_rate"),
+        "payment_scorecard": ("channel", "total_revenue", "on_time_delivery_rate"),
+        "geography": ("state", "state_tier", "total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"),
+        "state_scorecard": ("state", "state_tier", "total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"),
+        "logistics": ("order_month", "total_orders", "avg_delivery_days", "estimated_delivery_days", "median_delivery_days", "late_delivery_rate", "on_time_delivery_rate", "avg_review_score"),
+        "operations_scorecard": ("order_month", "total_orders", "avg_delivery_days", "estimated_delivery_days", "median_delivery_days", "late_delivery_rate", "on_time_delivery_rate", "avg_review_score"),
+        "cohort": ("cohort_month", "cohort_index", "retention_rate"),
+        "retention_scorecard": ("cohort_month", "cohort_index", "retention_rate"),
+        "rfm": ("segment",),
+        "customer_segment_health": ("recommended_action", "revenue_proxy", "churn_risk_band"),
+        "executive_scorecard": ("repeat_revenue_share", "m1_retention_rate", "seller_top10_revenue_share", "category_top10_revenue_share"),
+    }
+    frame_numeric_columns: dict[str, tuple[str, ...]] = {
+        "customers": ("recency_days", "frequency", "monetary", "ltv_proxy", "churn_probability", "next_purchase_probability", "avg_review_score"),
+        "summary_layer": ("total_revenue",),
+        "categories": ("total_revenue", "total_orders", "avg_ticket", "avg_review_score", "late_delivery_rate", "revenue_share_pct"),
+        "category_scorecard": ("total_revenue", "total_orders", "avg_ticket", "avg_review_score", "late_delivery_rate", "revenue_share_pct"),
+        "sellers": ("total_revenue", "total_orders", "avg_review_score", "late_delivery_rate"),
+        "seller_scorecard": ("total_revenue", "total_orders", "avg_review_score", "late_delivery_rate"),
+        "products": ("total_revenue", "total_orders", "avg_ticket", "avg_review_score"),
+        "payments": ("total_revenue", "on_time_delivery_rate"),
+        "payment_scorecard": ("total_revenue", "on_time_delivery_rate"),
+        "geography": ("total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"),
+        "state_scorecard": ("total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"),
+        "logistics": ("total_orders", "avg_delivery_days", "estimated_delivery_days", "median_delivery_days", "late_delivery_rate", "on_time_delivery_rate", "avg_review_score"),
+        "operations_scorecard": ("total_orders", "avg_delivery_days", "estimated_delivery_days", "median_delivery_days", "late_delivery_rate", "on_time_delivery_rate", "avg_review_score"),
+        "cohort": ("cohort_index", "retention_rate"),
+        "retention_scorecard": ("cohort_index", "retention_rate"),
+        "customer_segment_health": ("revenue_proxy",),
+        "executive_scorecard": ("repeat_revenue_share", "m1_retention_rate", "seller_top10_revenue_share", "category_top10_revenue_share"),
+    }
+    for key, value in list(assets.items()):
+        if not isinstance(value, pd.DataFrame):
+            continue
+        frame = _normalize_columns(value.copy())
+        if key in frame_aliases:
+            frame = _apply_aliases(frame, frame_aliases[key])
+        if key in frame_required_columns:
+            frame = _ensure_columns(frame, frame_required_columns[key])
+        if key in frame_numeric_columns:
+            frame = _coerce_numeric_columns(frame, frame_numeric_columns[key])
+        assets[key] = frame
     return assets
 
 
