@@ -554,6 +554,7 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
 
     cols = st.columns(2)
     with cols[0]:
+        st.markdown("### Valor, recência e prioridade de ação")
         fig = px.scatter(
             filtered_customers,
             x="recency_days",
@@ -561,7 +562,6 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
             color="recommended_action",
             size="ltv_proxy",
             hover_data=["customer_state", "segment", "avg_review_score"],
-            title="Valor, recência e prioridade de ação",
             color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY, COLOR_NEUTRAL, COLOR_DANGER],
             labels={
                 "recency_days": "Recência (dias)",
@@ -571,7 +571,13 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
             },
         )
         fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
-        st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        fig = apply_chart_style(fig)
+        fig.update_layout(
+            title="",
+            legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0),
+            margin={"l": 24, "r": 24, "t": 36, "b": 24},
+        )
+        st.plotly_chart(fig, use_container_width=True)
     with cols[1]:
         fig = px.bar(
             rfm,
