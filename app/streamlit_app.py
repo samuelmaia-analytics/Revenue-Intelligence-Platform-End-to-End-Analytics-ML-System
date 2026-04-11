@@ -105,6 +105,7 @@ PTBR_COLUMN_LABELS = {
     "avg_review_score": "Nota média",
     "channel": "Canal",
     "total_revenue": "Receita total",
+    "unique_customers": "Clientes",
     "total_orders": "Pedidos",
     "avg_ticket": "Ticket médio",
     "late_delivery_rate": "Taxa de atraso",
@@ -207,7 +208,12 @@ def _format_pct(value: float) -> str:
 
 
 def _ptbr_value(value: object) -> object:
+    if pd.isna(value):
+        return "n/a"
     if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"", "unknown", "undefined", "none", "null", "nan"}:
+            return "n/a"
         return PTBR_VALUE_LABELS.get(value, value)
     return value
 
@@ -572,8 +578,8 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
             x="rfm_segment",
             y="customers",
             title="Distribuição dos segmentos comportamentais",
-            color="customers",
-            color_continuous_scale=[COLOR_SURFACE_BLUE, COLOR_SECONDARY],
+            color_discrete_sequence=[COLOR_SECONDARY],
+            labels={"rfm_segment": "Segmento comportamental", "customers": "Clientes"},
         )
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
 
@@ -780,7 +786,7 @@ def _render_payments_geography(assets: dict) -> None:
     states = assets.get("state_scorecard", assets["geography"]).head(15)
     if "channel" in payments.columns:
         payments = payments.copy()
-        payments["channel"] = payments["channel"].map(_ptbr_value)
+        payments["channel"] = payments["channel"].map(_display_label)
     if "state" in states.columns:
         states = states.copy()
         states = states[~states["state"].astype(str).str.strip().str.lower().isin(["", "unknown", "none", "null", "nan"])]
@@ -827,16 +833,21 @@ def _render_payments_geography(assets: dict) -> None:
             )
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        else:
+            st.info("Não há dados geográficos válidos nesta publicação.")
 
     st.markdown("### Scorecard geografico")
-    st.dataframe(
-        _ptbr_frame(
-            states,
-            [col for col in ["state", "state_tier", "total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"] if col in states.columns],
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
+    if not states.empty:
+        st.dataframe(
+            _ptbr_frame(
+                states,
+                [col for col in ["state", "state_tier", "total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"] if col in states.columns],
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.info("Scorecard geográfico indisponível.")
     _render_sql_reference()
 
 
@@ -865,6 +876,14 @@ def _render_operations(assets: dict) -> None:
                 "avg_delivery_days": "Prazo real",
                 "estimated_delivery_days": "Prazo prometido",
             },
+        )
+        fig.for_each_trace(
+            lambda trace: trace.update(
+                name={
+                    "avg_delivery_days": "Prazo real",
+                    "estimated_delivery_days": "Prazo prometido",
+                }.get(trace.name, trace.name)
+            )
         )
         fig.update_layout(title="", legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0))
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
