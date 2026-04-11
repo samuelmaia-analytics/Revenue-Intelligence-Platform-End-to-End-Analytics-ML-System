@@ -496,9 +496,19 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
                 color="churn_risk_band",
                 title="Exposição de receita por ação e faixa de churn",
                 color_discrete_map={"Baixo": COLOR_PRIMARY, "Médio": COLOR_ACCENT, "Alto": COLOR_DANGER},
+                labels={
+                    "recommended_action": "Ação recomendada",
+                    "revenue_proxy": "Receita potencial",
+                    "churn_risk_band": "Faixa de churn",
+                },
             )
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
-            st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+            fig = apply_chart_style(fig)
+            fig.update_layout(
+                legend=dict(title=None, orientation="h", yanchor="bottom", y=1.06, x=0),
+                margin={"l": 24, "r": 24, "t": 78, "b": 24},
+            )
+            st.plotly_chart(fig, use_container_width=True)
     with bottom[1]:
         if scorecard_row is not None:
             st.markdown("### Concentração executiva")
