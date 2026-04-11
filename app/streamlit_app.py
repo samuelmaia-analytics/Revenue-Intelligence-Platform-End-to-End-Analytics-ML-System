@@ -215,6 +215,13 @@ def _ptbr_frame(frame: pd.DataFrame, columns: list[str] | None = None) -> pd.Dat
     return data.rename(columns=PTBR_COLUMN_LABELS)
 
 
+def _first_non_empty_frame(*frames: pd.DataFrame) -> pd.DataFrame:
+    for frame in frames:
+        if isinstance(frame, pd.DataFrame) and not frame.empty:
+            return frame
+    return pd.DataFrame()
+
+
 def _render_sql_snippets(section_key: str) -> None:
     snippets = SQL_SNIPPETS.get(section_key, [])
     if not snippets:
@@ -310,11 +317,27 @@ def _render_sql_console() -> None:
 def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
     kpis = assets["executive_kpis"]
     monthly = assets["summary_layer"].copy()
-    categories = assets["categories"].head(8)
-    states = assets["geography"].head(10)
+    categories = _first_non_empty_frame(
+        assets.get("category_scorecard", pd.DataFrame()),
+        assets.get("categories", pd.DataFrame()),
+    ).head(8)
+    states = _first_non_empty_frame(
+        assets.get("state_scorecard", pd.DataFrame()),
+        assets.get("geography", pd.DataFrame()),
+    ).head(10)
     scorecard = assets.get("executive_scorecard", pd.DataFrame())
     customer_segment_health = assets.get("customer_segment_health", pd.DataFrame()).head(12)
     scorecard_row = scorecard.iloc[0] if not scorecard.empty else None
+    latest_revenue = (
+        float(monthly["total_revenue"].tail(1).iloc[0])
+        if not monthly.empty and "total_revenue" in monthly.columns
+        else 0.0
+    )
+    dominant_action = (
+        _ptbr_value(filtered_customers["recommended_action"].mode().iat[0])
+        if not filtered_customers.empty and "recommended_action" in filtered_customers.columns
+        else "n/a"
+    )
 
     cols = st.columns(4)
     with cols[0]:
@@ -329,7 +352,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
     st.markdown(
         f"""
         <div class="story-grid">
-            {_story_card("Postura de Crescimento", format_currency(float(monthly['total_revenue'].tail(1).iloc[0]), "pt-br"), "Receita do último mês publicada no scorecard executivo.", True)}
+            {_story_card("Postura de Crescimento", format_currency(latest_revenue, "pt-br"), "Receita do último mês publicada no scorecard executivo.", True)}
             {_story_card("Risco Operacional", _format_pct(kpis['late_delivery_rate']), "Atrasos seguem pressionando confiança comercial e satisfação.")}
             {_story_card("Sinal de Satisfação", f"{kpis['avg_review_score']:.2f} / 5", "A nota média agora faz parte da leitura curada de saúde do cliente.")}
         </div>
@@ -344,14 +367,17 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
 
     narrative = st.columns([1.55, 1.05])
     with narrative[0]:
-        fig = px.area(
-            monthly,
-            x="order_month",
-            y="total_revenue",
-            title="Trajetória de receita ao longo do ciclo do marketplace",
-        )
-        fig.update_traces(line_color="#0d5e54", fillcolor="rgba(13,94,84,0.18)")
-        st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        if {"order_month", "total_revenue"}.issubset(monthly.columns):
+            fig = px.area(
+                monthly,
+                x="order_month",
+                y="total_revenue",
+                title="Trajetória de receita ao longo do ciclo do marketplace",
+            )
+            fig.update_traces(line_color="#0d5e54", fillcolor="rgba(13,94,84,0.18)")
+            st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        else:
+            st.info("Série mensal indisponível no artefato publicado.")
     with narrative[1]:
         st.markdown("### Resumo executivo")
         st.markdown(
@@ -359,7 +385,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             - A maior concentração de receita está em **{_ptbr_value(kpis.get('top_category', {}).get('category', 'n/a'))}**.
             - O estado líder no recorte é **{kpis.get('top_state', {}).get('state', 'n/a')}**.
             - A taxa de atraso está em **{kpis['late_delivery_rate']:.1%}**, com nota média de **{kpis['avg_review_score']:.2f} / 5**.
-            - A ação dominante no recorte atual é **{_ptbr_value(filtered_customers['recommended_action'].mode().iat[0])}**.
+            - A ação dominante no recorte atual é **{dominant_action}**.
             """
         )
         st.markdown("### Qualidade das regras de negócio")
@@ -367,30 +393,40 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
 
     row_two = st.columns(2)
     with row_two[0]:
-        fig = px.bar(
-            categories,
-            x="total_revenue",
-            y="category",
-            orientation="h",
-            title="Concentração de receita por categoria",
-            color="avg_review_score",
-            color_continuous_scale=["#d9ede8", "#0d5e54"],
-        )
-        st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        if {"total_revenue", "category"}.issubset(categories.columns):
+            chart_kwargs: dict[str, object] = {
+                "data_frame": categories,
+                "x": "total_revenue",
+                "y": "category",
+                "orientation": "h",
+                "title": "Concentração de receita por categoria",
+            }
+            if "avg_review_score" in categories.columns:
+                chart_kwargs["color"] = "avg_review_score"
+                chart_kwargs["color_continuous_scale"] = ["#d9ede8", "#0d5e54"]
+            fig = px.bar(**chart_kwargs)
+            st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        else:
+            st.info("Scorecard de categorias indisponível no artefato publicado.")
     with row_two[1]:
-        fig = px.bar(
-            states,
-            x="state",
-            y="total_revenue",
-            title="Participação dos estados na receita",
-            color="late_delivery_rate",
-            color_continuous_scale=["#e6f2ef", "#c48a3a", "#8c2f2f"],
-        )
-        st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        if {"state", "total_revenue"}.issubset(states.columns):
+            chart_kwargs = {
+                "data_frame": states,
+                "x": "state",
+                "y": "total_revenue",
+                "title": "Participação dos estados na receita",
+            }
+            if "late_delivery_rate" in states.columns:
+                chart_kwargs["color"] = "late_delivery_rate"
+                chart_kwargs["color_continuous_scale"] = ["#e6f2ef", "#c48a3a", "#8c2f2f"]
+            fig = px.bar(**chart_kwargs)
+            st.plotly_chart(apply_chart_style(fig), use_container_width=True)
+        else:
+            st.info("Scorecard de estados indisponível no artefato publicado.")
 
     bottom = st.columns([1.15, 0.85])
     with bottom[0]:
-        if not customer_segment_health.empty:
+        if {"recommended_action", "revenue_proxy", "churn_risk_band"}.issubset(customer_segment_health.columns):
             fig = px.bar(
                 customer_segment_health,
                 x="recommended_action",
@@ -406,10 +442,10 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             st.markdown("### Concentração executiva")
             st.markdown(
                 f"""
-                - Receita recorrente: **{scorecard_row['repeat_revenue_share']:.1%}**
-                - Retenção M+1: **{scorecard_row['m1_retention_rate']:.1%}**
-                - Concentração top-10 sellers: **{scorecard_row['seller_top10_revenue_share']:.1%}**
-                - Concentração top-10 categorias: **{scorecard_row['category_top10_revenue_share']:.1%}**
+                - Receita recorrente: **{scorecard_row.get('repeat_revenue_share', 0.0):.1%}**
+                - Retenção M+1: **{scorecard_row.get('m1_retention_rate', 0.0):.1%}**
+                - Concentração top-10 sellers: **{scorecard_row.get('seller_top10_revenue_share', 0.0):.1%}**
+                - Concentração top-10 categorias: **{scorecard_row.get('category_top10_revenue_share', 0.0):.1%}**
                 """
             )
     _render_sql_reference()
