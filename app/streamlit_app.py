@@ -489,12 +489,12 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
     bottom = st.columns([1.15, 0.85])
     with bottom[0]:
         if {"recommended_action", "revenue_proxy", "churn_risk_band"}.issubset(customer_segment_health.columns):
+            st.markdown("### Exposição de receita por ação e faixa de churn")
             fig = px.bar(
                 customer_segment_health,
                 x="recommended_action",
                 y="revenue_proxy",
                 color="churn_risk_band",
-                title="Exposição de receita por ação e faixa de churn",
                 color_discrete_map={"Baixo": COLOR_PRIMARY, "Médio": COLOR_ACCENT, "Alto": COLOR_DANGER},
                 labels={
                     "recommended_action": "Ação recomendada",
@@ -505,8 +505,9 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
             fig = apply_chart_style(fig)
             fig.update_layout(
-                legend=dict(title=None, orientation="h", yanchor="bottom", y=1.06, x=0),
-                margin={"l": 24, "r": 24, "t": 78, "b": 24},
+                title=None,
+                legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0),
+                margin={"l": 24, "r": 24, "t": 36, "b": 24},
             )
             st.plotly_chart(fig, use_container_width=True)
     with bottom[1]:
