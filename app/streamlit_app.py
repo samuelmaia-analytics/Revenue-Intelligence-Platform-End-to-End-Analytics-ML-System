@@ -428,6 +428,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
                 x="order_month",
                 y="total_revenue",
                 title="Trajetória de receita ao longo do ciclo do marketplace",
+                labels={"order_month": "Mês", "total_revenue": "Receita total"},
             )
             fig.update_traces(line_color=COLOR_SECONDARY, fillcolor="rgba(15, 91, 215, 0.16)")
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
@@ -507,7 +508,10 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
     elif state_ready:
         _plot_states()
     else:
-        st.info("Os scorecards de categorias e estados não estão disponíveis nesta publicação.")
+        if is_executive_mode:
+            st.caption("Scorecards de categorias e estados indisponíveis nesta publicação.")
+        else:
+            st.info("Os scorecards de categorias e estados não estão disponíveis nesta publicação.")
 
     bottom = st.columns([1.15, 0.85])
     with bottom[0]:
@@ -536,14 +540,13 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
     with bottom[1]:
         if scorecard_row is not None:
             st.markdown("### Concentração executiva")
-            st.markdown(
-                f"""
-                - Receita recorrente: **{scorecard_row.get('repeat_revenue_share', 0.0):.1%}**
-                - Retenção M+1: **{scorecard_row.get('m1_retention_rate', 0.0):.1%}**
-                - Concentração top-10 sellers: **{scorecard_row.get('seller_top10_revenue_share', 0.0):.1%}**
-                - Concentração top-10 categorias: **{scorecard_row.get('category_top10_revenue_share', 0.0):.1%}**
-                """
-            )
+            concentration_cols = st.columns(2)
+            with concentration_cols[0]:
+                st.metric("Receita recorrente", f"{scorecard_row.get('repeat_revenue_share', 0.0):.1%}")
+                st.metric("Concentração top-10 sellers", f"{scorecard_row.get('seller_top10_revenue_share', 0.0):.1%}")
+            with concentration_cols[1]:
+                st.metric("Retenção M+1", f"{scorecard_row.get('m1_retention_rate', 0.0):.1%}")
+                st.metric("Concentração top-10 categorias", f"{scorecard_row.get('category_top10_revenue_share', 0.0):.1%}")
     _render_sql_reference()
 
 
