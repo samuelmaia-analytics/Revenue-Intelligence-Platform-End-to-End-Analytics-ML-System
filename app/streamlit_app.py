@@ -923,11 +923,26 @@ def main() -> None:
         if st.button("Refresh pipeline", use_container_width=True):
             refresh_pipeline_outputs(PROJECT_ROOT)
             st.rerun()
-        state = st.selectbox("Estado", ["Todos"] + sorted(customers["customer_state"].dropna().unique().tolist()))
-        segment = st.selectbox("Segmento do cliente", ["Todos"] + sorted(customers["segment"].dropna().unique().tolist()))
+        state_options = (
+            ["Todos"] + sorted(customers["customer_state"].dropna().unique().tolist())
+            if "customer_state" in customers.columns
+            else ["Todos"]
+        )
+        segment_options = (
+            ["Todos"] + sorted(customers["segment"].dropna().unique().tolist())
+            if "segment" in customers.columns
+            else ["Todos"]
+        )
+        action_options = (
+            ["Todos"] + sorted(customers["recommended_action"].dropna().map(_ptbr_value).tolist())
+            if "recommended_action" in customers.columns
+            else ["Todos"]
+        )
+        state = st.selectbox("Estado", state_options)
+        segment = st.selectbox("Segmento do cliente", segment_options)
         action = st.selectbox(
             "Ação recomendada",
-            ["Todos"] + sorted(customers["recommended_action"].dropna().map(_ptbr_value).tolist()),
+            action_options,
         )
         st.markdown(
             f"""
@@ -958,7 +973,11 @@ def main() -> None:
         action="All" if action == "Todos" else str(_canonical_value(action)),
     )
 
-    top_action = _ptbr_value(filtered_customers["recommended_action"].mode().iat[0]) if not filtered_customers.empty else "n/a"
+    top_action = (
+        _ptbr_value(filtered_customers["recommended_action"].mode().iat[0])
+        if not filtered_customers.empty and "recommended_action" in filtered_customers.columns
+        else "n/a"
+    )
     st.markdown(
         """
         <div class="hero">

@@ -46,6 +46,33 @@ def _load_json(path: Path) -> dict[str, Any]:
         return json.load(file)
 
 
+def _ensure_column_alias(
+    frame: pd.DataFrame,
+    canonical: str,
+    aliases: tuple[str, ...],
+) -> pd.DataFrame:
+    if canonical in frame.columns:
+        return frame
+    for alias in aliases:
+        if alias in frame.columns:
+            frame[canonical] = frame[alias]
+            return frame
+    return frame
+
+
+def _normalize_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    frame.columns = [
+        str(column)
+        .replace("\ufeff", "")
+        .strip()
+        .lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+        for column in frame.columns
+    ]
+    return frame
+
+
 @st.cache_data(show_spinner=False)
 def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
     processed_dir = Path(processed_dir_str)
@@ -98,6 +125,24 @@ def load_processed_assets(processed_dir_str: str) -> dict[str, Any]:
         "cohort": pd.read_csv(processed_dir / "cohort_retention.csv"),
     }
 
+    # Keep dashboard consumers resilient to schema drift in processed artifacts.
+    assets["customers"] = _normalize_columns(assets["customers"])
+    assets["customers"] = _ensure_column_alias(
+        assets["customers"],
+        "customer_state",
+        ("state", "customer_uf", "uf", "customer_region"),
+    )
+    assets["customers"] = _ensure_column_alias(
+        assets["customers"],
+        "segment",
+        ("customer_segment", "rfm_segment", "segmento"),
+    )
+    assets["customers"] = _ensure_column_alias(
+        assets["customers"],
+        "recommended_action",
+        ("action", "next_best_action", "recommendation", "recommended_actions"),
+    )
+
     optional_frames = {
         "sellers": "seller_analytics.csv",
         "products": "product_analytics.csv",
@@ -141,11 +186,11 @@ def filter_customers(
     action: str,
 ) -> pd.DataFrame:
     filtered = customers.copy()
-    if state != "All":
+    if state != "All" and "customer_state" in filtered.columns:
         filtered = filtered[filtered["customer_state"] == state]
-    if segment != "All":
+    if segment != "All" and "segment" in filtered.columns:
         filtered = filtered[filtered["segment"] == segment]
-    if action != "All":
+    if action != "All" and "recommended_action" in filtered.columns:
         filtered = filtered[filtered["recommended_action"] == action]
     return filtered.reset_index(drop=True)
 
