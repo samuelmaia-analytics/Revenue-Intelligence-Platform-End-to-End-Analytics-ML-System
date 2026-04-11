@@ -156,6 +156,12 @@ PTBR_VALUE_LABELS = {
     "Anchor": "Âncora",
     "Growth": "Crescimento",
     "Emerging": "Emergente",
+    "Unknown": "n/a",
+    "unknown": "n/a",
+    "Undefined": "n/a",
+    "undefined": "n/a",
+    "None": "n/a",
+    "none": "n/a",
 }
 PTBR_REVERSE_VALUE_LABELS = {value: key for key, value in PTBR_VALUE_LABELS.items()}
 
@@ -505,7 +511,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
             fig = apply_chart_style(fig)
             fig.update_layout(
-                title=None,
+                title="",
                 legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0),
                 margin={"l": 24, "r": 24, "t": 36, "b": 24},
             )
@@ -551,6 +557,12 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
             hover_data=["customer_state", "segment", "avg_review_score"],
             title="Valor, recência e prioridade de ação",
             color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY, COLOR_NEUTRAL, COLOR_DANGER],
+            labels={
+                "recency_days": "Recência (dias)",
+                "monetary": "Receita",
+                "recommended_action": "Ação recomendada",
+                "ltv_proxy": "LTV proxy",
+            },
         )
         fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
@@ -662,6 +674,11 @@ def _render_products(assets: dict) -> None:
         "Esta visão mostra onde o sortimento gera valor, onde o frete pressiona a economia e quais categorias combinam escala com satisfação.",
     )
 
+    if categories.empty and products.empty:
+        st.info("Não há dados de categorias e produtos disponíveis nesta publicação.")
+        _render_sql_reference()
+        return
+
     cols = st.columns(2)
     with cols[0]:
         if not categories.empty:
@@ -718,6 +735,11 @@ def _render_sellers(assets: dict) -> None:
         "A visão de sellers separa crescimento de dependência. Ela destaca quem move receita, quem pressiona atraso e onde a cauda longa ainda exige disciplina operacional.",
     )
 
+    if sellers.empty:
+        st.info("Não há dados de sellers disponíveis nesta publicação.")
+        _render_sql_reference()
+        return
+
     cols = st.columns(2)
     with cols[0]:
         if not sellers.empty:
@@ -756,6 +778,12 @@ def _render_sellers(assets: dict) -> None:
 def _render_payments_geography(assets: dict) -> None:
     payments = assets.get("payment_scorecard", assets["payments"])
     states = assets.get("state_scorecard", assets["geography"]).head(15)
+    if "channel" in payments.columns:
+        payments = payments.copy()
+        payments["channel"] = payments["channel"].map(_ptbr_value)
+    if "state" in states.columns:
+        states = states.copy()
+        states = states[~states["state"].astype(str).str.strip().str.lower().isin(["", "unknown", "none", "null", "nan"])]
 
     _section_band(
         "Pagamentos e geografia",
@@ -772,6 +800,11 @@ def _render_payments_geography(assets: dict) -> None:
                 color="on_time_delivery_rate",
                 title="Receita por meio de pagamento com qualidade de entrega",
                 color_continuous_scale=[COLOR_DANGER, COLOR_ACCENT, COLOR_PRIMARY],
+                labels={
+                    "channel": "Canal",
+                    "total_revenue": "Receita total",
+                    "on_time_delivery_rate": "Entrega no prazo",
+                },
             )
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
@@ -785,6 +818,12 @@ def _render_payments_geography(assets: dict) -> None:
                 hover_data=["state", "avg_review_score", "revenue_per_customer"],
                 title="Receita estadual versus risco de atraso",
                 color_discrete_sequence=px.colors.qualitative.Safe,
+                labels={
+                    "late_delivery_rate": "Taxa de atraso",
+                    "total_revenue": "Receita total",
+                    "unique_customers": "Clientes",
+                    "state": "Estado",
+                },
             )
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
@@ -813,35 +852,51 @@ def _render_operations(assets: dict) -> None:
 
     cols = st.columns(2)
     with cols[0]:
+        st.markdown("### Prazo real versus prazo prometido")
         fig = px.line(
             logistics,
             x="order_month",
             y=["avg_delivery_days", "estimated_delivery_days"],
-            title="Prazo real versus prazo prometido",
             color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY],
+            labels={
+                "order_month": "Mês",
+                "value": "Dias",
+                "variable": "Indicador",
+                "avg_delivery_days": "Prazo real",
+                "estimated_delivery_days": "Prazo prometido",
+            },
         )
+        fig.update_layout(title="", legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0))
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
+        st.markdown("### Taxa de atraso ao longo do tempo")
         fig = px.line(
             logistics,
             x="order_month",
             y="late_delivery_rate",
-            title="Taxa de atraso ao longo do tempo",
             markers=True,
+            labels={"order_month": "Mês", "late_delivery_rate": "Taxa de atraso"},
         )
         fig.update_traces(line_color=COLOR_DANGER)
+        fig.update_layout(title="")
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
 
     bottom = st.columns(2)
     with bottom[0]:
+        st.markdown("### Curvas de retenção por coorte")
         fig = px.line(
             cohort,
             x="cohort_index",
             y="retention_rate",
             color="cohort_month",
-            title="Curvas de retenção por coorte",
             color_discrete_sequence=px.colors.qualitative.Safe,
+            labels={
+                "cohort_index": "Mês da coorte",
+                "retention_rate": "Retenção",
+                "cohort_month": "Coorte",
+            },
         )
+        fig.update_layout(title="", showlegend=False, margin={"l": 24, "r": 24, "t": 24, "b": 24})
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with bottom[1]:
         st.markdown("### Scorecard operacional mensal")
@@ -950,42 +1005,40 @@ def _render_reliability(assets: dict) -> None:
         else:
             st.info("Nenhuma checagem de artefato disponível.")
 
-    lower_cols = st.columns(2)
-    with lower_cols[0]:
-        st.markdown("### Alertas ativos")
-        if not alert_rows.empty:
-            st.dataframe(
-                _ptbr_frame(
-                    alert_rows.rename(columns={"category": "Categoria", "severity": "Severidade", "message": "Mensagem"})
-                ),
-                use_container_width=True,
-                hide_index=True,
-            )
-        else:
-            st.success("Nenhum alerta ativo no run atual.")
-    with lower_cols[1]:
-        st.markdown("### Principais recomendações executivas")
-        if not top_recommendations.empty:
-            st.dataframe(
-                _ptbr_frame(
-                    top_recommendations,
-                    [
-                        col
-                        for col in [
-                            "customer_id",
-                            "segment",
-                            "channel",
-                            "recommended_action",
-                            "strategic_score",
-                        ]
-                        if col in top_recommendations.columns
-                    ],
-                ),
-                use_container_width=True,
-                hide_index=True,
-            )
-        else:
-            st.info("Nenhuma recomendação disponível.")
+    st.markdown("### Principais recomendações executivas")
+    if not top_recommendations.empty:
+        st.dataframe(
+            _ptbr_frame(
+                top_recommendations,
+                [
+                    col
+                    for col in [
+                        "customer_id",
+                        "segment",
+                        "channel",
+                        "recommended_action",
+                        "strategic_score",
+                    ]
+                    if col in top_recommendations.columns
+                ],
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.info("Nenhuma recomendação disponível.")
+
+    st.markdown("### Alertas ativos")
+    if not alert_rows.empty:
+        st.dataframe(
+            _ptbr_frame(
+                alert_rows.rename(columns={"category": "Categoria", "severity": "Severidade", "message": "Mensagem"})
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.success("Nenhum alerta ativo no run atual.")
 
     with st.expander("Abrir manifesto do pipeline"):
         manifest_json = json.dumps(manifest, ensure_ascii=False, indent=2)

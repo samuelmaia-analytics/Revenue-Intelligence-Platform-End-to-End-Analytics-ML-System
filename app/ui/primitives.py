@@ -32,9 +32,9 @@ def apply_chart_style(fig: go.Figure) -> go.Figure:
         title_font={"color": DEFAULT_THEME["text"], "size": 18},
         plot_bgcolor=DEFAULT_THEME["surface"],
         paper_bgcolor=DEFAULT_THEME["surface"],
-        margin={"l": 24, "r": 24, "t": 56, "b": 24},
+        margin={"l": 24, "r": 24, "t": 72, "b": 24},
         title_x=0.02,
-        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "x": 0},
+        legend={"title": None, "orientation": "h", "yanchor": "bottom", "y": 1.06, "x": 0},
     )
     fig.update_xaxes(gridcolor="#edf2f7")
     fig.update_yaxes(gridcolor="#edf2f7")
