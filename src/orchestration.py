@@ -32,6 +32,7 @@ from src.monitoring import build_monitoring_report
 from src.observability import build_reliability_report
 from src.persistence import persist_frames
 from src.quality import (
+    build_business_rule_report,
     build_dataset_quality_report,
     enforce_quality_gate,
     validate_required_columns,
@@ -50,7 +51,7 @@ RawInputMetadata: TypeAlias = dict[str, object]  # noqa: UP040
 
 
 def _copy_gold_outputs(cfg: PipelineConfig) -> None:
-    for table in ["dim_customers.csv", "dim_date.csv", "dim_channel.csv", "fact_orders.csv"]:
+    for table in sorted(path.name for path in cfg.gold_dir.glob("*.csv")):
         atomic_copy_file(cfg.gold_dir / table, cfg.processed_dir / table)
 
 
@@ -254,13 +255,31 @@ def _load_warehouse_frames(processed_dir: Path) -> dict[str, pd.DataFrame]:
         "dim_date",
         "dim_channel",
         "fact_orders",
+        "dim_products",
+        "dim_sellers",
+        "dim_geography",
+        "fact_order_items",
         "customer_features",
         "scored_customers",
         "recommendations",
         "unit_economics",
         "top_10_actions",
+        "customer_analytics",
+        "payment_analytics",
+        "geographic_analytics",
+        "logistics_analytics",
+        "executive_summary_layer",
+        "rfm_segments",
+        "seller_analytics",
+        "product_analytics",
+        "category_analytics",
     ]
-    return {name: pd.read_csv(processed_dir / f"{name}.csv") for name in frame_names}
+    frames: dict[str, pd.DataFrame] = {}
+    for name in frame_names:
+        path = processed_dir / f"{name}.csv"
+        if path.exists():
+            frames[name] = pd.read_csv(path)
+    return frames
 
 
 def _apply_retention(cfg: PipelineConfig) -> None:
@@ -514,9 +533,14 @@ class RevenueIntelligencePipeline:
                 "ingestion.raw",
                 lambda: save_raw_datasets(self.cfg.raw_dir, seed=self.cfg.seed),
             )
+            raw_metadata_paths = [
+                path
+                for path in sorted(self.cfg.raw_dir.iterdir())
+                if path.is_file() and (path.name.startswith("olist_") or path.name in {Path(item).name for item in raw_paths})
+            ]
             raw_input_metadata = self._stage(
                 "ingestion.metadata",
-                lambda: _build_raw_input_metadata([Path(path) for path in raw_paths]),
+                lambda: _build_raw_input_metadata(raw_metadata_paths),
             )
             atomic_write_json(
                 self.cfg.processed_dir / "raw_input_metadata.json",
@@ -599,6 +623,14 @@ class RevenueIntelligencePipeline:
             quality_payload = write_quality_report(
                 quality_reports,
                 self.cfg.processed_dir / "quality_report.json",
+            )
+            self._stage(
+                "validation.business_rules",
+                lambda: build_business_rule_report(
+                    orders_df=orders_df,
+                    customers_df=customers_df,
+                    output_path=self.cfg.processed_dir / "quality_business_rules.json",
+                ),
             )
 
             freshness_snapshot = _build_source_aware_freshness_snapshot(

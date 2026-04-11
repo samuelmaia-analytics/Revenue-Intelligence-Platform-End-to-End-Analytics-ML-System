@@ -1,91 +1,91 @@
 {
   "selectboxes": [
-    "Idioma",
-    "Segmento",
-    "Canal",
-    "Ação"
+    "Tema técnico",
+    "Snippet",
+    "Estado",
+    "Segmento do cliente",
+    "Ação recomendada"
   ],
   "buttons": [
-    "Aprovar ações selecionadas",
-    "Atualizar saídas do pipeline"
+    "Refresh pipeline"
   ],
   "captions": [
-    "Leitura visual",
-    "Nenhuma ação aprovada registrada até o momento.",
-    "Atualize os artefatos quando quiser sincronizar o dashboard com o último run.",
-    "Revise, exporte e aprove as ações prioritárias para os clientes certos."
+    "SQL curado desta visão disponível na aba Confiabilidade.",
+    "SQL curado desta visão disponível na aba Confiabilidade.",
+    "SQL curado desta visão disponível na aba Confiabilidade.",
+    "SQL curado desta visão disponível na aba Confiabilidade.",
+    "SQL curado desta visão disponível na aba Confiabilidade.",
+    "SQL curado desta visão disponível na aba Confiabilidade."
   ],
   "tabs": [
-    "Visão Geral",
-    "Receita em Risco",
-    "Performance por Segmento",
-    "Forecast & Cenários",
-    "Confiabilidade Operacional",
-    "Governança & Data Trust",
-    "Board de Ações"
+    "Resumo Executivo",
+    "Inteligência de Clientes",
+    "Produto & Categoria",
+    "Performance de Sellers",
+    "Logística & Retenção",
+    "Pagamentos & Geografia",
+    "Confiabilidade"
   ],
   "tab_summaries": [
     {
-      "label": "Visão Geral",
-      "dataframe_count": 1,
-      "expander_labels": [
-        "Validação de artefatos"
-      ],
-      "markdown_count": 17
-    },
-    {
-      "label": "Receita em Risco",
+      "label": "Resumo Executivo",
       "dataframe_count": 0,
       "expander_labels": [],
-      "markdown_count": 9
+      "markdown_count": 11
     },
     {
-      "label": "Performance por Segmento",
-      "dataframe_count": 0,
-      "expander_labels": [],
-      "markdown_count": 9
-    },
-    {
-      "label": "Forecast & Cenários",
-      "dataframe_count": 1,
-      "expander_labels": [],
-      "markdown_count": 13
-    },
-    {
-      "label": "Confiabilidade Operacional",
-      "dataframe_count": 2,
-      "expander_labels": [
-        "Validação de artefatos"
-      ],
-      "markdown_count": 19
-    },
-    {
-      "label": "Governança & Data Trust",
+      "label": "Inteligência de Clientes",
       "dataframe_count": 2,
       "expander_labels": [],
-      "markdown_count": 9
+      "markdown_count": 3
     },
     {
-      "label": "Board de Ações",
+      "label": "Produto & Categoria",
+      "dataframe_count": 2,
+      "expander_labels": [],
+      "markdown_count": 3
+    },
+    {
+      "label": "Performance de Sellers",
       "dataframe_count": 1,
+      "expander_labels": [],
+      "markdown_count": 2
+    },
+    {
+      "label": "Logística & Retenção",
+      "dataframe_count": 1,
+      "expander_labels": [],
+      "markdown_count": 2
+    },
+    {
+      "label": "Pagamentos & Geografia",
+      "dataframe_count": 1,
+      "expander_labels": [],
+      "markdown_count": 2
+    },
+    {
+      "label": "Confiabilidade",
+      "dataframe_count": 4,
       "expander_labels": [
-        "Ações aprovadas recentemente"
+        "Abrir manifesto do pipeline",
+        "Abrir artefato do report executivo",
+        "SQL curado por tema"
       ],
-      "markdown_count": 7
+      "markdown_count": 22
     }
   ],
-  "dataframe_count": 7,
+  "dataframe_count": 11,
   "expander_labels": [
-    "Validação de artefatos",
-    "Validação de artefatos",
-    "Ações aprovadas recentemente"
+    "Abrir manifesto do pipeline",
+    "Abrir artefato do report executivo",
+    "SQL curado por tema"
   ],
   "markdown_snippets": [
-    "<div class=\"hero\">\n    <div class=\"hero-grid\">\n        <div class=\"hero-copy\">\n            <div>\n            <div class=\"hero-badge\">Dashboard Executivo SaaS</d",
-    "<div class=\"section-head\">\n    <div class=\"section-label\">Resumo dos filtros</div>\n    <div class=\"section-title\">Resumo dos filtros</div>\n    <div class=\"secti",
-    "<div class=\"status-card\">\n    <div class=\"status-label\">Escopo atual</div>\n    <div class=\"status-value\">Carteira completa</div>\n    <div class=\"status-sub\">Fil",
-    "<div class=\"status-card\">\n    <div class=\"status-label\">Segmento selecionado</div>\n    <div class=\"status-value\">Carteira completa</div>\n    <div class=\"status-",
-    "<div class=\"status-card\">\n    <div class=\"status-label\">Canal selecionado</div>\n    <div class=\"status-value\">Carteira completa</div>\n    <div class=\"status-sub",
-    "<div class=\"status-card\">\n    <div class=\"status-label\">Ação selecionada</div>\n    <div class=\"status-value\">Carteira completa</div>\n    <div class=\"status-sub\""
+    "<div class=\"hero\">\n    <div class=\"hero-grid\">\n        <div class=\"hero-copy\">\n            <div>\n                <div class=\"hero-badge\">Analytics Executiva Bat",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Receita Total</div>\n    <div class=\"kpi-value\">R$ 15.422.605</div>\n    <div class=\"kpi-caption\">Receita entreg",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Pedidos Totais</div>\n    <div class=\"kpi-value\">98,200</div>\n    <div class=\"kpi-caption\">Pedidos governados n",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Ticket Médio</div>\n    <div class=\"kpi-value\">R$ 160</div>\n    <div class=\"kpi-caption\">Valor médio por pedido",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Clientes Recorrentes</div>\n    <div class=\"kpi-value\">2.2%</div>\n    <div class=\"kpi-caption\">Clientes com com",
+    "<div class=\"story-grid\">\n\n<div class=\"story-card kicker\">\n    <div class=\"story-label\">Postura de Crescimento</div>\n    <div class=\"story-value\">R$ 166</div>\n  "
   ]
 }

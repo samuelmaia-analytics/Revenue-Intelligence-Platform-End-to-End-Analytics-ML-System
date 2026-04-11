@@ -90,12 +90,90 @@ CSV_ARTIFACT_SPECS: dict[str, set[str]] = {
         "cohort_size",
         "retention_rate",
     },
+    "customer_analytics.csv": {
+        "customer_id",
+        "channel",
+        "segment",
+        "recency_days",
+        "frequency",
+        "monetary",
+        "ltv",
+        "churn_probability",
+        "next_purchase_probability",
+        "recommended_action",
+    },
+    "payment_analytics.csv": {
+        "channel",
+        "total_orders",
+        "total_revenue",
+        "avg_ticket",
+        "revenue_share_pct",
+    },
+    "geographic_analytics.csv": {
+        "state",
+        "total_orders",
+        "unique_customers",
+        "total_revenue",
+        "revenue_share_pct",
+    },
+    "logistics_analytics.csv": {
+        "order_month",
+        "total_orders",
+        "delivered_orders",
+        "canceled_orders",
+        "avg_delivery_days",
+        "late_delivery_rate",
+    },
+    "executive_summary_layer.csv": {
+        "order_month",
+        "total_revenue",
+        "total_orders",
+        "unique_customers",
+        "avg_ticket",
+    },
+    "executive_scorecard.csv": {
+        "snapshot_date",
+        "total_revenue",
+        "total_orders",
+        "average_ticket",
+        "recurring_customer_rate",
+        "late_delivery_rate",
+        "m1_retention_rate",
+    },
+    "customer_segment_health.csv": {
+        "recommended_action",
+        "rfm_segment",
+        "churn_risk_band",
+        "customers",
+        "revenue_proxy",
+        "avg_ltv",
+        "avg_churn_probability",
+    },
+    "payment_scorecard.csv": {
+        "channel",
+        "total_orders",
+        "total_revenue",
+        "avg_ticket",
+        "revenue_share_pct",
+        "on_time_delivery_rate",
+    },
+    "retention_scorecard.csv": {
+        "cohort_month",
+        "cohort_index",
+        "active_customers",
+        "cohort_size",
+        "retention_rate",
+    },
 }
 
 JSON_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
     "quality_report.json": (
         "datasets",
         "total_datasets",
+    ),
+    "quality_business_rules.json": (
+        "checks",
+        "status",
     ),
     "freshness_report.json": (
         "evaluated_at_utc",
@@ -188,6 +266,13 @@ JSON_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
         "output_count",
     ),
     "semantic_metrics_catalog.json": ("metrics",),
+    "executive_kpis.json": (
+        "total_revenue",
+        "total_orders",
+        "average_ticket",
+        "unique_customers",
+        "avg_review_score",
+    ),
 }
 JSONL_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
     "run_events.jsonl": (

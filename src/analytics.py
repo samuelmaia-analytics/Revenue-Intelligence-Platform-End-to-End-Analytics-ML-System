@@ -7,6 +7,7 @@ import pandas as pd
 
 from src.analytics_duckdb import build_curated_support_frames_duckdb, duckdb_available
 from src.io_utils import atomic_write_csv, atomic_write_json
+from src.marketplace_analytics import build_marketplace_outputs
 from src.metrics import (
     build_business_kpi_snapshot,
     calculate_cac,
@@ -51,11 +52,19 @@ def build_analytics_outputs(
     unit_df = unit_economics(ltv_df, cac_df)
     recommendations_df = build_recommendations(ltv_df, cac_df)
     kpi_snapshot = build_business_kpi_snapshot(recommendations_df, scored_df, unit_df)
+    marketplace_outputs = build_marketplace_outputs(
+        silver_customers_path=silver_customers_path,
+        silver_orders_path=silver_orders_path,
+        processed_dir=processed_dir,
+        scored_df=scored_df,
+        recommendations_df=recommendations_df,
+        cohort_df=cohort_df,
+    )
+    kpi_snapshot = {**kpi_snapshot, **marketplace_outputs["executive_kpis"]}
 
     artifacts = {
         "ltv.csv": ltv_df,
         "cac_by_channel.csv": cac_df,
-        "rfm_segments.csv": rfm_df,
         "cohort_retention.csv": cohort_df,
         "unit_economics.csv": unit_df,
         "recommendations.csv": recommendations_df,

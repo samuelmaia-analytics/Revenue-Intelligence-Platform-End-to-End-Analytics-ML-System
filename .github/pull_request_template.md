@@ -33,6 +33,7 @@ If any item above was intentionally not run, explain why:
 - Backfill or retry behavior impact:
 - Warehouse impact:
 - Dashboard impact:
+- LGPD/privacy impact:
 
 ## Documentation
 
@@ -41,6 +42,7 @@ If any item above was intentionally not run, explain why:
 - [ ] `docs/architecture.md` reviewed when needed
 - [ ] `docs/runbook.md` reviewed when needed
 - [ ] `docs/release_process.md` reviewed when needed
+- [ ] `docs/lgpd_data_governance.md` reviewed when data handling or deployment exposure changed
 - [ ] No aspirational documentation introduced
 
 ## Tests Added or Updated

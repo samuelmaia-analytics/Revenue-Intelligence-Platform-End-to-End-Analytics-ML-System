@@ -134,6 +134,16 @@ def build_executive_report(
             "portfolio_size": int(kpi_snapshot["portfolio_size"]),
             "best_channel_efficiency": kpi_snapshot["best_channel_efficiency"],
         },
+        "marketplace_overview": {
+            "total_orders": int(kpi_snapshot.get("total_orders", 0)),
+            "average_ticket": _as_float(cast(SupportsFloat, kpi_snapshot.get("average_ticket", 0.0))),
+            "late_delivery_rate": _as_float(cast(SupportsFloat, kpi_snapshot.get("late_delivery_rate", 0.0))),
+            "cancellation_rate": _as_float(cast(SupportsFloat, kpi_snapshot.get("cancellation_rate", 0.0))),
+            "avg_review_score": _as_float(cast(SupportsFloat, kpi_snapshot.get("avg_review_score", 0.0))),
+            "top_category": kpi_snapshot.get("top_category", {}),
+            "top_state": kpi_snapshot.get("top_state", {}),
+            "top_seller": kpi_snapshot.get("top_seller", {}),
+        },
         "model_performance": {
             "churn": churn_results,
             "next_purchase_30d": next_purchase_results,
@@ -176,10 +186,19 @@ def build_executive_summary(
             "avg_arpu": _as_float(kpi_snapshot["avg_arpu"]),
             "avg_churn_probability": float(recommendations_df["churn_probability"].mean()),
             "portfolio_size": int(kpi_snapshot["portfolio_size"]),
+            "repeat_customer_rate": _as_float(cast(SupportsFloat, kpi_snapshot.get("repeat_customer_rate", 0.0))),
+            "avg_review_score": _as_float(cast(SupportsFloat, kpi_snapshot.get("avg_review_score", 0.0))),
         },
         "ltv_cac_by_channel": ltv_cac_channel,
         "top_churn_risk_customers": top_churn,
         "top_20_recommended_actions": top_actions,
+        "marketplace_highlights": {
+            "total_orders": int(kpi_snapshot.get("total_orders", 0)),
+            "average_ticket": _as_float(cast(SupportsFloat, kpi_snapshot.get("average_ticket", 0.0))),
+            "late_delivery_rate": _as_float(cast(SupportsFloat, kpi_snapshot.get("late_delivery_rate", 0.0))),
+            "top_category": kpi_snapshot.get("top_category", {}),
+            "top_state": kpi_snapshot.get("top_state", {}),
+        },
     }
 
     atomic_write_json(output_path, summary)

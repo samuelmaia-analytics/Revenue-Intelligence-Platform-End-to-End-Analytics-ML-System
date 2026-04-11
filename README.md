@@ -70,6 +70,25 @@ Supported raw-source patterns:
 
 This is not just a portfolio dashboard. It is a productizable operating layer for revenue analytics with explicit runtime ownership, governed outputs, and downstream accountability.
 
+## Olist Executive Layer
+
+The current implementation now uses the available Olist marketplace CSVs as the main analytical source rather than compressing them into a thin demo schema.
+
+What the runtime now delivers from the Olist base:
+
+- enriched silver entities for customers, orders, order items, payments, reviews, products, sellers, and geography
+- expanded gold tables for warehouse consumption, including seller, product, geography, and order-item structures
+- executive KPIs for revenue, order volume, average ticket, freight, recurring customers, fulfillment delay, cancellations, review score, category concentration, seller concentration, and state-level performance
+- customer analytics with churn proxy, next-purchase propensity, LTV proxy, RFM segmentation, and prioritized actions
+- curated marts for logistics, payments, geography, products, categories, sellers, and executive monthly scorecards
+- BI-ready curated scorecards for executive summary, customer segment health, payments, retention, sellers, categories, states, and operations
+- a Streamlit workspace that reads governed outputs instead of reimplementing metric logic in the UI
+
+Important policy note:
+
+- CAC and unit economics remain explicitly labeled as proxy metrics because the Olist dataset does not contain real acquisition spend.
+- The repository now prefers transparent proxy logic over implied precision.
+
 ## Who It Serves
 
 ### CEOs and Founders
@@ -137,6 +156,26 @@ Key characteristics:
 - processed and operational report validation before pipeline completion
 - SQLite warehouse by default, with compatibility paths for service and dbt consumers
 
+Core business domains now surfaced in the governed output layer:
+
+- executive summary and monthly scorecard
+- customer intelligence, retention, cohort, RFM, and churn-risk proxy
+- product and category performance
+- seller concentration and seller quality
+- logistics, delay, on-time delivery, and satisfaction
+- payments and state-level geography analytics
+
+Primary curated BI files:
+
+- `data/processed/executive_scorecard.csv`
+- `data/processed/customer_segment_health.csv`
+- `data/processed/payment_scorecard.csv`
+- `data/processed/retention_scorecard.csv`
+- `data/processed/seller_scorecard.csv`
+- `data/processed/category_scorecard.csv`
+- `data/processed/state_scorecard.csv`
+- `data/processed/operations_scorecard.csv`
+
 ## Repository Structure
 
 ```text
@@ -171,11 +210,14 @@ Primary references:
 - [docs/README.md](docs/README.md)
 - [docs/audit/executive_audit_2026-04.md](docs/audit/executive_audit_2026-04.md)
 - [docs/architecture.md](docs/architecture.md)
+- [docs/olist_analytics_model.md](docs/olist_analytics_model.md)
+- [docs/metric_map.md](docs/metric_map.md)
 - [docs/architecture_decision_summary.md](docs/architecture_decision_summary.md)
 - [docs/governance_framework.md](docs/governance_framework.md)
 - [docs/runtime_surfaces.md](docs/runtime_surfaces.md)
 - [docs/environments.md](docs/environments.md)
 - [docs/ci_cd.md](docs/ci_cd.md)
+- [docs/github_actions_workflows.md](docs/github_actions_workflows.md)
 - [docs/repository_structure.md](docs/repository_structure.md)
 - [docs/runbook.md](docs/runbook.md)
 - [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
@@ -184,6 +226,7 @@ Primary references:
 - [docs/merge_policy.md](docs/merge_policy.md)
 - [docs/sql_examples.md](docs/sql_examples.md)
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
+- [docs/lgpd_data_governance.md](docs/lgpd_data_governance.md)
 - [docs/hiring_review.md](docs/hiring_review.md)
 - [docs/executive/one_pager.md](docs/executive/one_pager.md)
 - [docs/executive/technical_one_pager.md](docs/executive/technical_one_pager.md)
@@ -214,6 +257,26 @@ The dashboard is not a second source of truth. It consumes processed artifacts g
 - `app/views` for business sections and user flows
 - `app/dashboard_data.py` for cached artifact access
 - `app/dashboard_i18n.py` for `EN`, `PT-BR`, and `PT-PT`
+
+Current presentation surfaces:
+
+- `app/streamlit_app.py`: canonical executive command center, optimized for PT-BR-first executive storytelling and governed KPI consumption
+- `app/pages/`: multipage compatibility surface that reuses the same processed artifacts and shared views for navigation by business topic
+
+Business-oriented pages currently cover:
+
+- executive summary
+- customer and segment performance
+- revenue at risk
+- projections and scenarios
+- operational reliability
+- governance and data trust
+
+Important UI policy:
+
+- the Streamlit layer reads governed curated outputs and executive artifacts
+- metric logic stays in the pipeline and processed layer, not in ad hoc dashboard calculations
+- PT-BR is the most polished presentation path, while `EN` and `PT-PT` remain supported
 
 ## Local Setup
 
@@ -266,13 +329,21 @@ python -m src.pipeline run --start-date 2025-01-01 --end-date 2025-03-31
 Streamlit:
 
 ```powershell
-streamlit run app/streamlit_app.py
+.\scripts\dev\start.ps1 -Target app -SkipPipeline
+```
+
+Governed file queries:
+
+```powershell
+python -m src.file_queries --list
+python -m src.file_queries --sql "SELECT * FROM processed.executive_scorecard"
+python -m src.file_queries --sql "SELECT * FROM raw.orders LIMIT 10"
 ```
 
 Official entrypoint for local and private deploy:
 
 ```powershell
-streamlit run app/streamlit_app.py
+python -m streamlit run app/streamlit_app.py
 ```
 
 Make-based workflow:
@@ -330,8 +401,10 @@ See [docs/sql_examples.md](docs/sql_examples.md) for practical warehouse queries
 The repository is compatible with a private GitHub operating model and a Streamlit deployment surface for controlled demos.
 
 - use the canonical Streamlit entrypoint `app/streamlit_app.py`
+- keep `runtime.txt` pinned to `python-3.11` for Streamlit Community Cloud parity
 - keep environment-specific values in Streamlit secrets, not in Git
 - retain `python -m src.pipeline run` as the canonical runtime even when the app is the demo surface
+- private GitHub repo and public Streamlit app can coexist when the linked GitHub account has private-repo access
 
 Deployment reference:
 

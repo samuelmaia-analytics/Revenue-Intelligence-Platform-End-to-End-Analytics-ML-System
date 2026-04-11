@@ -16,6 +16,16 @@ Review-friendly analytical queries showing how governed warehouse outputs are co
 
 This folder now also includes a Power BI-oriented scorecard query so BI consumers can reuse governed warehouse semantics instead of rebuilding metrics ad hoc.
 
+## `olist/`
+
+Executive and analytical queries over the governed file-query surface powered by `python -m src.file_queries`.
+
+These queries are intended for:
+
+- direct analysis over `raw`, `silver`, and `processed`
+- fast reviewer demos without loading a separate BI tool
+- reusable executive cuts for revenue, retention, sellers, categories, and geography
+
 ## `create_tables.sql`
 
 Bootstrap script for fast local schema creation. Keep it aligned with the `ddl/` files so the consolidated path does not drift from the table-specific definitions.
@@ -26,3 +36,4 @@ Bootstrap script for fast local schema creation. Keep it aligned with the `ddl/`
 - use explicit aliases and reviewer-readable metric names
 - document non-obvious assumptions close to the query
 - keep examples tied to actual warehouse entities produced by the batch pipeline
+- when querying CSV layers directly, prefer `processed` and `silver` over re-deriving business logic from `raw`

@@ -14,6 +14,11 @@ The main workflow in `.github/workflows/ci.yml` is split into focused jobs:
 - `dbt-sqlite`: pipeline execution followed by dbt-on-SQLite validation
 - `docker`: container image build plus dashboard, batch, and API container smoke validation
 
+Additional operational workflows:
+
+- `.github/workflows/runtime-baseline.yml`: controlled runtime baseline refresh with PR automation
+- `.github/workflows/dbt-docs.yml`: manual dbt documentation build/publish workflow
+
 This split matters because it makes failures attributable:
 
 - if `quality` fails, the code or core artifacts are inconsistent
@@ -46,6 +51,7 @@ The workflow is expected to keep these signals green before merge:
 - dashboard, API, SQL, processed-export, partner-payload, and dbt smoke checks
 - package build
 - repository-governance and operational-asset tests
+- privacy/governance discipline documented and referenced (`docs/lgpd_data_governance.md`)
 - dashboard, batch, and API container smoke validation
 
 ## Artifact Expectations

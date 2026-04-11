@@ -37,6 +37,16 @@ def _build_valid_processed_artifacts(processed_dir: Path) -> None:
         },
     )
     _write_json(
+        processed_dir / "quality_business_rules.json",
+        {
+            "checks": {
+                "customer_id_uniqueness_violations": 0,
+                "order_id_uniqueness_violations": 0,
+            },
+            "status": "ok",
+        },
+    )
+    _write_json(
         processed_dir / "freshness_report.json",
         {
             "evaluated_at_utc": "2026-01-01T00:00:00+00:00",
@@ -200,6 +210,125 @@ def _build_valid_processed_artifacts(processed_dir: Path) -> None:
             }
         ],
     )
+    _write_csv(
+        processed_dir / "customer_analytics.csv",
+        [
+            {
+                "customer_id": 1,
+                "channel": "Organic",
+                "segment": "Enterprise",
+                "recency_days": 12,
+                "frequency": 3,
+                "monetary": 420.0,
+                "ltv": 420.0,
+                "churn_probability": 0.2,
+                "next_purchase_probability": 0.6,
+                "recommended_action": "Upsell Offer",
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "payment_analytics.csv",
+        [
+            {
+                "channel": "Organic",
+                "total_orders": 10,
+                "total_revenue": 4200.0,
+                "avg_ticket": 420.0,
+                "revenue_share_pct": 1.0,
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "geographic_analytics.csv",
+        [
+            {
+                "state": "SP",
+                "total_orders": 10,
+                "unique_customers": 9,
+                "total_revenue": 4200.0,
+                "revenue_share_pct": 1.0,
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "logistics_analytics.csv",
+        [
+            {
+                "order_month": "2025-01",
+                "total_orders": 10,
+                "delivered_orders": 9,
+                "canceled_orders": 1,
+                "avg_delivery_days": 7.0,
+                "late_delivery_rate": 0.1,
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "executive_summary_layer.csv",
+        [
+            {
+                "order_month": "2025-01",
+                "total_revenue": 4200.0,
+                "total_orders": 10,
+                "unique_customers": 9,
+                "avg_ticket": 420.0,
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "executive_scorecard.csv",
+        [
+            {
+                "snapshot_date": "2026-01-01",
+                "total_revenue": 4200.0,
+                "total_orders": 10,
+                "average_ticket": 420.0,
+                "recurring_customer_rate": 0.4,
+                "late_delivery_rate": 0.1,
+                "m1_retention_rate": 0.3,
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "customer_segment_health.csv",
+        [
+            {
+                "recommended_action": "Upsell Offer",
+                "rfm_segment": "Champions",
+                "churn_risk_band": "Low",
+                "customers": 4,
+                "revenue_proxy": 1800.0,
+                "avg_ltv": 450.0,
+                "avg_churn_probability": 0.2,
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "payment_scorecard.csv",
+        [
+            {
+                "channel": "Organic",
+                "total_orders": 10,
+                "total_revenue": 4200.0,
+                "avg_ticket": 420.0,
+                "revenue_share_pct": 1.0,
+                "on_time_delivery_rate": 0.9,
+            }
+        ],
+    )
+    _write_csv(
+        processed_dir / "retention_scorecard.csv",
+        [
+            {
+                "cohort_month": "2025-01",
+                "cohort_index": 1,
+                "active_customers": 3,
+                "cohort_size": 10,
+                "retention_rate": 0.3,
+            }
+        ],
+    )
     _write_json(
         processed_dir / "executive_report.json",
         {
@@ -251,6 +380,21 @@ def _build_valid_processed_artifacts(processed_dir: Path) -> None:
         },
     )
     _write_json(
+        processed_dir / "insight_draft.json",
+        {
+            "generated_at_utc": "2026-01-01T00:00:00+00:00",
+            "run_id": "20260101T000000Z-test",
+            "mode_requested": "deterministic",
+            "mode_applied": "deterministic",
+            "headline": "Revenue portfolio stable",
+            "summary": "Top marketplace KPIs are available.",
+            "kpi_highlights": [],
+            "anomalies": [],
+            "recommended_actions": [],
+            "evidence": {"revenue_proxy": 4200.0},
+        },
+    )
+    _write_json(
         processed_dir / "runtime_metrics.json",
         {
             "run_id": "20260101T000000Z-test",
@@ -262,6 +406,14 @@ def _build_valid_processed_artifacts(processed_dir: Path) -> None:
             "event_count": 1,
             "output_count": 20,
             "outputs": ["runtime_metrics.json"],
+        },
+    )
+    _write_json(
+        processed_dir / "reliability_report.json",
+        {
+            "run_id": "20260101T000000Z-test",
+            "status": "ok",
+            "summary": "Artifacts validated successfully.",
         },
     )
     (processed_dir / "run_events.jsonl").write_text(
@@ -277,6 +429,16 @@ def _build_valid_processed_artifacts(processed_dir: Path) -> None:
         encoding="utf-8",
     )
     _write_json(processed_dir / "semantic_metrics_catalog.json", {"metrics": []})
+    _write_json(
+        processed_dir / "executive_kpis.json",
+        {
+            "total_revenue": 4200.0,
+            "total_orders": 10,
+            "average_ticket": 420.0,
+            "unique_customers": 9,
+            "avg_review_score": 4.3,
+        },
+    )
 
 
 def test_validate_processed_artifacts_writes_report(tmp_path: Path) -> None:
@@ -290,7 +452,7 @@ def test_validate_processed_artifacts_writes_report(tmp_path: Path) -> None:
     )
 
     assert report["status"] == "ok"
-    assert int(report["artifact_count"]) == 21
+    assert int(report["artifact_count"]) == 33
     assert (processed_dir / "artifact_validation_report.json").exists()
 
 

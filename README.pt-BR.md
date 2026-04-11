@@ -53,6 +53,23 @@ A plataforma converte comportamento de clientes em ativos que apoiam decisões c
 - snapshots executivos de KPI e monitoramento
 - tabelas de warehouse prontas para SQL e consumo estilo dbt
 
+## Camada Executiva Olist
+
+Com os CSVs atuais do Olist em `data/raw/`, o repositório agora entrega uma camada analítica mais profunda, sem depender de uma modelagem simplificada de demo.
+
+O que passa a existir de forma governada:
+
+- entidades `silver` enriquecidas para clientes, pedidos, itens, pagamentos, reviews, produtos, sellers e geografia
+- tabelas `gold` para consumo em warehouse, com fatos de pedidos e itens e dimensões de cliente, produto, seller, data e geografia
+- métricas executivas para receita, ticket médio, frete, recorrência, entrega, atraso, satisfação, concentração de sellers, concentração de categorias e performance por estado
+- analytics de cliente com proxy de churn, propensão de recompra, proxy de LTV, RFM e ação recomendada
+- scorecards curated prontos para BI em pagamentos, retenção, sellers, categorias, estados, operações e resumo executivo
+
+Política importante:
+
+- CAC e unit economics continuam explicitamente tratados como métricas proxy, porque o Olist não traz custo real de aquisição
+- o projeto prioriza transparência metodológica sobre precisão artificial
+
 Para um avaliador técnico, o sinal prático é direto: este não é um showcase de notebook disfarçado de plataforma. É um sistema de dados pequeno, mas disciplinado, com ownership claro de runtime e responsabilidade sobre consumidores downstream.
 
 ## Caminho Oficial de Execução
@@ -122,6 +139,7 @@ Referências principais:
 - [docs/runtime_surfaces.md](docs/runtime_surfaces.md)
 - [docs/environments.md](docs/environments.md)
 - [docs/ci_cd.md](docs/ci_cd.md)
+- [docs/github_actions_workflows.md](docs/github_actions_workflows.md)
 - [docs/repository_structure.md](docs/repository_structure.md)
 - [docs/runbook.md](docs/runbook.md)
 - [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
@@ -130,6 +148,7 @@ Referências principais:
 - [docs/merge_policy.md](docs/merge_policy.md)
 - [docs/sql_examples.md](docs/sql_examples.md)
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
+- [docs/lgpd_data_governance.md](docs/lgpd_data_governance.md)
 - [docs/hiring_review.md](docs/hiring_review.md)
 
 ## Sinais de Maturidade em Engenharia de Dados
@@ -152,6 +171,26 @@ O dashboard não é uma segunda fonte de verdade. Ele consome os artefatos proce
 - `app/views` para seções de negócio e fluxo de leitura
 - `app/dashboard_data.py` para acesso cacheado aos artefatos
 - `app/dashboard_i18n.py` para `EN`, `PT-BR` e `PT-PT`
+
+Superfícies atuais:
+
+- `app/streamlit_app.py`: command center executivo principal, com narrativa premium orientada a negócio
+- `app/pages/`: navegação multipage compatível, reutilizando os mesmos artefatos governados e as mesmas views compartilhadas
+
+Páginas de negócio cobertas:
+
+- visão geral executiva
+- receita em risco
+- performance por segmento
+- projeções e cenários
+- confiabilidade operacional
+- governança e confiança de dados
+
+Princípio de produto:
+
+- a lógica de métricas fica no pipeline e nos artefatos processados
+- a UI apenas consome, organiza e apresenta os outputs governados
+- PT-BR é a trilha visual mais refinada no estado atual do projeto
 
 ## Setup Local
 
@@ -198,7 +237,15 @@ python -m src.pipeline run --start-date 2025-01-01 --end-date 2025-03-31
 Streamlit:
 
 ```powershell
-streamlit run app/streamlit_app.py
+.\scripts\dev\start.ps1 -Target app -SkipPipeline
+```
+
+Queries sobre arquivos governados:
+
+```powershell
+python -m src.file_queries --list
+python -m src.file_queries --sql "SELECT * FROM processed.executive_scorecard"
+python -m src.file_queries --sql "SELECT * FROM raw.orders LIMIT 10"
 ```
 
 Fluxo com Make:
@@ -254,6 +301,10 @@ Checkpoints de governança:
 ## Exemplos de Consumo SQL
 
 Veja [docs/sql_examples.md](docs/sql_examples.md) para queries práticas de consumo do warehouse cobrindo economics por canal, ranking de recomendações, retenção por coorte e visão executiva por segmento.
+
+## Deploy Streamlit Com Repositório Privado
+
+Mantenha `app/streamlit_app.py` como entrypoint, `runtime.txt` com `python-3.11` e segredos apenas no painel do Streamlit (nunca no Git).
 
 ## Decisões Técnicas e Trade-offs
 

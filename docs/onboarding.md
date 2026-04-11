@@ -92,7 +92,7 @@ python -m src.pipeline --help
 Dashboard:
 
 ```powershell
-python -m streamlit run app/streamlit_app.py
+.\scripts\dev\start.ps1 -Target app -SkipPipeline
 ```
 
 Windows shortcut:

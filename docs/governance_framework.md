@@ -27,6 +27,7 @@ Everything else is downstream of that path:
 3. Keep local-first reproducibility as the default unless an external dependency materially improves verification.
 4. Prefer portable SQL for documented examples because the repository standard is SQLite-first.
 5. Every operational claim in a README, runbook, or release note should map to code, tests, or automation already in the repo.
+6. Privacy-sensitive handling must follow `docs/lgpd_data_governance.md`, including secret hygiene and restricted-data discipline.
 
 ## Change Classes
 
@@ -37,6 +38,7 @@ Use these classes to reason about review depth and required evidence:
 - `warehouse`: changes persisted SQLite structures or downstream analytical expectations
 - `experience`: changes Streamlit, API, or other consumer-facing presentation layers
 - `governance`: changes CI, repository policy, merge discipline, issue intake, or release process
+- `privacy`: changes data handling, retention, exposure risk, or LGPD-related controls
 - `docs`: changes reviewer understanding without changing runtime behavior
 
 ## Required Evidence By Change Type
@@ -46,6 +48,7 @@ Use these classes to reason about review depth and required evidence:
 - `warehouse`: SQL or dbt validation, portability check for SQLite-first examples
 - `experience`: smoke validation and documentation if the interaction model changes
 - `governance`: CI or repository-governance validation and updated policy docs
+- `privacy`: explicit impact analysis for data sensitivity, deployment exposure, and secret handling
 - `docs`: cross-check against implemented behavior and linked references
 
 ## Ownership Surfaces
@@ -56,6 +59,7 @@ Use these classes to reason about review depth and required evidence:
 - `dbt/` owns governed downstream transformation examples
 - `.github/` owns merge, issue, and CI discipline
 - `docs/` owns the reviewer narrative and operating model
+- `docs/lgpd_data_governance.md` owns privacy control guidance for repository-level engineering decisions
 
 ## Release Alignment
 

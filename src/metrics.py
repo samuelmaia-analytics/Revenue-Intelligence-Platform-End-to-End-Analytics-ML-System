@@ -117,6 +117,17 @@ def build_business_kpi_snapshot(
     avg_cac = float(recommendations_df["cac"].mean())
     avg_ltv_cac = float(recommendations_df["ltv_cac_ratio"].mean())
     high_risk_share = float((recommendations_df["churn_probability"] >= 0.7).mean())
+    repeat_customer_rate = (
+        float((scored_df["frequency"] >= 2).mean()) if "frequency" in scored_df.columns else 0.0
+    )
+    avg_review_score = (
+        float(scored_df["avg_review_score"].mean())
+        if "avg_review_score" in scored_df.columns
+        else 0.0
+    )
+    late_order_rate = (
+        float(scored_df["late_order_rate"].mean()) if "late_order_rate" in scored_df.columns else 0.0
+    )
 
     best_channel = (
         unit_economics_df.sort_values("ltv_cac_ratio", ascending=False)
@@ -131,5 +142,8 @@ def build_business_kpi_snapshot(
         "avg_ltv_cac_ratio": avg_ltv_cac,
         "high_churn_risk_pct": high_risk_share,
         "portfolio_size": int(recommendations_df["customer_id"].nunique()),
+        "repeat_customer_rate": repeat_customer_rate,
+        "avg_review_score": avg_review_score,
+        "late_order_rate": late_order_rate,
         "best_channel_efficiency": best_channel[0] if best_channel else {},
     }

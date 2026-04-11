@@ -1,0 +1,25 @@
+-- Extrato de one-pager executivo em uma linha.
+SELECT
+    snapshot_date,
+    total_revenue,
+    total_orders,
+    average_ticket,
+    recurring_customer_rate,
+    repeat_revenue_share,
+    m1_retention_rate,
+    late_delivery_rate,
+    on_time_delivery_rate,
+    avg_review_score,
+    review_promoter_rate,
+    high_churn_risk_customer_pct,
+    high_churn_risk_revenue_pct,
+    seller_top10_revenue_share,
+    category_top10_revenue_share,
+    top_state,
+    top_state_revenue_share,
+    top_category,
+    top_category_revenue_share,
+    top_seller,
+    top_payment_channel,
+    latest_month_orders
+FROM processed.executive_scorecard;

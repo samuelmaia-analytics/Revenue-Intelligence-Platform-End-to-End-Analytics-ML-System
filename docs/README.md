@@ -5,12 +5,16 @@ This repository keeps documentation intentionally scoped and operational. Each d
 ## Core Documents
 
 - [architecture.md](architecture.md): system boundary, runtime path, data flow, reliability controls and trade-offs
+- [olist_analytics_model.md](olist_analytics_model.md): bronze, silver, gold and processed analytical products for the Olist marketplace source
+- [metric_map.md](metric_map.md): executive KPI definitions, proxy policy, and processed business views
+- [`../README.pt-BR.md`](../README.pt-BR.md): best entrypoint for the current premium PT-BR product surface
 - [architecture_decision_summary.md](architecture_decision_summary.md): short architecture summary for sponsors and fast reviews
 - [governance_framework.md](governance_framework.md): source-of-truth rules, ownership surfaces, and change-evidence expectations
 - [runtime_surfaces.md](runtime_surfaces.md): canonical runtime surface, downstream interfaces, and smoke ownership
 - [runbook.md](runbook.md): operational commands, failure investigation, and exported observability evidence
 - [environments.md](environments.md): how `.venv`, `.dbt-venv`, and CI relate to each other
 - [ci_cd.md](ci_cd.md): CI job topology, required gates, and local-to-CI parity expectations
+- [github_actions_workflows.md](github_actions_workflows.md): workflow-by-workflow map for GitHub Actions triggers, jobs, and evidence
 - [repository_structure.md](repository_structure.md): why directories exist, where new code belongs and what should stay out of the top level
 - [onboarding.md](onboarding.md): fastest path to a successful local run, validation commands and common failure modes
 - [incident_playbooks.md](incident_playbooks.md): short containment playbooks for the most likely incident classes
@@ -20,8 +24,10 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - [merge_policy.md](merge_policy.md): labels, merge expectations, and what must be green before merging
 - [sql_examples.md](sql_examples.md): practical downstream SQL examples over warehouse outputs
 - [demo_enterprise_local.md](demo_enterprise_local.md): local enterprise demo path across batch, API, and Streamlit
+- [streamlit_private_deploy.md](streamlit_private_deploy.md): private GitHub + Streamlit deployment path, account linking, and visibility controls
 - [export_layer.md](export_layer.md): governed export and downstream consumption paths
 - [ai_governance.md](ai_governance.md): governed AI posture for optional insight drafting
+- [lgpd_data_governance.md](lgpd_data_governance.md): privacy controls and LGPD-oriented operating policy for data handling and deployment
 - [reliability_report.md](reliability_report.md): governed operational summary for recurring delivery
 - [recurring_analytics_operating_pack.md](recurring_analytics_operating_pack.md): recurring analytics operating model and artifact pack
 - [lineage_and_traceability.md](lineage_and_traceability.md): source-to-consumer lineage and runtime traceability
@@ -34,6 +40,13 @@ This repository keeps documentation intentionally scoped and operational. Each d
 - `scripts/smoke_support.py`: shared temporary-runtime helper for downstream smoke checks
 - [adr/README.md](adr/README.md): short decision records for the most important architectural trade-offs
 - [hiring_review.md](hiring_review.md): honest portfolio assessment from a hiring-review perspective
+
+## Current Product Notes
+
+- `app/streamlit_app.py` is the canonical executive surface
+- `app/pages/` remains as a compatible business-topic navigation layer over the same artifacts
+- PT-BR is the most curated presentation path today
+- curated BI exports in `data/processed/` should be preferred over rebuilding executive aggregates in BI tools
 
 ## Executive and Commercial
 

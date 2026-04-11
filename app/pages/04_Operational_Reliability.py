@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import streamlit as st
 
 from app.page_runtime import prepare_page
@@ -25,7 +27,17 @@ def main() -> None:
     )
     reliability_report = assets.get("reliability_report", {})
     if reliability_report:
-        st.json(reliability_report, expanded=False)
+        with st.expander("Open reliability report JSON"):
+            payload = json.dumps(reliability_report, ensure_ascii=False, indent=2)
+            st.markdown("**Technical artifact**")
+            st.write("Use the download below for the full reliability report payload.")
+            st.download_button(
+                "Download reliability report",
+                data=payload,
+                file_name="reliability_report.json",
+                mime="application/json",
+                use_container_width=True,
+            )
     render_dashboard_footer(lang)
 
 

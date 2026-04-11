@@ -53,6 +53,23 @@ A plataforma converte comportamento de clientes em activos que suportam decisõe
 - snapshots executivos de KPI e monitorização
 - tabelas de warehouse prontas para SQL e consumo ao estilo dbt
 
+## Camada Executiva Olist
+
+Com os CSVs actuais do Olist em `data/raw/`, o repositório entrega agora uma camada analítica mais profunda, sem depender de uma modelação simplificada de demonstração.
+
+O que passa a existir de forma governada:
+
+- entidades `silver` enriquecidas para clientes, encomendas, itens, pagamentos, reviews, produtos, sellers e geografia
+- tabelas `gold` para consumo em warehouse, com factos de encomendas e itens e dimensões de cliente, produto, seller, data e geografia
+- métricas executivas para receita, ticket médio, frete, recorrência, entrega, atraso, satisfação, concentração de sellers, concentração de categorias e performance por estado
+- analytics de cliente com proxy de churn, propensão de recompra, proxy de LTV, RFM e acção recomendada
+- scorecards curated prontos para BI em pagamentos, retenção, sellers, categorias, estados, operações e resumo executivo
+
+Política importante:
+
+- CAC e unit economics continuam explicitamente tratados como métricas proxy, porque o Olist não inclui custo real de aquisição
+- o projecto privilegia transparência metodológica em vez de precisão artificial
+
 Para um avaliador técnico, o sinal prático é directo: este não é um showcase de notebooks disfarçado de plataforma. É um sistema de dados pequeno, mas disciplinado, com ownership claro de runtime e responsabilidade sobre consumidores downstream.
 
 ## Caminho Oficial de Execução
@@ -122,6 +139,7 @@ Referências principais:
 - [docs/runtime_surfaces.md](docs/runtime_surfaces.md)
 - [docs/environments.md](docs/environments.md)
 - [docs/ci_cd.md](docs/ci_cd.md)
+- [docs/github_actions_workflows.md](docs/github_actions_workflows.md)
 - [docs/repository_structure.md](docs/repository_structure.md)
 - [docs/runbook.md](docs/runbook.md)
 - [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
@@ -130,6 +148,7 @@ Referências principais:
 - [docs/merge_policy.md](docs/merge_policy.md)
 - [docs/sql_examples.md](docs/sql_examples.md)
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
+- [docs/lgpd_data_governance.md](docs/lgpd_data_governance.md)
 - [docs/hiring_review.md](docs/hiring_review.md)
 
 ## Sinais de Maturidade em Engenharia de Dados
@@ -152,6 +171,26 @@ O dashboard não é uma segunda fonte de verdade. Consome os artefactos processa
 - `app/views` para secções de negócio e fluxo de leitura
 - `app/dashboard_data.py` para acesso com cache aos artefactos
 - `app/dashboard_i18n.py` para `EN`, `PT-BR` e `PT-PT`
+
+Superfícies actuais:
+
+- `app/streamlit_app.py`: command center executivo principal, com narrativa premium orientada a negócio
+- `app/pages/`: navegação multipage compatível, reutilizando os mesmos artefactos governados e as mesmas views partilhadas
+
+Páginas de negócio cobertas:
+
+- visão geral executiva
+- receita em risco
+- performance por segmento
+- projecções e cenários
+- confiabilidade operacional
+- governação e confiança de dados
+
+Princípio de produto:
+
+- a lógica de métricas permanece no pipeline e nos artefactos processados
+- a UI apenas consome, organiza e apresenta os outputs governados
+- PT-BR é actualmente a via visual mais refinada do projecto
 
 ## Setup Local
 
@@ -198,7 +237,7 @@ python -m src.pipeline run --start-date 2025-01-01 --end-date 2025-03-31
 Streamlit:
 
 ```powershell
-streamlit run app/streamlit_app.py
+.\scripts\dev\start.ps1 -Target app -SkipPipeline
 ```
 
 Fluxo com Make:
@@ -254,6 +293,10 @@ Checkpoints de governação:
 ## Exemplos de Consumo SQL
 
 Veja [docs/sql_examples.md](docs/sql_examples.md) para queries práticas de consumo do warehouse cobrindo economics por canal, ranking de recomendações, retenção por coorte e visão executiva por segmento.
+
+## Deploy Streamlit Com Repositório Privado
+
+Mantenha `app/streamlit_app.py` como entrypoint, `runtime.txt` com `python-3.11` e segredos apenas no painel do Streamlit (nunca no Git).
 
 ## Decisões Técnicas e Trade-offs
 

@@ -2,6 +2,40 @@
 
 These queries are intentionally small and practical. They show how a downstream analyst or partner team would consume the warehouse outputs without re-implementing pipeline logic.
 
+## Querying The CSV Layers Directly
+
+The repository now includes a lightweight query surface over the governed CSV layers:
+
+```powershell
+python -m src.file_queries --list
+python -m src.file_queries --sql "SELECT * FROM processed.executive_scorecard"
+python -m src.file_queries --sql "SELECT customer_state, total_revenue FROM processed.state_scorecard ORDER BY total_revenue DESC LIMIT 10"
+```
+
+Available schemas:
+
+- `raw`
+- `bronze`
+- `silver`
+- `gold`
+- `processed`
+
+For convenience, each relation is also exposed as a flat alias such as `processed_executive_scorecard`.
+
+You can also execute the curated Olist query pack directly:
+
+```powershell
+python -m src.file_queries --file sql/olist/001_revenue_by_state.sql
+python -m src.file_queries --file sql/olist/003_cohort_retention_curve.sql
+python -m src.file_queries --file sql/olist/005_category_churn_proxy.sql
+python -m src.file_queries --file sql/olist/006_payment_mix_quality.sql
+python -m src.file_queries --file sql/olist/010_executive_monthly_summary.sql
+python -m src.file_queries --file sql/olist/014_seller_watchlist.sql
+python -m src.file_queries --file sql/olist/015_executive_one_pager_extract.sql
+python -m src.file_queries --file sql/olist/views/revenue_board.sql
+python -m src.file_queries --file sql/olist/views/operations_board.sql
+```
+
 ## Channel Economics
 
 ```sql

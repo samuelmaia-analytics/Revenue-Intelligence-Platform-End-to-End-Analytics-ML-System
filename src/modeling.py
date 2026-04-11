@@ -199,6 +199,9 @@ def _build_business_model_summary(
         "temporal_test_roc_auc": results["temporal_test_roc_auc"],
         "train_size": results["train_size"],
         "test_size": results["test_size"],
+        "model_reused": bool(results.get("model_reused", False)),
+        "training_mode": str(results.get("training_mode", "full_retrain")),
+        "registry_model_version": results.get("registry_model_version"),
         "top_business_drivers": top_drivers,
         "business_interpretation": interpretation[model_name],
     }
@@ -217,6 +220,9 @@ def _build_cached_results(metadata: dict) -> dict:
         "tpr": [],
         "precision": [],
         "recall": [],
+        "model_reused": True,
+        "training_mode": "registry_reuse",
+        "registry_model_version": metadata.get("model_version"),
     }
 
 
@@ -246,6 +252,9 @@ def _train_or_load_model(
         return cached_model, cached_results
     except FileNotFoundError:
         results = _evaluate_pipeline_temporal(pipeline, x, y, ordered_df)
+        results["model_reused"] = False
+        results["training_mode"] = "full_retrain"
+        results["registry_model_version"] = None
         return results["model"], results
 
 

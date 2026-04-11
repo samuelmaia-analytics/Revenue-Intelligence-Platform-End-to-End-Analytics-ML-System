@@ -22,6 +22,8 @@ def test_repository_contains_high_signal_operational_docs() -> None:
         PROJECT_ROOT / "docs" / "deprecation_policy.md",
         PROJECT_ROOT / "docs" / "merge_policy.md",
         PROJECT_ROOT / "docs" / "sql_examples.md",
+        PROJECT_ROOT / "docs" / "github_actions_workflows.md",
+        PROJECT_ROOT / "docs" / "lgpd_data_governance.md",
         PROJECT_ROOT / "docs" / "hiring_review.md",
         PROJECT_ROOT / "docs" / "releases" / "v1.1.0.md",
         PROJECT_ROOT / "docs" / "releases" / "v1.2.0.md",
@@ -121,6 +123,8 @@ def test_readme_and_docs_map_reference_core_operational_docs() -> None:
         "docs/deprecation_policy.md",
         "docs/merge_policy.md",
         "docs/sql_examples.md",
+        "docs/github_actions_workflows.md",
+        "docs/lgpd_data_governance.md",
         "docs/incident_playbooks.md",
         "docs/hiring_review.md",
     ]
@@ -162,7 +166,7 @@ def test_pyproject_declares_runtime_and_dev_dependency_paths() -> None:
     dev_dependencies = "\n".join(project["optional-dependencies"]["dev"])
     requirements_dev = (PROJECT_ROOT / "requirements-dev.txt").read_text(encoding="utf-8")
 
-    for expected_runtime in ["fastapi==0.115.12", "pydantic==2.11.2", "streamlit==1.43.1"]:
+    for expected_runtime in ["fastapi==0.115.12", "pydantic==2.11.2", "streamlit==1.56.0"]:
         assert expected_runtime in runtime_dependencies
 
     for expected_dev in ["pytest==8.3.5", "pytest-cov==6.0.0", "mypy==1.11.2", "ruff==0.6.9"]:

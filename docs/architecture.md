@@ -15,10 +15,10 @@ See also:
 
 Primary responsibility:
 
-- ingest customer and order behavior
-- validate and curate analytical layers
-- score churn and next-purchase models
-- generate governed reporting artifacts
+- ingest the Olist marketplace source as the default system-of-record dataset
+- validate and curate layered customer, order, item, payment, seller, review, and geography entities
+- score churn and next-purchase models on top of the curated customer feature base
+- generate executive KPI products and business-specific marts
 - persist warehouse-ready tables
 - emit operational evidence for every run
 
@@ -46,15 +46,15 @@ That command resolves runtime policy from [`src/config.py`](../src/config.py) an
 2. `bronze`
    Raw tables are copied with source lineage metadata and ingestion timestamps.
 3. `silver`
-   Required-column validation, deduplication, type normalization, and referential cleanup.
+   Required-column validation, deduplication, type normalization, referential cleanup, and Olist enrichment across orders, items, payments, reviews, products, sellers, and geography.
 4. `features`
-   Customer-level analytical base with recency, frequency, monetary, tenure, ARPU, and supervised targets.
+   Customer-level analytical base with recency, frequency, monetary, tenure, ARPU, review, freight and logistics signals plus supervised targets.
 5. `gold`
-   Curated star schema with `dim_customers`, `dim_date`, `dim_channel`, and `fact_orders`.
+   Curated star schema with customer, date, channel, seller, product, geography and order-item structures.
 6. `modeling`
    Churn and next-purchase model training, scoring, and model registry updates. For larger sources, training volume can be capped with `RIP_MODELING_MAX_TRAINING_ROWS` while preserving full-corpus scoring and downstream contracts. If the feature fingerprint is unchanged, the runtime can reuse the registered model instead of retraining.
 7. `analytics`
-   Recommendations, unit economics, KPI snapshots, and downstream business outputs.
+   Recommendations, unit economics, KPI snapshots, customer analytics, logistics analytics, payment analytics, geographic analytics, product analytics, seller analytics, and executive scorecard outputs.
 8. `monitoring`
    Numeric drift summary, calibration report, and alert generation.
 9. `operations`
@@ -114,6 +114,7 @@ Current quality controls:
 - duplicate-key detection
 - referential integrity checks
 - configurable total null-density threshold
+- business-rule checks for invalid statuses, negative values, orphan customers, payment mismatches and delivery outliers
 - quality report persisted as an artifact
 
 Current governance controls:

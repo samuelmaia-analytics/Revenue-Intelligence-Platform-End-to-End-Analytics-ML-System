@@ -56,6 +56,7 @@ body:
         - Streamlit app
         - Warehouse and downstream consumption
         - Contracts and governance
+        - Privacy and LGPD controls
         - CI, tooling, or repository automation
         - Documentation and onboarding
     validations:

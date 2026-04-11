@@ -26,6 +26,12 @@ Python version:
 3.11
 ```
 
+Runtime pin file:
+
+```text
+runtime.txt
+```
+
 Dependencies source:
 
 ```text
@@ -35,10 +41,14 @@ requirements.txt
 ## Deploy Flow
 
 1. Connect Streamlit to the same GitHub account that can read this private repository.
-2. Create a new app and select the repository.
-3. Set the main file path to `app/streamlit_app.py`.
-4. Add any required runtime secrets in the Streamlit secrets panel.
-5. Deploy the app.
+2. In GitHub linked-account permissions, allow access to this private repository.
+3. Create a new app and select the repository/branch.
+4. Set the main file path to `app/streamlit_app.py`.
+5. Add any required runtime secrets in the Streamlit secrets panel.
+6. Deploy the app.
+7. If desired, set the app visibility to public in Streamlit app settings.
+
+If you see `You do not have access to this app or it does not exist`, validate linked-account ownership and repository permissions before debugging application code.
 
 ## Runtime Behavior
 
@@ -57,3 +67,7 @@ Typical keys:
 - `RIP_API_RATE_LIMIT_PER_MINUTE`
 
 If you later externalize storage or API credentials, add them only in the Streamlit deployment settings.
+
+`.env` exists for local development and scripts; Streamlit Community Cloud does not read your local `.env` file from your machine.
+
+For privacy handling and LGPD-oriented controls, see `docs/lgpd_data_governance.md`.

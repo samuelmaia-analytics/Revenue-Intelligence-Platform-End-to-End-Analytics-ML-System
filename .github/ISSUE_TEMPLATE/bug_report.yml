@@ -21,6 +21,7 @@ body:
         - Config and runtime
         - Warehouse persistence
         - Governance/contracts
+        - Privacy/LGPD
         - API
         - CI or developer tooling
         - Documentation

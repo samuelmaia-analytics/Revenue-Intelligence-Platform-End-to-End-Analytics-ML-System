@@ -76,6 +76,10 @@ def test_pipeline_generates_expected_contract_outputs(tmp_path: Path) -> None:
         "dim_date.csv",
         "dim_channel.csv",
         "fact_orders.csv",
+        "executive_scorecard.csv",
+        "customer_segment_health.csv",
+        "payment_scorecard.csv",
+        "retention_scorecard.csv",
     ]
     for file_name in expected_files:
         assert (processed / file_name).exists(), f"Missing output file: {file_name}"
