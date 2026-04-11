@@ -948,8 +948,13 @@ def _render_operations(assets: dict) -> None:
     with bottom[0]:
         st.markdown("### Curvas de retenção por coorte")
         if {"cohort_index", "retention_rate", "cohort_month"}.issubset(cohort.columns) and not cohort.empty:
+            cohort_plot = cohort.copy()
+            unique_cohorts = sorted(cohort_plot["cohort_month"].dropna().unique().tolist())
+            if len(unique_cohorts) > 8:
+                cohort_plot = cohort_plot[cohort_plot["cohort_month"].isin(unique_cohorts[-8:])]
+                st.caption("Exibindo as 8 coortes mais recentes para melhorar a leitura.")
             fig = px.line(
-                cohort,
+                cohort_plot,
                 x="cohort_index",
                 y="retention_rate",
                 color="cohort_month",
@@ -966,20 +971,26 @@ def _render_operations(assets: dict) -> None:
             st.info("Sem curvas de retenção por coorte disponíveis nesta publicação.")
     with bottom[1]:
         st.markdown("### Scorecard operacional mensal")
+        scorecard_cols = [
+            "order_month",
+            "total_orders",
+            "avg_delivery_days",
+            "median_delivery_days",
+            "late_delivery_rate",
+            "on_time_delivery_rate",
+            "avg_review_score",
+        ]
+        scorecard_df = logistics[[col for col in scorecard_cols if col in logistics.columns]].copy()
+        for pct_col in ["late_delivery_rate", "on_time_delivery_rate"]:
+            if pct_col in scorecard_df.columns:
+                scorecard_df[pct_col] = pd.to_numeric(scorecard_df[pct_col], errors="coerce").fillna(0.0).map(lambda v: f"{v:.1%}")
+        for num_col, digits in [("avg_delivery_days", 1), ("median_delivery_days", 1), ("avg_review_score", 2)]:
+            if num_col in scorecard_df.columns:
+                scorecard_df[num_col] = pd.to_numeric(scorecard_df[num_col], errors="coerce").fillna(0.0).map(lambda v, d=digits: f"{v:.{d}f}")
         st.dataframe(
             _ptbr_frame(
-                logistics,
-                [
-                    "order_month",
-                    "total_orders",
-                    "avg_delivery_days",
-                    "median_delivery_days",
-                    "late_delivery_rate",
-                    "on_time_delivery_rate",
-                    "avg_review_score",
-                ]
-                if "median_delivery_days" in logistics.columns
-                else None,
+                scorecard_df,
+                None,
             ),
             use_container_width=True,
             hide_index=True,
