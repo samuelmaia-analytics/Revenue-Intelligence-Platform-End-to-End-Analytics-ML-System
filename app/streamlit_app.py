@@ -229,6 +229,15 @@ def _first_non_empty_frame(*frames: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+def _display_label(value: object, fallback: str = "n/a") -> str:
+    if value is None:
+        return fallback
+    rendered = str(_ptbr_value(value)).strip()
+    if rendered.lower() in {"", "unknown", "none", "null", "nan", "n/a"}:
+        return fallback
+    return rendered
+
+
 def _render_sql_snippets(section_key: str) -> None:
     snippets = SQL_SNIPPETS.get(section_key, [])
     if not snippets:
@@ -341,10 +350,30 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
         else 0.0
     )
     dominant_action = (
-        _ptbr_value(filtered_customers["recommended_action"].mode().iat[0])
+        _display_label(filtered_customers["recommended_action"].mode().iat[0])
         if not filtered_customers.empty and "recommended_action" in filtered_customers.columns
         else "n/a"
     )
+    checks = assets.get("quality_business_rules", {}).get("checks", {})
+    checks_df = pd.DataFrame(
+        [
+            {"regra": key, "ocorrencias": int(pd.to_numeric(value, errors="coerce") or 0)}
+            for key, value in checks.items()
+        ]
+    )
+    checks_alert_df = checks_df[checks_df["ocorrencias"] > 0].sort_values("ocorrencias", ascending=False)
+    categories_plot = categories.copy()
+    if "category" in categories_plot.columns:
+        categories_plot = categories_plot[
+            ~categories_plot["category"].astype(str).str.strip().str.lower().isin(["", "unknown", "none", "null", "nan"])
+        ]
+    states_plot = states.copy()
+    if "state" in states_plot.columns:
+        states_plot = states_plot[
+            ~states_plot["state"].astype(str).str.strip().str.lower().isin(["", "unknown", "none", "null", "nan"])
+        ]
+    category_ready = {"total_revenue", "category"}.issubset(categories_plot.columns) and not categories_plot.empty
+    state_ready = {"state", "total_revenue"}.issubset(states_plot.columns) and not states_plot.empty
 
     cols = st.columns(4)
     with cols[0]:
@@ -389,47 +418,73 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
         st.markdown("### Resumo executivo")
         st.markdown(
             f"""
-            - A maior concentração de receita está em **{_ptbr_value(kpis.get('top_category', {}).get('category', 'n/a'))}**.
-            - O estado líder no recorte é **{kpis.get('top_state', {}).get('state', 'n/a')}**.
+            - A maior concentração de receita está em **{_display_label(kpis.get('top_category', {}).get('category', 'n/a'))}**.
+            - O estado líder no recorte é **{_display_label(kpis.get('top_state', {}).get('state', 'n/a'))}**.
             - A taxa de atraso está em **{kpis['late_delivery_rate']:.1%}**, com nota média de **{kpis['avg_review_score']:.2f} / 5**.
             - A ação dominante no recorte atual é **{dominant_action}**.
             """
         )
         st.markdown("### Qualidade das regras de negócio")
-        st.json(assets["quality_business_rules"]["checks"], expanded=False)
+        if checks_alert_df.empty:
+            st.success("Sem violações nas regras de negócio.")
+        else:
+            st.dataframe(
+                checks_alert_df.rename(columns={"regra": "Regra", "ocorrencias": "Ocorrências"}),
+                use_container_width=True,
+                hide_index=True,
+            )
+        with st.expander("Ver detalhamento completo das regras"):
+            st.dataframe(
+                checks_df.rename(columns={"regra": "Regra", "ocorrencias": "Ocorrências"}),
+                use_container_width=True,
+                hide_index=True,
+            )
 
-    row_two = st.columns(2)
-    with row_two[0]:
-        if {"total_revenue", "category"}.issubset(categories.columns):
+    def _plot_categories() -> None:
+        if category_ready:
             chart_kwargs: dict[str, object] = {
-                "data_frame": categories,
+                "data_frame": categories_plot,
                 "x": "total_revenue",
                 "y": "category",
                 "orientation": "h",
                 "title": "Concentração de receita por categoria",
             }
-            if "avg_review_score" in categories.columns:
+            if "avg_review_score" in categories_plot.columns:
                 chart_kwargs["color"] = "avg_review_score"
                 chart_kwargs["color_continuous_scale"] = [COLOR_SURFACE_BLUE, COLOR_PRIMARY]
             fig = px.bar(**chart_kwargs)
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
             st.info("Scorecard de categorias indisponível no artefato publicado.")
-    with row_two[1]:
-        if {"state", "total_revenue"}.issubset(states.columns):
+
+    def _plot_states() -> None:
+        if state_ready:
             chart_kwargs = {
-                "data_frame": states,
+                "data_frame": states_plot,
                 "x": "state",
                 "y": "total_revenue",
                 "title": "Participação dos estados na receita",
             }
-            if "late_delivery_rate" in states.columns:
+            if "late_delivery_rate" in states_plot.columns:
                 chart_kwargs["color"] = "late_delivery_rate"
                 chart_kwargs["color_continuous_scale"] = [COLOR_SURFACE_BLUE, COLOR_ACCENT, COLOR_DANGER]
             fig = px.bar(**chart_kwargs)
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
             st.info("Scorecard de estados indisponível no artefato publicado.")
+
+    if category_ready and state_ready:
+        row_two = st.columns(2)
+        with row_two[0]:
+            _plot_categories()
+        with row_two[1]:
+            _plot_states()
+    elif category_ready:
+        _plot_categories()
+    elif state_ready:
+        _plot_states()
+    else:
+        st.info("Os scorecards de categorias e estados não estão disponíveis nesta publicação.")
 
     bottom = st.columns([1.15, 0.85])
     with bottom[0]:
