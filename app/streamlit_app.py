@@ -22,6 +22,9 @@ COLOR_NEUTRAL = "#64748B"
 COLOR_ACCENT = "#F59E0B"
 COLOR_DANGER = "#B91C1C"
 COLOR_SURFACE_BLUE = "#DDEAFB"
+EXPERIENCE_MODE_KEY = "rip_experience_mode"
+EXECUTIVE_MODE = "executive"
+TECHNICAL_MODE = "technical"
 
 SQL_SNIPPETS = {
     "overview": [
@@ -288,10 +291,13 @@ def _render_sql_snippets(section_key: str) -> None:
 
 
 def _render_sql_reference() -> None:
-    st.caption("SQL curado desta visão disponível na aba Confiabilidade.")
+    if st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == TECHNICAL_MODE:
+        st.caption("SQL curado desta visão disponível na aba Confiabilidade.")
 
 
 def _render_sql_console() -> None:
+    if st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) != TECHNICAL_MODE:
+        return
     with st.expander("SQL curado por tema"):
         st.caption("Central técnico com snippets SQL curados para demo, auditoria e export.")
         theme_options = [
@@ -343,6 +349,7 @@ def _render_sql_console() -> None:
 
 
 def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
+    is_executive_mode = st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE
     kpis = assets["executive_kpis"]
     monthly = assets["summary_layer"].copy()
     categories = _first_non_empty_frame(
@@ -438,19 +445,23 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
         )
         st.markdown("### Qualidade das regras de negócio")
         if checks_alert_df.empty:
-            st.success("Sem violações nas regras de negócio.")
+            st.success("Governança estável no ciclo publicado.")
         else:
-            st.dataframe(
-                checks_alert_df.rename(columns={"regra": "Regra", "ocorrencias": "Ocorrências"}),
-                use_container_width=True,
-                hide_index=True,
-            )
-        with st.expander("Ver detalhamento completo das regras"):
-            st.dataframe(
-                checks_df.rename(columns={"regra": "Regra", "ocorrencias": "Ocorrências"}),
-                use_container_width=True,
-                hide_index=True,
-            )
+            if is_executive_mode:
+                st.warning(f"{len(checks_alert_df)} regra(s) com ocorrência no ciclo publicado.")
+            else:
+                st.dataframe(
+                    checks_alert_df.rename(columns={"regra": "Regra", "ocorrencias": "Ocorrências"}),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+        if not is_executive_mode:
+            with st.expander("Ver detalhamento completo das regras"):
+                st.dataframe(
+                    checks_df.rename(columns={"regra": "Regra", "ocorrencias": "Ocorrências"}),
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
     def _plot_categories() -> None:
         if category_ready:
@@ -537,6 +548,7 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
 
 
 def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
+    is_executive_mode = st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE
     top_customers = filtered_customers.nlargest(15, "ltv_proxy")
     rfm = assets["rfm"]["segment"].value_counts().reset_index()
     rfm.columns = ["rfm_segment", "customers"]
@@ -589,7 +601,7 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
         )
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
 
-    if not watchlist.empty:
+    if not watchlist.empty and not is_executive_mode:
         st.markdown("### Watchlist prioritário de clientes")
         st.dataframe(
             _ptbr_frame(
@@ -610,26 +622,27 @@ def _render_customers(assets: dict, filtered_customers: pd.DataFrame) -> None:
             hide_index=True,
         )
 
-    st.markdown("### Clientes de maior valor no recorte")
-    st.dataframe(
-        _ptbr_frame(
-            top_customers,
-            [
-                "customer_id",
-                "customer_state",
-                "segment",
-                "frequency",
-                "monetary",
-                "ltv_proxy",
-                "avg_review_score",
-                "churn_probability",
-                "next_purchase_probability",
-                "recommended_action",
-            ],
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
+    if not is_executive_mode:
+        st.markdown("### Clientes de maior valor no recorte")
+        st.dataframe(
+            _ptbr_frame(
+                top_customers,
+                [
+                    "customer_id",
+                    "customer_state",
+                    "segment",
+                    "frequency",
+                    "monetary",
+                    "ltv_proxy",
+                    "avg_review_score",
+                    "churn_probability",
+                    "next_purchase_probability",
+                    "recommended_action",
+                ],
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
     _render_sql_reference()
 
 
@@ -678,6 +691,7 @@ def _render_commercial(assets: dict) -> None:
 
 
 def _render_products(assets: dict) -> None:
+    is_executive_mode = st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE
     categories = assets.get("category_scorecard", assets["categories"]).head(15)
     products = assets["products"].head(15)
 
@@ -707,26 +721,27 @@ def _render_products(assets: dict) -> None:
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
-        st.markdown("### Scorecard de categorias")
-        if not categories.empty:
-            st.dataframe(
-                _ptbr_frame(
-                    categories,
-                    [
-                        "category",
-                        "category_tier",
-                        "total_revenue",
-                        "total_orders",
-                        "avg_ticket",
-                        "avg_review_score",
-                        "late_delivery_rate",
-                    ],
-                ),
-                use_container_width=True,
-                hide_index=True,
-            )
+        if not is_executive_mode:
+            st.markdown("### Scorecard de categorias")
+            if not categories.empty:
+                st.dataframe(
+                    _ptbr_frame(
+                        categories,
+                        [
+                            "category",
+                            "category_tier",
+                            "total_revenue",
+                            "total_orders",
+                            "avg_ticket",
+                            "avg_review_score",
+                            "late_delivery_rate",
+                        ],
+                    ),
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
-    if not products.empty:
+    if not products.empty and not is_executive_mode:
         st.markdown("### Candidatos premium de sortimento")
         st.dataframe(
             _ptbr_frame(
@@ -740,6 +755,7 @@ def _render_products(assets: dict) -> None:
 
 
 def _render_sellers(assets: dict) -> None:
+    is_executive_mode = st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE
     sellers = assets.get("seller_scorecard", assets["sellers"]).head(20)
 
     _section_band(
@@ -768,26 +784,28 @@ def _render_sellers(assets: dict) -> None:
             fig.for_each_trace(lambda trace: trace.update(name=_ptbr_value(trace.name)))
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
-        st.markdown("### Scorecard de sellers")
-        if not sellers.empty:
-            table_cols = [
-                "seller_id",
-                "seller_state",
-                "seller_tier",
-                "total_revenue",
-                "total_orders",
-                "avg_review_score",
-                "late_delivery_rate",
-            ]
-            st.dataframe(
-                _ptbr_frame(sellers, [col for col in table_cols if col in sellers.columns]),
-                use_container_width=True,
-                hide_index=True,
-            )
+        if not is_executive_mode:
+            st.markdown("### Scorecard de sellers")
+            if not sellers.empty:
+                table_cols = [
+                    "seller_id",
+                    "seller_state",
+                    "seller_tier",
+                    "total_revenue",
+                    "total_orders",
+                    "avg_review_score",
+                    "late_delivery_rate",
+                ]
+                st.dataframe(
+                    _ptbr_frame(sellers, [col for col in table_cols if col in sellers.columns]),
+                    use_container_width=True,
+                    hide_index=True,
+                )
     _render_sql_reference()
 
 
 def _render_payments_geography(assets: dict) -> None:
+    is_executive_mode = st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE
     payments = assets.get("payment_scorecard", assets["payments"])
     states = assets.get("state_scorecard", assets["geography"]).head(15)
     if "channel" in payments.columns:
@@ -842,22 +860,24 @@ def _render_payments_geography(assets: dict) -> None:
         else:
             st.info("Não há dados geográficos válidos nesta publicação.")
 
-    st.markdown("### Scorecard geografico")
-    if not states.empty:
-        st.dataframe(
-            _ptbr_frame(
-                states,
-                [col for col in ["state", "state_tier", "total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"] if col in states.columns],
-            ),
-            use_container_width=True,
-            hide_index=True,
-        )
-    else:
-        st.info("Scorecard geográfico indisponível.")
+    if not is_executive_mode:
+        st.markdown("### Scorecard geografico")
+        if not states.empty:
+            st.dataframe(
+                _ptbr_frame(
+                    states,
+                    [col for col in ["state", "state_tier", "total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"] if col in states.columns],
+                ),
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info("Scorecard geográfico indisponível.")
     _render_sql_reference()
 
 
 def _render_operations(assets: dict) -> None:
+    is_executive_mode = st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE
     logistics = assets.get("operations_scorecard", assets["logistics"])
     cohort = assets.get("retention_scorecard", assets["cohort"]).copy()
     if "cohort_month" in cohort.columns:
@@ -970,35 +990,39 @@ def _render_operations(assets: dict) -> None:
         else:
             st.info("Sem curvas de retenção por coorte disponíveis nesta publicação.")
     with bottom[1]:
-        st.markdown("### Scorecard operacional mensal")
-        scorecard_cols = [
-            "order_month",
-            "total_orders",
-            "avg_delivery_days",
-            "median_delivery_days",
-            "late_delivery_rate",
-            "on_time_delivery_rate",
-            "avg_review_score",
-        ]
-        scorecard_df = logistics[[col for col in scorecard_cols if col in logistics.columns]].copy()
-        for pct_col in ["late_delivery_rate", "on_time_delivery_rate"]:
-            if pct_col in scorecard_df.columns:
-                scorecard_df[pct_col] = pd.to_numeric(scorecard_df[pct_col], errors="coerce").fillna(0.0).map(lambda v: f"{v:.1%}")
-        for num_col, digits in [("avg_delivery_days", 1), ("median_delivery_days", 1), ("avg_review_score", 2)]:
-            if num_col in scorecard_df.columns:
-                scorecard_df[num_col] = pd.to_numeric(scorecard_df[num_col], errors="coerce").fillna(0.0).map(lambda v, d=digits: f"{v:.{d}f}")
-        st.dataframe(
-            _ptbr_frame(
-                scorecard_df,
-                None,
-            ),
-            use_container_width=True,
-            hide_index=True,
-        )
+        if not is_executive_mode:
+            st.markdown("### Scorecard operacional mensal")
+            scorecard_cols = [
+                "order_month",
+                "total_orders",
+                "avg_delivery_days",
+                "median_delivery_days",
+                "late_delivery_rate",
+                "on_time_delivery_rate",
+                "avg_review_score",
+            ]
+            scorecard_df = logistics[[col for col in scorecard_cols if col in logistics.columns]].copy()
+            for pct_col in ["late_delivery_rate", "on_time_delivery_rate"]:
+                if pct_col in scorecard_df.columns:
+                    scorecard_df[pct_col] = pd.to_numeric(scorecard_df[pct_col], errors="coerce").fillna(0.0).map(lambda v: f"{v:.1%}")
+            for num_col, digits in [("avg_delivery_days", 1), ("median_delivery_days", 1), ("avg_review_score", 2)]:
+                if num_col in scorecard_df.columns:
+                    scorecard_df[num_col] = pd.to_numeric(scorecard_df[num_col], errors="coerce").fillna(0.0).map(lambda v, d=digits: f"{v:.{d}f}")
+            st.dataframe(
+                _ptbr_frame(
+                    scorecard_df,
+                    None,
+                ),
+                use_container_width=True,
+                hide_index=True,
+            )
     _render_sql_reference()
 
 
 def _render_reliability(assets: dict) -> None:
+    if st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) != TECHNICAL_MODE:
+        st.info("Esta visão está disponível no modo Técnico (Operação).")
+        return
     _section_band(
         "Governança e evidências de runtime",
         "Esta aba sustenta a credibilidade do produto: o mesmo batch que alimenta a UI também publica validação, freshness, alertas e manifestos do ciclo.",
@@ -1159,6 +1183,13 @@ def main() -> None:
     with st.sidebar:
         st.markdown("## Torre de Controle")
         st.caption("Navegação executiva sobre os outputs governados do batch Olist.")
+        experience_mode = st.radio(
+            "Experiência",
+            options=[EXECUTIVE_MODE, TECHNICAL_MODE],
+            format_func=lambda mode: "Executiva (Produto)" if mode == EXECUTIVE_MODE else "Técnica (Operação)",
+            index=0 if st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE else 1,
+            key=EXPERIENCE_MODE_KEY,
+        )
         if st.button("Refresh pipeline", use_container_width=True):
             refresh_pipeline_outputs(PROJECT_ROOT)
             st.rerun()
@@ -1223,10 +1254,10 @@ def main() -> None:
             <div class="hero-grid">
                 <div class="hero-copy">
                     <div>
-                        <div class="hero-badge">Analytics Executiva Batch-First</div>
-                        <h1>Inteligencia de receita para marketplace com leitura de diretoria.</h1>
-                        <p>A aplicação agora se comporta como uma superfície analítica governada, em camadas e opinativa sobre o que a liderança deve ver primeiro em receita, clientes, operação e risco.</p>
-                        <div class="hero-support">Fonte Olist • runtime batch governado • marts executivos • evidências operacionais</div>
+                        <div class="hero-badge">Revenue Intelligence</div>
+                        <h1>Decisões comerciais com clareza de receita, risco e crescimento.</h1>
+                        <p>Uma experiência executiva para liderança comercial acompanhar desempenho, priorizar ações e acelerar resultados com leitura única.</p>
+                        <div class="hero-support">Produto analítico para operação comercial, planejamento e gestão de performance.</div>
                     </div>
                     <div class="hero-brief">
                         <div class="hero-brief-card">
@@ -1272,31 +1303,38 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    tabs = st.tabs(
-        [
-            "Resumo Executivo",
-            "Inteligência de Clientes",
-            "Produto & Categoria",
-            "Performance de Sellers",
-            "Logística & Retenção",
-            "Pagamentos & Geografia",
-            "Confiabilidade",
-        ]
-    )
-    with tabs[0]:
+    is_executive_mode = experience_mode == EXECUTIVE_MODE
+    tab_labels = [
+        "Resumo Executivo",
+        "Inteligência de Clientes",
+        "Produto & Categoria",
+        "Pagamentos & Geografia",
+    ]
+    if not is_executive_mode:
+        tab_labels.extend(["Performance de Sellers", "Logística & Retenção", "Confiabilidade"])
+    tabs = st.tabs(tab_labels)
+    tab_idx = 0
+    with tabs[tab_idx]:
         _render_overview(assets, filtered_customers)
-    with tabs[1]:
+    tab_idx += 1
+    with tabs[tab_idx]:
         _render_customers(assets, filtered_customers)
-    with tabs[2]:
+    tab_idx += 1
+    with tabs[tab_idx]:
         _render_products(assets)
-    with tabs[3]:
-        _render_sellers(assets)
-    with tabs[4]:
-        _render_operations(assets)
-    with tabs[5]:
+    tab_idx += 1
+    with tabs[tab_idx]:
         _render_payments_geography(assets)
-    with tabs[6]:
-        _render_reliability(assets)
+    if not is_executive_mode:
+        tab_idx += 1
+        with tabs[tab_idx]:
+            _render_sellers(assets)
+        tab_idx += 1
+        with tabs[tab_idx]:
+            _render_operations(assets)
+        tab_idx += 1
+        with tabs[tab_idx]:
+            _render_reliability(assets)
 
 
 if __name__ == "__main__":
