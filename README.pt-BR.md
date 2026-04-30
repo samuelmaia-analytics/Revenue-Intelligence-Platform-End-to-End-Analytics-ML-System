@@ -1,4 +1,4 @@
-﻿# Revenue Intelligence Platform
+# Revenue Intelligence Platform
 
 Repositório de analytics de receita orientado a produção que transforma comportamento de clientes e pedidos em saídas batch governadas, tabelas para warehouse, artefatos executivos de decisão e um workspace Streamlit para ação comercial.
 
@@ -347,3 +347,13 @@ Próximos passos de maior impacto:
 ## Contribuição
 
 Veja [CONTRIBUTING.md](CONTRIBUTING.md) para expectativas de workflow, convenção de commits, validação e boundaries do repositório.
+
+## License
+
+This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+To view a copy of this license, visit:
+https://creativecommons.org/licenses/by-nc/4.0/
+
+[![License: CC BY-NC 4.0](https://licensebuttons.net/l/by-nc/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc/4.0/)
+

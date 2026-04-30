@@ -525,3 +525,13 @@ Current high-impact next steps:
 ## Contribution
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow expectations, commit conventions, validation standards, and repository boundaries.
+
+## License
+
+This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+To view a copy of this license, visit:
+https://creativecommons.org/licenses/by-nc/4.0/
+
+[![License: CC BY-NC 4.0](https://licensebuttons.net/l/by-nc/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc/4.0/)
+
