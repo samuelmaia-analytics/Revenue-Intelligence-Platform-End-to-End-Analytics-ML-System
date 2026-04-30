@@ -12,12 +12,14 @@ Current examples:
 
 - `api/`
 - `contracts/data_contract.py`
+- `contracts/processed_contract.py`
 - `src/data_contract.py`
 
 Canonical paths should be preferred in new code:
 
 - `services.api`
 - `contracts.v1.data_contract`
+- `contracts.v1.processed_contract`
 
 ## Contract Compatibility Rule
 
@@ -29,6 +31,7 @@ Governed data contracts should follow these rules:
 4. release notes should state whether a change is additive, behavior-changing, or compatibility-breaking
 
 For this repository, `contracts.v1.data_contract` is the canonical contract surface until a deliberate version increment is introduced.
+The same rule applies to `contracts.v1.processed_contract` for curated batch outputs.
 
 ## Deprecation Rule
 

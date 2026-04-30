@@ -124,6 +124,39 @@ jobs:
       - name: dbt SQLite smoke validation
         run: python scripts/smoke_dbt_sqlite.py
 
+  postgres-optional:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: quality
+    if: ${{ secrets.RIP_SMOKE_POSTGRES_URL != '' }}
+    env:
+      RIP_SMOKE_POSTGRES_URL: ${{ secrets.RIP_SMOKE_POSTGRES_URL }}
+      RIP_SMOKE_POSTGRES_SCHEMA: ${{ vars.RIP_SMOKE_POSTGRES_SCHEMA }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies and Postgres extras
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+          python -m pip install sqlalchemy psycopg[binary]
+          python -m pip check
+
+      - name: Optional Postgres smoke validation
+        run: python scripts/smoke_postgres_optional.py
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 20

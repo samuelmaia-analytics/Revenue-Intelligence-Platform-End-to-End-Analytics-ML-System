@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 import sys
+from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 
@@ -22,52 +23,10 @@ from src.orchestration import (
 from src.pipeline import main as pipeline_main
 
 
-def _build_config(tmp_path: Path, *, semantic_metrics_exists: bool = True) -> PipelineConfig:
-    data_dir = tmp_path / "data"
-    metrics_path = tmp_path / "metrics" / "semantic_metrics.json"
-    if semantic_metrics_exists:
-        metrics_path.parent.mkdir(parents=True, exist_ok=True)
-        metrics_path.write_text(
-            json.dumps(
-                {
-                    "version": "1.0",
-                    "metrics": [{"name": "revenue_proxy", "expression": "sum(monetary)"}],
-                }
-            ),
-            encoding="utf-8",
-        )
-
-    return PipelineConfig(
-        project_root=tmp_path,
-        data_dir=data_dir,
-        raw_dir=data_dir / "raw",
-        bronze_dir=data_dir / "bronze",
-        silver_dir=data_dir / "silver",
-        gold_dir=data_dir / "gold",
-        processed_dir=data_dir / "processed",
-        warehouse_dir=data_dir / "warehouse",
-        warehouse_db_path=data_dir / "warehouse" / "revenue_intelligence.db",
-        semantic_metrics_path=metrics_path,
-        alerts_output_path=data_dir / "processed" / "alerts_report.json",
-        approvals_output_path=data_dir / "processed" / "approved_actions.csv",
-        runs_dir=data_dir / "runs",
-        manifests_dir=data_dir / "manifests",
-        snapshots_dir=data_dir / "snapshots",
-        data_dictionary_path=data_dir / "processed" / "data_dictionary.json",
-        env_name="test",
-        warehouse_target="sqlite",
-        warehouse_url=None,
-        seed=42,
-        log_level="WARNING",
-        freshness_max_age_hours=48,
-        snapshot_retention_runs=2,
-        snapshot_retention_days=30,
-        failure_retention_days=14,
-    )
-
-
-def test_pipeline_manifest_and_snapshot_are_created(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path)
+def test_pipeline_manifest_and_snapshot_are_created(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory()
 
     manifest = run_pipeline(cfg)
 
@@ -83,8 +42,10 @@ def test_pipeline_manifest_and_snapshot_are_created(tmp_path: Path) -> None:
     assert (snapshot_dir / cfg.warehouse_db_path.name).exists()
 
 
-def test_pipeline_generates_raw_input_metadata_and_source_aware_freshness(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path)
+def test_pipeline_generates_raw_input_metadata_and_source_aware_freshness(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory()
 
     run_pipeline(cfg)
 
@@ -96,6 +57,7 @@ def test_pipeline_generates_raw_input_metadata_and_source_aware_freshness(tmp_pa
     )
 
     assert raw_metadata["dataset_count"] == 3
+    assert raw_metadata["source_name"] in {"synthetic", "local_kaggle_csv", "external_kaggle_csv"}
     assert {item["dataset_name"] for item in raw_metadata["datasets"]} == {
         "customers",
         "orders",
@@ -107,8 +69,10 @@ def test_pipeline_generates_raw_input_metadata_and_source_aware_freshness(tmp_pa
     assert all("source_updated_at_utc" in item for item in freshness["checks"])
 
 
-def test_pipeline_persists_queryable_sqlite_warehouse(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path)
+def test_pipeline_persists_queryable_sqlite_warehouse(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory()
 
     run_pipeline(cfg)
 
@@ -145,8 +109,10 @@ def test_pipeline_persists_queryable_sqlite_warehouse(tmp_path: Path) -> None:
     assert int(joined.loc[0, "joined_rows"]) > 0
 
 
-def test_warehouse_dimensions_remain_consistent_with_facts(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path)
+def test_warehouse_dimensions_remain_consistent_with_facts(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory()
 
     run_pipeline(cfg)
 
@@ -186,8 +152,10 @@ def test_warehouse_dimensions_remain_consistent_with_facts(tmp_path: Path) -> No
     assert (aggregates["revenue"] > 0).all()
 
 
-def test_pipeline_is_idempotent_for_curated_outputs(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path)
+def test_pipeline_is_idempotent_for_curated_outputs(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory()
 
     run_pipeline(cfg)
     first_recommendations = pd.read_csv(cfg.processed_dir / "recommendations.csv")
@@ -201,8 +169,10 @@ def test_pipeline_is_idempotent_for_curated_outputs(tmp_path: Path) -> None:
     pd.testing.assert_frame_equal(first_features, second_features)
 
 
-def test_pipeline_manifest_captures_runtime_evidence(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path)
+def test_pipeline_manifest_captures_runtime_evidence(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory()
 
     manifest = run_pipeline(cfg)
     artifact_validation = json.loads(
@@ -210,6 +180,8 @@ def test_pipeline_manifest_captures_runtime_evidence(tmp_path: Path) -> None:
     )
 
     assert manifest["reliability_policy"]["retry_attempts"] == cfg.retry_attempts
+    assert manifest["processed_contract_version"] == "1.0.0"
+    assert manifest["warehouse_schema"] is None
     assert manifest["quality_snapshot"]["dataset_count"] >= 1
     assert "artifact_validation_report.json" in manifest["outputs"]
     assert "freshness_report.json" in manifest["outputs"]
@@ -223,8 +195,10 @@ def test_pipeline_manifest_captures_runtime_evidence(tmp_path: Path) -> None:
     )
 
 
-def test_failure_manifest_is_written(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path, semantic_metrics_exists=False)
+def test_failure_manifest_is_written(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory(semantic_metrics_exists=False)
 
     with pytest.raises(PipelineStageError):
         run_pipeline(cfg)
@@ -237,7 +211,10 @@ def test_failure_manifest_is_written(tmp_path: Path) -> None:
     assert payload["run_id"]
 
 
-def test_kaggle_csv_parsing_creates_curated_raw_tables(tmp_path: Path) -> None:
+def test_kaggle_csv_parsing_creates_curated_raw_tables(
+    tmp_path: Path,
+    pipeline_config_factory: Callable[..., PipelineConfig],
+) -> None:
     raw_dir = tmp_path / "data" / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     source = raw_dir / "E-commerce Customer Behavior - Sheet1.csv"
@@ -252,7 +229,7 @@ def test_kaggle_csv_parsing_creates_curated_raw_tables(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    cfg = _build_config(tmp_path)
+    cfg = pipeline_config_factory()
     run_pipeline(cfg)
 
     customers = pd.read_csv(cfg.raw_dir / "customers.csv")
@@ -272,8 +249,10 @@ def test_data_dictionary_generation_from_contracts(tmp_path: Path) -> None:
     assert {"table_name", "contract_model", "columns"} == set(first_table)
 
 
-def test_retention_enforces_max_runs_and_age(tmp_path: Path) -> None:
-    cfg = _build_config(tmp_path)
+def test_retention_enforces_max_runs_and_age(
+    pipeline_config_factory: Callable[..., PipelineConfig]
+) -> None:
+    cfg = pipeline_config_factory()
     cfg.ensure_directories()
     old_snapshot = cfg.snapshots_dir / "20240101T000000Z-old"
     mid_snapshot = cfg.snapshots_dir / "20240102T000000Z-mid"
@@ -334,6 +313,9 @@ def test_pipeline_config_reads_env_file(tmp_path: Path, monkeypatch: pytest.Monk
                 "RIP_QUALITY_MAX_NULL_FRACTION=0.15",
                 "RIP_BACKFILL_START_DATE=2025-01-01",
                 "RIP_BACKFILL_END_DATE=2025-03-31",
+                "RIP_WAREHOUSE_SCHEMA=analytics_smoke",
+                "RIP_SYNTHETIC_CUSTOMERS=5000",
+                "RIP_ALLOW_BUNDLED_SEED_FALLBACK=false",
             ]
         ),
         encoding="utf-8",
@@ -348,6 +330,9 @@ def test_pipeline_config_reads_env_file(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.delenv("RIP_QUALITY_MAX_NULL_FRACTION", raising=False)
     monkeypatch.delenv("RIP_BACKFILL_START_DATE", raising=False)
     monkeypatch.delenv("RIP_BACKFILL_END_DATE", raising=False)
+    monkeypatch.delenv("RIP_WAREHOUSE_SCHEMA", raising=False)
+    monkeypatch.delenv("RIP_SYNTHETIC_CUSTOMERS", raising=False)
+    monkeypatch.delenv("RIP_ALLOW_BUNDLED_SEED_FALLBACK", raising=False)
 
     cfg = PipelineConfig.from_env(tmp_path)
 
@@ -361,6 +346,9 @@ def test_pipeline_config_reads_env_file(tmp_path: Path, monkeypatch: pytest.Monk
     assert cfg.quality_max_null_fraction == 0.15
     assert str(cfg.backfill_start_date) == "2025-01-01"
     assert str(cfg.backfill_end_date) == "2025-03-31"
+    assert cfg.warehouse_schema == "analytics_smoke"
+    assert cfg.synthetic_customer_count == 5000
+    assert cfg.allow_bundled_seed_fallback is False
 
 
 def test_stage_runner_retries_transient_failures() -> None:

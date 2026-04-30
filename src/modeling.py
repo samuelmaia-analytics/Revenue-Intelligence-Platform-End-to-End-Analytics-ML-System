@@ -1,16 +1,10 @@
 import hashlib
 import pickle
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import precision_recall_curve, roc_auc_score, roc_curve
-from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.io_utils import atomic_write_csv, atomic_write_json
 from src.model_registry import register_model
@@ -20,8 +14,29 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - fallback used only in minimal envs
     joblib = None
 
+if TYPE_CHECKING:
+    from sklearn.compose import ColumnTransformer
+    from sklearn.pipeline import Pipeline
+else:  # pragma: no cover - type aliases for runtime when sklearn is optional
+    ColumnTransformer = Any
+    Pipeline = Any
+
+
+def _missing_dependency_error() -> RuntimeError:
+    return RuntimeError(
+        "scikit-learn is required for model training and scoring. "
+        "Install project dependencies with `python -m pip install -e .[dev]` "
+        "or use the configured project virtual environment."
+    )
+
 
 def _build_preprocessor() -> tuple[ColumnTransformer, list[str], list[str]]:
+    try:
+        from sklearn.compose import ColumnTransformer
+        from sklearn.preprocessing import OneHotEncoder, StandardScaler
+    except ModuleNotFoundError as exc:  # pragma: no cover - depends on environment
+        raise _missing_dependency_error() from exc
+
     numeric_features = [
         "recency_days",
         "frequency",
@@ -41,6 +56,11 @@ def _build_preprocessor() -> tuple[ColumnTransformer, list[str], list[str]]:
 
 
 def _safe_roc_auc(y_true: pd.Series, y_prob: np.ndarray) -> float:
+    try:
+        from sklearn.metrics import roc_auc_score
+    except ModuleNotFoundError as exc:  # pragma: no cover - depends on environment
+        raise _missing_dependency_error() from exc
+
     if y_true.nunique() < 2:
         return float("nan")
     return float(roc_auc_score(y_true, y_prob))
@@ -70,6 +90,11 @@ def _temporal_split_indices(
 
 
 def _build_evaluation_split(df: pd.DataFrame, y: pd.Series) -> tuple[pd.Index, pd.Index, str]:
+    try:
+        from sklearn.model_selection import train_test_split
+    except ModuleNotFoundError as exc:  # pragma: no cover - depends on environment
+        raise _missing_dependency_error() from exc
+
     train_idx, test_idx = _temporal_split_indices(df)
     y_train, y_test = y.loc[train_idx], y.loc[test_idx]
     if y_train.nunique() > 1 and y_test.nunique() > 1:
@@ -88,6 +113,12 @@ def _build_evaluation_split(df: pd.DataFrame, y: pd.Series) -> tuple[pd.Index, p
 def _evaluate_pipeline_temporal(
     pipeline: Pipeline, x: pd.DataFrame, y: pd.Series, ordered_df: pd.DataFrame
 ) -> dict:
+    try:
+        from sklearn.metrics import precision_recall_curve, roc_curve
+        from sklearn.model_selection import StratifiedKFold, cross_val_score
+    except ModuleNotFoundError as exc:  # pragma: no cover - depends on environment
+        raise _missing_dependency_error() from exc
+
     train_idx, test_idx, split_strategy = _build_evaluation_split(ordered_df, y)
     x_train, x_test = x.loc[train_idx], x.loc[test_idx]
     y_train, y_test = y.loc[train_idx], y.loc[test_idx]
@@ -177,7 +208,10 @@ def _extract_model_drivers(pipeline: Pipeline) -> list[dict[str, float | str]]:
 
     drivers = pd.DataFrame({"feature": feature_names, "importance": scores})
     drivers = drivers.sort_values("importance", ascending=False).head(8)
-    return drivers.to_dict(orient="records")
+    return [
+        {"feature": str(row["feature"]), "importance": float(row["importance"])}
+        for row in drivers.to_dict(orient="records")
+    ]
 
 
 def _build_business_model_summary(
@@ -208,6 +242,13 @@ def train_and_score_models(
     output_dir: Path,
     run_id: str | None = None,
 ) -> tuple[dict, dict, pd.DataFrame]:
+    try:
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.pipeline import Pipeline
+    except ModuleNotFoundError as exc:  # pragma: no cover - depends on environment
+        raise _missing_dependency_error() from exc
+
     output_dir.mkdir(parents=True, exist_ok=True)
     work_df = df.copy().dropna(subset=["signup_date"])
     preprocessor, numeric_features, categorical_features = _build_preprocessor()

@@ -5,9 +5,8 @@ import pickle
 import re
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
-
-from sklearn.pipeline import Pipeline
 
 from src.io_utils import atomic_write_json
 
@@ -15,6 +14,11 @@ try:
     import joblib
 except ModuleNotFoundError:  # pragma: no cover
     joblib = None
+
+if TYPE_CHECKING:
+    from sklearn.pipeline import Pipeline
+else:  # pragma: no cover - keep import path light in environments without sklearn
+    Pipeline = Any
 
 
 def _persist_pickle(model: Pipeline, path: Path) -> None:

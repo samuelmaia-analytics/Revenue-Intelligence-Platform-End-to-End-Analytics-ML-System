@@ -1,48 +1,57 @@
 name: Documentation request
-description: Request a documentation improvement where current docs are unclear, incomplete, or misleading.
+description: Request a documentation improvement where current guidance is unclear, incomplete, or misleading.
 title: "[Docs] "
 labels:
   - docs
+  - triage
 body:
   - type: textarea
     id: gap
     attributes:
       label: Documentation gap
-      description: What is unclear, missing, or inaccurate?
+      description: What is unclear, missing, or inaccurate today?
     validations:
       required: true
   - type: dropdown
-    id: doc_area
+    id: area
     attributes:
       label: Area
       options:
         - README
         - Contributing guide
         - Architecture docs
+        - Runtime or runbook docs
         - Repository structure docs
-        - Runbooks or issue docs
         - API docs
+        - Release or governance docs
     validations:
       required: true
-  - type: textarea
-    id: user_impact
-    attributes:
-      label: User impact
-      description: Explain how the current documentation gap slows development, review, or operation.
-    validations:
-      required: true
-  - type: textarea
-    id: proposed_fix
-    attributes:
-      label: Suggested improvement
-      description: Describe the documentation change that would close the gap.
   - type: dropdown
-    id: reviewer_type
+    id: reader
     attributes:
       label: Primary reader
       options:
-        - New contributor
         - Hiring reviewer
+        - New contributor
         - Tech lead
         - Operator or maintainer
         - API or dashboard consumer
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: User impact
+      description: Explain how the current gap slows review, onboarding, operation, or maintenance.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested improvement
+      description: Describe the documentation change that would close the gap.
+  - type: textarea
+    id: related_runtime
+    attributes:
+      label: Related commands, files, or artifacts
+      description: Mention the commands, file paths, manifests, or outputs involved if applicable.

@@ -11,6 +11,28 @@ All notable changes to this project are documented in this file.
   - preserve older contract modules for migration windows when possible;
   - be documented in the relevant release under `Breaking Changes`.
 
+## [1.4.0] - 2026-03-20
+
+### Added
+
+- processed contract policy document at `docs/processed_contracts.md`
+- rollback-oriented processed contract regression coverage
+- optional Postgres CI smoke path when repository secrets are available
+- schema-prefixed Postgres smoke support
+- release note `docs/releases/v1.4.0.md`
+
+### Changed
+
+- processed artifact validation now enforces value-level quality checks on selected curated outputs
+- pipeline manifests now expose `warehouse_schema` when a non-default target is used
+- environment and README docs now describe processed contract migration and artifact storage policy more explicitly
+
+### Portfolio Deltas
+
+- the repository now shows a more credible contract-governance story for downstream consumers
+- SQLite-to-Postgres evolution looks intentional instead of aspirational
+- reviewer-facing reference artifacts in `data/processed` now have an explicit policy instead of implicit repository drift
+
 ## [1.3.0] - 2026-03-19
 
 ### Added

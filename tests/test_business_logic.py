@@ -61,6 +61,26 @@ def test_quality_gate_detects_excessive_null_fraction() -> None:
         raise AssertionError("Expected quality gate to fail on null fraction threshold")
 
 
+def test_quality_gate_detects_dataset_rule_violation() -> None:
+    df = pd.DataFrame(
+        {
+            "order_id": ["o1"],
+            "customer_id": [1],
+            "order_date": ["2025-01-01"],
+            "order_value": [-10.0],
+        }
+    )
+
+    report = build_dataset_quality_report(df, "silver_orders", primary_key="order_id")
+
+    try:
+        enforce_quality_gate([report])
+    except Exception as exc:
+        assert "negative values" in str(exc).lower()
+    else:  # pragma: no cover - defensive path
+        raise AssertionError("Expected quality gate to fail on dataset-specific rule violation")
+
+
 def test_preprocessor_handles_expected_feature_groups() -> None:
     preprocessor, numeric_features, categorical_features = _build_preprocessor()
     frame = pd.DataFrame(

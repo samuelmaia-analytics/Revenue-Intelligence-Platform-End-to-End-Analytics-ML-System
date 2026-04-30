@@ -6,167 +6,13 @@ from pathlib import Path
 
 import pandas as pd
 
+from contracts.processed_contract import (
+    CSV_ARTIFACT_SPECS,
+    JSON_ARTIFACT_SPECS,
+    PROCESSED_CONTRACT_VERSION,
+)
 from src.exceptions import DataQualityError
 from src.io_utils import atomic_write_json
-
-CSV_ARTIFACT_SPECS: dict[str, set[str]] = {
-    "customer_features.csv": {
-        "customer_id",
-        "segment",
-        "channel",
-        "recency_days",
-        "frequency",
-        "monetary",
-        "avg_order_value",
-        "tenure_days",
-        "arpu",
-        "is_churned",
-        "next_purchase_30d",
-    },
-    "recommendations.csv": {
-        "customer_id",
-        "channel",
-        "segment",
-        "ltv",
-        "cac",
-        "ltv_cac_ratio",
-        "churn_probability",
-        "next_purchase_probability",
-        "strategic_score",
-        "recommended_action",
-    },
-    "unit_economics.csv": {
-        "channel",
-        "marketing_spend",
-        "customers_acquired",
-        "cac",
-        "avg_arpu",
-        "ltv_cac_ratio",
-        "contribution_margin",
-        "payback_period_months",
-    },
-    "top_10_actions.csv": {
-        "priority_rank",
-        "customer_id",
-        "channel",
-        "segment",
-        "action",
-        "strategic_priority_score",
-        "expected_uplift",
-        "action_cost",
-        "net_impact",
-        "roi_simulated",
-    },
-    "cac_by_channel.csv": {
-        "channel",
-        "marketing_spend",
-        "customers_acquired",
-        "cac",
-    },
-    "ltv.csv": {
-        "customer_id",
-        "channel",
-        "segment",
-        "ltv",
-        "churn_probability",
-        "next_purchase_probability",
-    },
-    "rfm_segments.csv": {
-        "customer_id",
-        "channel",
-        "recency",
-        "frequency",
-        "monetary",
-        "r_score",
-        "f_score",
-        "m_score",
-        "rfm_total",
-        "segment",
-    },
-    "cohort_retention.csv": {
-        "cohort_month",
-        "cohort_index",
-        "active_customers",
-        "cohort_size",
-        "retention_rate",
-    },
-}
-
-JSON_ARTIFACT_SPECS: dict[str, tuple[str, ...]] = {
-    "quality_report.json": (
-        "datasets",
-        "total_datasets",
-    ),
-    "freshness_report.json": (
-        "evaluated_at_utc",
-        "max_age_hours",
-        "status",
-        "checks",
-    ),
-    "raw_input_metadata.json": (
-        "generated_at_utc",
-        "dataset_count",
-        "datasets",
-    ),
-    "kpi_snapshot.json": (
-        "revenue_proxy",
-        "avg_arpu",
-        "avg_ltv",
-        "avg_cac",
-        "avg_ltv_cac_ratio",
-        "portfolio_size",
-        "best_channel_efficiency.channel",
-    ),
-    "metrics_report.json": (
-        "churn.model_name",
-        "churn.cv_roc_auc_mean",
-        "churn.temporal_test_roc_auc",
-        "next_purchase_30d.model_name",
-        "next_purchase_30d.cv_roc_auc_mean",
-        "next_purchase_30d.temporal_test_roc_auc",
-    ),
-    "executive_report.json": (
-        "data_refresh_utc",
-        "base_size.customers_in_scope",
-        "base_size.rows_in_recommendation_table",
-        "top_kpis.avg_ltv",
-        "business_context.revenue_proxy",
-        "model_performance.churn",
-        "model_performance.next_purchase_30d",
-        "recommendations_top_20",
-    ),
-    "executive_summary.json": (
-        "data_refresh_utc",
-        "kpis.total_revenue_proxy",
-        "kpis.avg_arpu",
-        "ltv_cac_by_channel",
-        "top_churn_risk_customers",
-        "top_20_recommended_actions",
-    ),
-    "business_outcomes.json": (
-        "data_refresh_utc",
-        "kpis.avg_ltv_cac_ratio",
-        "kpis.simulated_net_impact_top10",
-        "simulation_assumptions",
-        "simulation_summary_top10.delta_revenue_90d",
-        "top_10_actions",
-    ),
-    "monitoring_report.json": (
-        "drift_status",
-        "numeric_summary",
-        "feature_drift",
-        "calibration.churn",
-        "calibration.next_purchase_30d",
-    ),
-    "alerts_report.json": (
-        "generated_at_utc",
-        "thresholds",
-        "alert_count",
-        "status",
-        "alerts",
-    ),
-    "semantic_metrics_catalog.json": ("metrics",),
-}
 
 
 def _resolve_nested_key(payload: dict[str, object], dotted_key: str) -> object:
@@ -188,6 +34,7 @@ def _validate_csv_artifact(
     missing_columns = sorted(required_columns.difference(frame.columns))
     if missing_columns:
         raise DataQualityError(f"{file_name} missing required columns: {missing_columns}")
+    _validate_csv_artifact_values(file_name, frame)
     return {
         "artifact": file_name,
         "type": "csv",
@@ -212,6 +59,7 @@ def _validate_json_artifact(
             missing_keys.append(dotted_key)
     if missing_keys:
         raise DataQualityError(f"{file_name} missing required key paths: {missing_keys}")
+    _validate_json_artifact_values(file_name, payload)
     return {
         "artifact": file_name,
         "type": "json",
@@ -219,18 +67,140 @@ def _validate_json_artifact(
     }
 
 
+def _validate_numeric_bounds(
+    file_name: str,
+    frame: pd.DataFrame,
+    *,
+    column: str,
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> None:
+    if column not in frame.columns:
+        return
+    series = pd.to_numeric(frame[column], errors="coerce")
+    if minimum is not None and bool((series < minimum).fillna(False).any()):
+        raise DataQualityError(f"{file_name}.{column} contains values below {minimum}")
+    if maximum is not None and bool((series > maximum).fillna(False).any()):
+        raise DataQualityError(f"{file_name}.{column} contains values above {maximum}")
+
+
+def _validate_csv_artifact_values(file_name: str, frame: pd.DataFrame) -> None:
+    bounded_columns: dict[str, dict[str, tuple[float | None, float | None]]] = {
+        "recommendations.csv": {
+            "ltv": (0.0, None),
+            "cac": (0.0, None),
+            "ltv_cac_ratio": (0.0, None),
+            "churn_probability": (0.0, 1.0),
+            "next_purchase_probability": (0.0, 1.0),
+            "strategic_score": (0.0, 1.0),
+        },
+        "unit_economics.csv": {
+            "marketing_spend": (0.0, None),
+            "customers_acquired": (1.0, None),
+            "cac": (0.0, None),
+            "avg_arpu": (0.0, None),
+            "ltv_cac_ratio": (0.0, None),
+            "payback_period_months": (0.0, None),
+        },
+        "top_10_actions.csv": {
+            "priority_rank": (1.0, None),
+            "strategic_priority_score": (0.0, 1.0),
+            "expected_uplift": (0.0, None),
+            "action_cost": (0.0, None),
+        },
+        "cac_by_channel.csv": {
+            "marketing_spend": (0.0, None),
+            "customers_acquired": (1.0, None),
+            "cac": (0.0, None),
+        },
+        "ltv.csv": {
+            "ltv": (0.0, None),
+            "churn_probability": (0.0, 1.0),
+            "next_purchase_probability": (0.0, 1.0),
+        },
+        "cohort_retention.csv": {
+            "cohort_index": (0.0, None),
+            "active_customers": (0.0, None),
+            "cohort_size": (1.0, None),
+            "retention_rate": (0.0, 1.0),
+        },
+    }
+    for column, (minimum, maximum) in bounded_columns.get(file_name, {}).items():
+        _validate_numeric_bounds(
+            file_name,
+            frame,
+            column=column,
+            minimum=minimum,
+            maximum=maximum,
+        )
+
+    if file_name == "top_10_actions.csv" and "priority_rank" in frame.columns:
+        if frame["priority_rank"].duplicated().any():
+            raise DataQualityError("top_10_actions.csv.priority_rank contains duplicates")
+    if (
+        file_name == "cohort_retention.csv"
+        and {"active_customers", "cohort_size"}.issubset(frame.columns)
+        and bool((frame["active_customers"] > frame["cohort_size"]).any())
+    ):
+        raise DataQualityError(
+            "cohort_retention.csv.active_customers exceeds cohort_size in at least one row"
+        )
+
+
+def _validate_json_artifact_values(file_name: str, payload: dict[str, object]) -> None:
+    bounded_keys: dict[str, dict[str, tuple[float | None, float | None]]] = {
+        "kpi_snapshot.json": {
+            "revenue_proxy": (0.0, None),
+            "avg_arpu": (0.0, None),
+            "avg_ltv": (0.0, None),
+            "avg_cac": (0.0, None),
+            "avg_ltv_cac_ratio": (0.0, None),
+            "portfolio_size": (0.0, None),
+        },
+        "business_outcomes.json": {
+            "kpis.avg_ltv_cac_ratio": (0.0, None),
+        },
+    }
+    for dotted_key, (minimum, maximum) in bounded_keys.get(file_name, {}).items():
+        value = _resolve_nested_key(payload, dotted_key)
+        if not isinstance(value, int | float):
+            raise DataQualityError(f"{file_name}.{dotted_key} must be numeric")
+        if minimum is not None and float(value) < minimum:
+            raise DataQualityError(f"{file_name}.{dotted_key} contains values below {minimum}")
+        if maximum is not None and float(value) > maximum:
+            raise DataQualityError(f"{file_name}.{dotted_key} contains values above {maximum}")
+
+    if file_name == "alerts_report.json":
+        alert_count = _resolve_nested_key(payload, "alert_count")
+        alerts = _resolve_nested_key(payload, "alerts")
+        if not isinstance(alert_count, int):
+            raise DataQualityError("alerts_report.json.alert_count must be an integer")
+        if not isinstance(alerts, list):
+            raise DataQualityError("alerts_report.json.alerts must be a list")
+        if alert_count != len(alerts):
+            raise DataQualityError("alerts_report.json.alert_count does not match alerts length")
+
+
 def validate_processed_artifacts(
-    processed_dir: Path, output_path: Path | None = None
+    processed_dir: Path,
+    output_path: Path | None = None,
+    *,
+    csv_artifact_specs: dict[str, set[str]] | None = None,
+    json_artifact_specs: dict[str, tuple[str, ...]] | None = None,
+    contract_version: str = PROCESSED_CONTRACT_VERSION,
 ) -> dict[str, object]:
     checks: list[dict[str, object]] = []
-    for file_name, required_columns in CSV_ARTIFACT_SPECS.items():
+    resolved_csv_specs = CSV_ARTIFACT_SPECS if csv_artifact_specs is None else csv_artifact_specs
+    resolved_json_specs = JSON_ARTIFACT_SPECS if json_artifact_specs is None else json_artifact_specs
+    for file_name, required_columns in resolved_csv_specs.items():
         checks.append(_validate_csv_artifact(processed_dir, file_name, required_columns))
-    for file_name, required_keys in JSON_ARTIFACT_SPECS.items():
+    for file_name, required_keys in resolved_json_specs.items():
         checks.append(_validate_json_artifact(processed_dir, file_name, required_keys))
 
     payload = {
         "validated_at_utc": datetime.now(UTC).isoformat(),
         "processed_dir": str(processed_dir),
+        "contract_version": contract_version,
         "status": "ok",
         "artifact_count": len(checks),
         "checks": checks,

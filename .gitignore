@@ -21,9 +21,8 @@ data/raw/*.csv
 data/bronze/*.csv
 data/silver/*.csv
 data/gold/*.csv
-data/processed/*.csv
-data/processed/*.json
-data/processed/registry/
+data/processed/*
+!data/processed/metrics_report.json
 data/warehouse/*.db
 data/manifests/*.json
 data/runs/

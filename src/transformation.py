@@ -1,9 +1,19 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from src.io_utils import atomic_write_csv
+
+
+@dataclass(frozen=True)
+class SilverDatasets:
+    customers_path: Path
+    orders_path: Path
+    marketing_path: Path
 
 
 def _validate_columns(df: pd.DataFrame, required: set[str], table_name: str) -> None:
@@ -17,7 +27,7 @@ def build_silver_layer(
     bronze_orders_path: Path,
     bronze_marketing_path: Path,
     silver_dir: Path,
-) -> tuple[Path, Path, Path]:
+) -> SilverDatasets:
     silver_dir.mkdir(parents=True, exist_ok=True)
 
     customers = pd.read_csv(bronze_customers_path, parse_dates=["signup_date"], low_memory=False)
@@ -65,7 +75,11 @@ def build_silver_layer(
     atomic_write_csv(silver_customers_path, customers)
     atomic_write_csv(silver_orders_path, orders)
     atomic_write_csv(silver_marketing_path, marketing)
-    return silver_customers_path, silver_orders_path, silver_marketing_path
+    return SilverDatasets(
+        customers_path=silver_customers_path,
+        orders_path=silver_orders_path,
+        marketing_path=silver_marketing_path,
+    )
 
 
 def build_customer_features(

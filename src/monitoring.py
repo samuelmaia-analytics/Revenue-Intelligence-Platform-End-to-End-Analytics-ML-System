@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from sklearn.calibration import calibration_curve
-from sklearn.metrics import brier_score_loss
 
 from src.io_utils import atomic_write_json
 
@@ -17,6 +15,12 @@ NUMERIC_MONITOR_COLUMNS = [
     "tenure_days",
     "arpu",
 ]
+
+
+def _series_or_empty(df: pd.DataFrame, column: str) -> pd.Series:
+    if column in df.columns:
+        return df[column]
+    return pd.Series(dtype="float64")
 
 
 def _summarize_numeric_distribution(
@@ -63,6 +67,15 @@ def _distribution_shift(reference: dict, current: dict) -> dict[str, dict[str, f
 
 
 def _calibration_summary(y_true: pd.Series, y_prob: pd.Series, label: str) -> dict:
+    try:
+        from sklearn.calibration import calibration_curve
+        from sklearn.metrics import brier_score_loss
+    except ModuleNotFoundError as exc:  # pragma: no cover - depends on environment
+        raise RuntimeError(
+            "scikit-learn is required for calibration monitoring. "
+            "Install project dependencies with `python -m pip install -e .[dev]`."
+        ) from exc
+
     clean = pd.DataFrame({"y_true": y_true, "y_prob": y_prob}).dropna()
     if clean.empty or clean["y_true"].nunique() < 2:
         return {"label": label, "status": "insufficient_signal"}
@@ -106,13 +119,13 @@ def build_monitoring_report(
 
     labeled = labeled_df.copy()
     churn_calibration = _calibration_summary(
-        labeled.get("is_churned"),
-        labeled.get("churn_probability"),
+        _series_or_empty(labeled, "is_churned"),
+        _series_or_empty(labeled, "churn_probability"),
         "churn",
     )
     next_purchase_calibration = _calibration_summary(
-        labeled.get("next_purchase_30d"),
-        labeled.get("next_purchase_probability"),
+        _series_or_empty(labeled, "next_purchase_30d"),
+        _series_or_empty(labeled, "next_purchase_probability"),
         "next_purchase_30d",
     )
 

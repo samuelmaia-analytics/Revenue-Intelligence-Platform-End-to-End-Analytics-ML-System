@@ -68,6 +68,15 @@ def _resolve_optional_date(name: str) -> date | None:
         raise RuntimeError(f"{name} must use YYYY-MM-DD format.") from exc
 
 
+def _resolve_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name, "true" if default else "false").strip().lower()
+    if raw in {"1", "true", "yes", "y", "on"}:
+        return True
+    if raw in {"0", "false", "no", "n", "off"}:
+        return False
+    raise RuntimeError(f"{name} must be a boolean-like value.")
+
+
 @dataclass(frozen=True)
 class PipelineConfig:
     project_root: Path
@@ -105,6 +114,9 @@ class PipelineConfig:
     alert_webhook_url: str | None = None
     backfill_start_date: date | None = None
     backfill_end_date: date | None = None
+    warehouse_schema: str | None = None
+    synthetic_customer_count: int = 2500
+    allow_bundled_seed_fallback: bool = True
 
     def ensure_directories(self) -> None:
         for directory in [
@@ -242,4 +254,7 @@ class PipelineConfig:
             alert_webhook_url=os.getenv("RIP_ALERT_WEBHOOK_URL", "").strip() or None,
             backfill_start_date=backfill_start_date,
             backfill_end_date=backfill_end_date,
+            warehouse_schema=os.getenv("RIP_WAREHOUSE_SCHEMA", "").strip() or None,
+            synthetic_customer_count=_resolve_int("RIP_SYNTHETIC_CUSTOMERS", 2500, minimum=1),
+            allow_bundled_seed_fallback=_resolve_bool("RIP_ALLOW_BUNDLED_SEED_FALLBACK", True),
         )

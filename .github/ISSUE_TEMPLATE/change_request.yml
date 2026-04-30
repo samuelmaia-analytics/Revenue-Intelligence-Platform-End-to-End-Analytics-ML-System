@@ -1,28 +1,16 @@
 name: Change request
-description: Propose a high-signal improvement to reliability, architecture, governance, or maintainability.
+description: Propose a high-signal improvement to architecture, reliability, maintainability, or repository governance.
 title: "[Change] "
 labels:
+  - enhancement
   - runtime
+  - triage
 body:
   - type: textarea
     id: problem
     attributes:
       label: Problem statement
-      description: What concrete weakness or risk does this change address?
-    validations:
-      required: true
-  - type: textarea
-    id: proposal
-    attributes:
-      label: Proposed change
-      description: Describe the change in implementation terms, not just intent.
-    validations:
-      required: true
-  - type: textarea
-    id: rationale
-    attributes:
-      label: Technical rationale
-      description: Why is this change defensible and proportionate for this repository?
+      description: What concrete weakness, risk, or maintenance cost does this request address?
     validations:
       required: true
   - type: dropdown
@@ -33,13 +21,42 @@ body:
         - P0 critical
         - P1 high
         - P2 medium
+        - P3 low
+    validations:
+      required: true
+  - type: dropdown
+    id: boundary
+    attributes:
+      label: Main boundary touched
+      options:
+        - Batch runtime
+        - Data contracts and governance
+        - Modeling and monitoring
+        - Warehouse and downstream consumption
+        - API or Streamlit
+        - CI, packaging, or developer workflow
+        - Documentation and onboarding
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the implementation direction, not just the intent.
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Technical rationale
+      description: Why is this change proportionate and defensible for this repository?
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
       label: Acceptance criteria
-      description: List observable outcomes or tests that would make this complete.
+      description: List the observable outcomes, tests, or documentation updates required for completion.
     validations:
       required: true
   - type: textarea
@@ -47,16 +64,8 @@ body:
     attributes:
       label: Non-goals
       description: State what should explicitly not be added as part of this change.
-  - type: dropdown
-    id: system_boundary
+  - type: textarea
+    id: evidence
     attributes:
-      label: Main boundary touched
-      options:
-        - Batch core
-        - Streamlit app
-        - Warehouse and downstream consumption
-        - Contracts and governance
-        - CI, tooling, or repository automation
-        - Documentation and onboarding
-    validations:
-      required: true
+      label: Evidence or references
+      description: Link related docs, failing checks, review findings, or examples if available.

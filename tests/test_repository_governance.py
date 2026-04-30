@@ -1,3 +1,4 @@
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -160,3 +161,15 @@ def test_onboarding_uses_package_install_and_install_smoke() -> None:
         "python -m src.pipeline --help",
     ]:
         assert expected_snippet in onboarding
+
+
+def test_processed_artifact_tracking_policy_stays_narrow() -> None:
+    tracked = subprocess.run(
+        ["git", "ls-files", "data/processed"],
+        cwd=PROJECT_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+
+    assert tracked == ["data/processed/metrics_report.json"]

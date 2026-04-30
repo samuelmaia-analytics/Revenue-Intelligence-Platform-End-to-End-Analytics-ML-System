@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -16,13 +17,24 @@ from src.metrics import (
 from src.recommendation import build_recommendations
 
 
+@dataclass(frozen=True)
+class AnalyticsOutputs:
+    ltv: pd.DataFrame
+    cac: pd.DataFrame
+    rfm: pd.DataFrame
+    cohort: pd.DataFrame
+    unit_economics: pd.DataFrame
+    recommendations: pd.DataFrame
+    kpi_snapshot: dict[str, object]
+
+
 def build_analytics_outputs(
     scored_df: pd.DataFrame,
     silver_customers_path: Path,
     silver_orders_path: Path,
     silver_marketing_path: Path,
     processed_dir: Path,
-) -> dict[str, pd.DataFrame | dict]:
+) -> AnalyticsOutputs:
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     ltv_df = calculate_ltv(scored_df)
@@ -46,12 +58,12 @@ def build_analytics_outputs(
 
     atomic_write_json(processed_dir / "kpi_snapshot.json", kpi_snapshot)
 
-    return {
-        "ltv": ltv_df,
-        "cac": cac_df,
-        "rfm": rfm_df,
-        "cohort": cohort_df,
-        "unit_economics": unit_df,
-        "recommendations": recommendations_df,
-        "kpi_snapshot": kpi_snapshot,
-    }
+    return AnalyticsOutputs(
+        ltv=ltv_df,
+        cac=cac_df,
+        rfm=rfm_df,
+        cohort=cohort_df,
+        unit_economics=unit_df,
+        recommendations=recommendations_df,
+        kpi_snapshot=kpi_snapshot,
+    )

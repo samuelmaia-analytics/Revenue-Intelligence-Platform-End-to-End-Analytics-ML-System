@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -7,6 +10,24 @@ from src.io_utils import atomic_write_csv
 
 CHANNELS = ["Organic", "Paid Search", "Social Ads", "Referral", "Partnership"]
 KAGGLE_FILE = "E-commerce Customer Behavior - Sheet1.csv"
+
+
+@dataclass(frozen=True)
+class RawDatasets:
+    customers_path: Path
+    orders_path: Path
+    marketing_path: Path
+    source_name: str
+
+    def paths(self) -> list[Path]:
+        return [self.customers_path, self.orders_path, self.marketing_path]
+
+
+@dataclass(frozen=True)
+class BronzeDatasets:
+    customers_path: Path
+    orders_path: Path
+    marketing_path: Path
 
 
 def generate_synthetic_data(
@@ -31,17 +52,20 @@ def generate_synthetic_data(
     )
 
     churn_risk = {"SMB": 0.38, "Mid-Market": 0.28, "Enterprise": 0.18}
-    order_rows = []
-    for row in customers.itertuples(index=False):
-        tenure_days = max((today - row.signup_date).days, 1)
+    order_rows: list[dict[str, object]] = []
+    for row in customers.to_dict(orient="records"):
+        signup_date = pd.Timestamp(row["signup_date"]).normalize()
+        segment = str(row["segment"])
+        customer_id = int(row["customer_id"])
+        tenure_days = max((today - signup_date).days, 1)
         expected_orders = max(1, int(tenure_days / 45))
         num_orders = rng.poisson(lam=expected_orders * 0.6) + 1
-        if rng.random() < churn_risk[row.segment]:
+        if rng.random() < churn_risk[segment]:
             num_orders = max(1, int(num_orders * 0.4))
 
         order_days = rng.integers(1, tenure_days + 1, size=num_orders)
-        order_dates = sorted([row.signup_date + pd.Timedelta(days=int(x)) for x in order_days])
-        base_value = {"SMB": 120, "Mid-Market": 320, "Enterprise": 950}[row.segment]
+        order_dates = sorted(signup_date + pd.Timedelta(days=int(x)) for x in order_days)
+        base_value = {"SMB": 120, "Mid-Market": 320, "Enterprise": 950}[segment]
         order_values = np.clip(rng.normal(base_value, base_value * 0.35, size=num_orders), 25, None)
 
         for idx, (order_date, order_value) in enumerate(
@@ -49,8 +73,8 @@ def generate_synthetic_data(
         ):
             order_rows.append(
                 {
-                    "order_id": f"O{row.customer_id:05d}-{idx:03d}",
-                    "customer_id": row.customer_id,
+                    "order_id": f"O{customer_id:05d}-{idx:03d}",
+                    "customer_id": customer_id,
                     "order_date": pd.Timestamp(order_date).normalize(),
                     "order_value": round(float(order_value), 2),
                 }
@@ -66,6 +90,20 @@ def generate_synthetic_data(
         }
     )
     return customers, orders, marketing
+
+
+def _resolve_seed_dataset(
+    raw_dir: Path,
+    source_path: Path | None,
+) -> tuple[str, Path | None]:
+    candidate_paths = [
+        ("external_kaggle_csv", source_path),
+        ("local_kaggle_csv", raw_dir / KAGGLE_FILE),
+    ]
+    for source_name, candidate in candidate_paths:
+        if candidate is not None and candidate.exists():
+            return source_name, candidate
+    return "synthetic", None
 
 
 def _build_from_kaggle_dataset(
@@ -125,13 +163,19 @@ def _build_from_kaggle_dataset(
         ]
     ]
 
-    order_rows = []
+    order_rows: list[dict[str, object]] = []
+    recency_values = [int(value) for value in recency_days.tolist()]
     for row, tenure, recency in zip(
-        df.itertuples(index=False), tenure_days, recency_days, strict=False
+        df.to_dict(orient="records"),
+        tenure_days.tolist(),
+        recency_values,
+        strict=False,
     ):
         customer_signup = today - pd.Timedelta(days=int(tenure))
-        n_orders = int(max(1, row.items_purchased))
-        avg_ticket = float(row.total_spend) / n_orders
+        customer_id = int(row["customer_id"])
+        total_spend = float(row["total_spend"])
+        n_orders = max(1, int(row["items_purchased"]))
+        avg_ticket = total_spend / n_orders
         std_ticket = max(5.0, avg_ticket * 0.25)
 
         if n_orders == 1:
@@ -143,7 +187,7 @@ def _build_from_kaggle_dataset(
             order_dates.append(today - pd.Timedelta(days=int(recency)))
 
         order_values = np.clip(rng.normal(avg_ticket, std_ticket, size=n_orders), 5, None)
-        correction = float(row.total_spend) / float(order_values.sum())
+        correction = total_spend / float(order_values.sum())
         order_values = order_values * correction
 
         for idx, (order_date, order_value) in enumerate(
@@ -151,8 +195,8 @@ def _build_from_kaggle_dataset(
         ):
             order_rows.append(
                 {
-                    "order_id": f"O{int(row.customer_id):05d}-{idx:03d}",
-                    "customer_id": int(row.customer_id),
+                    "order_id": f"O{customer_id:05d}-{idx:03d}",
+                    "customer_id": customer_id,
                     "order_date": pd.Timestamp(order_date).normalize(),
                     "order_value": round(float(order_value), 2),
                 }
@@ -176,13 +220,22 @@ def _build_from_kaggle_dataset(
     return customers, orders, marketing
 
 
-def save_raw_datasets(raw_dir: Path, seed: int = 42) -> tuple[Path, Path, Path]:
+def save_raw_datasets(
+    raw_dir: Path,
+    *,
+    seed: int = 42,
+    source_path: Path | None = None,
+    synthetic_customer_count: int = 2500,
+) -> RawDatasets:
     raw_dir.mkdir(parents=True, exist_ok=True)
-    kaggle_path = raw_dir / KAGGLE_FILE
-    if kaggle_path.exists():
+    source_name, kaggle_path = _resolve_seed_dataset(raw_dir, source_path)
+    if kaggle_path is not None:
         customers, orders, marketing = _build_from_kaggle_dataset(kaggle_path, seed=seed)
     else:
-        customers, orders, marketing = generate_synthetic_data(seed=seed)
+        customers, orders, marketing = generate_synthetic_data(
+            n_customers=synthetic_customer_count,
+            seed=seed,
+        )
 
     customers_path = raw_dir / "customers.csv"
     orders_path = raw_dir / "orders.csv"
@@ -192,12 +245,17 @@ def save_raw_datasets(raw_dir: Path, seed: int = 42) -> tuple[Path, Path, Path]:
     atomic_write_csv(orders_path, orders)
     atomic_write_csv(marketing_path, marketing)
 
-    return customers_path, orders_path, marketing_path
+    return RawDatasets(
+        customers_path=customers_path,
+        orders_path=orders_path,
+        marketing_path=marketing_path,
+        source_name=source_name,
+    )
 
 
 def build_bronze_layer(
     customers_path: Path, orders_path: Path, marketing_path: Path, bronze_dir: Path
-) -> tuple[Path, Path, Path]:
+) -> BronzeDatasets:
     bronze_dir.mkdir(parents=True, exist_ok=True)
     ingestion_ts = pd.Timestamp.utcnow().isoformat()
 
@@ -220,4 +278,8 @@ def build_bronze_layer(
     atomic_write_csv(bronze_orders_path, orders)
     atomic_write_csv(bronze_marketing_path, marketing)
 
-    return bronze_customers_path, bronze_orders_path, bronze_marketing_path
+    return BronzeDatasets(
+        customers_path=bronze_customers_path,
+        orders_path=bronze_orders_path,
+        marketing_path=bronze_marketing_path,
+    )

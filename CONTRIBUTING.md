@@ -1,89 +1,124 @@
 # Contributing
 
-## Working Standard
+## Purpose
 
-Treat this repository as a small, production-minded data system.
+Treat this repository as a compact, production-minded data system.
 
-That means:
+That means contributions should improve one or more of the following:
 
-- optimize for clarity, reliability, and reproducibility
-- keep the batch pipeline as the system of record
-- prefer explicit contracts over implicit behavior
-- document real behavior, not desired future behavior
-- avoid adding complexity unless it clearly reduces operational risk
+- correctness
+- reliability
+- maintainability
+- observability
+- reproducibility
+- reviewer trust
 
-## Before You Change Code
+Changes that only make the repository look busier are out of scope.
 
-Read these files first:
+## First Read
+
+Before changing code, read:
 
 - [README.md](README.md)
 - [docs/architecture.md](docs/architecture.md)
 - [docs/runbook.md](docs/runbook.md)
 - [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
 - [docs/repository_structure.md](docs/repository_structure.md)
-- [docs/deprecation_policy.md](docs/deprecation_policy.md)
 - [docs/merge_policy.md](docs/merge_policy.md)
-- [docs/incident_playbooks.md](docs/incident_playbooks.md)
+- [docs/deprecation_policy.md](docs/deprecation_policy.md)
 
-## Contribution Principles
+## Engineering Principles
 
-- one official execution path: `python -m src.pipeline run`
-- optional interfaces must consume the batch core instead of becoming alternate orchestration centers
-- every meaningful change should reduce risk, improve maintainability, or improve reviewer trust
-- low-signal refactors should not displace higher-signal reliability or correctness work
+- `python -m src.pipeline run` is the official execution path.
+- Optional surfaces must consume the batch core, not replace it.
+- Prefer explicit contracts, manifests, and validation over implicit behavior.
+- Keep abstractions proportional to the size of the repository.
+- Document implemented behavior only. Do not write aspirational docs.
+- If a change increases complexity, its operational payoff must be obvious.
 
-## High-Signal Changes
+## High-Signal Contributions
 
-Strong changes usually improve one or more of these:
+Strong changes usually improve:
 
 - runtime reliability
-- contract clarity
+- type safety and boundary clarity
 - artifact validation
-- warehouse consumption correctness
-- observability and debuggability
-- documentation fidelity
+- warehouse correctness
+- debuggability and failure evidence
+- onboarding quality
 - regression protection
 
 Low-signal changes to avoid:
 
 - speculative abstractions
-- framework churn without operational payoff
-- broad renames without structural improvement
-- aspirational documentation for features that do not exist
+- framework churn without a clear benefit
+- broad renames without a structural payoff
+- documentation that promises behavior the code does not implement
+- “portfolio polish” that does not improve engineering quality
 
-## Local Workflow
+## Repository Boundaries
 
-Setup:
+Preferred placement:
+
+- `src/`: batch runtime, data services, modeling, reporting, pipeline logic
+- `contracts/`: governed schemas and compatibility paths
+- `services/`: service interfaces such as the API
+- `app/`: Streamlit presentation layer
+- `scripts/`: smoke checks and lightweight operational helpers
+- `tests/`: regression coverage
+- `docs/`: architecture, onboarding, runbooks, ADRs, release notes
+- `dbt/`: downstream analytical layer on trusted warehouse outputs
+
+Canonical imports should be preferred over compatibility shims:
+
+- `contracts.v1.data_contract`
+- `services.api.main`
+
+## Local Setup
 
 ```powershell
-py -3.11 -m venv .venv
+python -m venv .venv
 .\.venv\Scripts\activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt -r requirements-dev.txt
+python -m pip install -e .[dev]
 Copy-Item .env.example .env
+pre-commit install
 ```
 
-Common commands:
+Optional dbt environment:
 
 ```powershell
-make verify
-make smoke-dashboard
-make smoke-api
-make smoke-dbt
-make pipeline
+python -m venv .dbt-venv
+.\.dbt-venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install dbt-core dbt-sqlite
 ```
 
-Equivalent direct commands:
+## Standard Workflow
 
-```powershell
-python -m src.pipeline run
-python scripts/smoke_dashboard.py
-python -m pytest -q
-```
+1. Create a focused branch.
+2. Make one coherent change set.
+3. Update tests and docs where behavior changes.
+4. Run the relevant validation commands.
+5. Open a PR using the repository template.
+
+Prefer smaller PRs with one operational theme over mixed changes.
 
 ## Validation Expectations
 
-Run before opening a PR:
+Minimum expected before opening a PR:
+
+```powershell
+make verify-core
+```
+
+For changes that touch downstream surfaces, also run:
+
+```powershell
+make verify
+```
+
+Equivalent direct commands:
 
 ```powershell
 python -m ruff check .
@@ -100,107 +135,96 @@ python scripts/smoke_dbt_sqlite.py
 python -m build
 ```
 
-If your change affects the container path, also validate:
+If the container path is affected, also validate:
 
 ```powershell
-docker build -t revenue-intelligence .
-docker run --rm revenue-intelligence python -m src.pipeline run --log-level INFO
-docker build -f Dockerfile.api -t revenue-intelligence-api .
+make docker-build
+make docker-smoke
 ```
-
-## Repository Boundaries
-
-Placement rules:
-
-- `src/`: batch pipeline and domain logic
-- `app/`: Streamlit consumption layer
-- `services/`: runtime-facing APIs and interfaces
-- `contracts/`: governed schemas and compatibility paths
-- `tests/`: behavioral and regression coverage
-- `docs/`: documentation for implemented repository behavior
-- `scripts/`: smoke checks and lightweight automation
-
-For downstream smoke checks, prefer the shared temporary-runtime helper in `scripts/smoke_support.py` instead of duplicating bootstrap logic.
-
-Canonical paths should be preferred over shims:
-
-- `contracts.v1.data_contract`
-- `services.api`
 
 ## Testing Standard
 
 Add or update tests when changing:
 
-- orchestration behavior
-- manifests or snapshots
+- pipeline orchestration
 - config resolution
-- warehouse persistence or consumption
-- governed schemas
+- backfill, retry, retention, freshness, or quality policy
+- manifests, snapshots, or runtime evidence
+- warehouse persistence or downstream consumption
+- governed contracts
 - CLI behavior
-- failure handling
-- retry, backfill, retention, freshness, or quality policy
-- dashboard data loading or smoke behavior
+- API request or registry behavior
+- dashboard data loading or smoke surfaces
 
-If no test is added, the PR should explain why current coverage is sufficient.
+If no test is added, explain why current coverage is sufficient.
 
 ## Documentation Standard
 
-Update docs when behavior changes.
+Documentation must track behavior, not intention.
 
-At minimum, review:
+Review at least the relevant subset of:
 
-- `README.md`
-- `README.pt-BR.md`
-- `docs/architecture.md`
-- `docs/runbook.md`
-- `docs/troubleshooting_matrix.md`
-- `docs/release_process.md`
-
-Do not document planned behavior as if it already exists.
-
-## Pull Request Standard
-
-Use the template in:
-
-- [.github/pull_request_template.md](.github/pull_request_template.md)
-
-PRs should stay focused. Split changes when they mix unrelated concerns without a shared operational reason.
-
-Merge and labeling guidance lives in:
-
-- [docs/merge_policy.md](docs/merge_policy.md)
+- [README.md](README.md)
+- [README.pt-BR.md](README.pt-BR.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/runbook.md](docs/runbook.md)
+- [docs/troubleshooting_matrix.md](docs/troubleshooting_matrix.md)
+- [docs/release_process.md](docs/release_process.md)
 
 ## Commit Convention
 
 Use lightweight conventional commits:
 
-- `feat:` for capability changes
-- `fix:` for defects
-- `refactor:` for internal code improvement without intentional behavior change
-- `test:` for test-only work
-- `docs:` for documentation-only changes
-- `chore:` for maintenance and tooling
+- `feat:` new capability
+- `fix:` defect correction
+- `refactor:` internal improvement without intentional behavior change
+- `test:` test-only change
+- `docs:` documentation-only change
+- `chore:` tooling, maintenance, or dependency work
 
-Good examples:
+Examples:
 
-- `feat: add processed artifact validation stage`
-- `fix: fail pipeline on invalid backfill window`
-- `refactor: extract dashboard view composition`
-- `test: add warehouse consumption regression coverage`
-- `docs: publish release and runbook updates`
+- `feat: add runtime artifact service layer`
+- `fix: fail fast on invalid backfill window`
+- `refactor: extract pipeline runtime manifest helpers`
+- `test: cover external raw seed precedence`
+- `docs: tighten reviewer-facing repository guide`
 
-Bad examples:
+Do not use:
 
 - `update stuff`
-- `final changes`
-- `improve project`
+- `misc changes`
+- `final version`
+
+## Pull Request Standard
+
+Use the template in [.github/pull_request_template.md](.github/pull_request_template.md).
+
+A good PR should make it easy to answer:
+
+- what changed
+- why it changed
+- what risk it addresses
+- how it was validated
+- what residual risk remains
 
 ## Review Bar
 
 A change is not ready if:
 
-- it increases complexity without clear operational payoff
-- it weakens the batch core as the center of gravity
-- it changes outputs without validation or documentation
-- it introduces undocumented runtime behavior
-- it makes the repository easier to misunderstand
+- it increases complexity without reducing a real risk
+- it weakens the batch pipeline as the system of record
+- it changes artifacts without validation
+- it changes behavior without updating docs
+- it makes the repository harder to inspect or reason about
+
+## Merge Discipline
+
+Before merge:
+
+- CI must pass
+- unresolved review comments must be closed
+- documentation and tests must match behavior
+- commit titles should follow the commit convention
+
+Merge policy details live in [docs/merge_policy.md](docs/merge_policy.md).

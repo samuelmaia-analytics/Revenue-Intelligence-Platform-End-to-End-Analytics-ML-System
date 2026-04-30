@@ -9,18 +9,42 @@ from src.warehouse import build_star_schema
 
 def test_save_raw_datasets_creates_files(tmp_path: Path) -> None:
     raw_dir = tmp_path / "raw"
-    customers_path, orders_path, marketing_path = save_raw_datasets(raw_dir, seed=7)
+    raw_datasets = save_raw_datasets(raw_dir, seed=7)
 
-    assert customers_path.exists()
-    assert orders_path.exists()
-    assert marketing_path.exists()
+    assert raw_datasets.customers_path.exists()
+    assert raw_datasets.orders_path.exists()
+    assert raw_datasets.marketing_path.exists()
+    assert raw_datasets.source_name == "synthetic"
 
-    customers = pd.read_csv(customers_path)
-    orders = pd.read_csv(orders_path)
-    marketing = pd.read_csv(marketing_path)
+    customers = pd.read_csv(raw_datasets.customers_path)
+    orders = pd.read_csv(raw_datasets.orders_path)
+    marketing = pd.read_csv(raw_datasets.marketing_path)
     assert not customers.empty
     assert not orders.empty
     assert not marketing.empty
+
+
+def test_save_raw_datasets_uses_external_seed_dataset_when_provided(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "runtime-raw"
+    seed_path = tmp_path / "seed" / "E-commerce Customer Behavior - Sheet1.csv"
+    seed_path.parent.mkdir(parents=True, exist_ok=True)
+    seed_path.write_text(
+        "\n".join(
+            [
+                "Customer ID,Gender,Age,City,Membership Type,Total Spend,Items Purchased,Average Rating,Discount Applied,Days Since Last Purchase,Satisfaction Level",
+                "1,Male,31,Sao Paulo,Gold,900,3,4.8,Yes,14,High",
+                "2,Female,28,Recife,Silver,450,2,4.3,No,35,Medium",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    raw_datasets = save_raw_datasets(raw_dir, seed=7, source_path=seed_path)
+    customers = pd.read_csv(raw_datasets.customers_path)
+
+    assert raw_datasets.source_name == "external_kaggle_csv"
+    assert set(["customer_id", "channel", "segment", "signup_date"]).issubset(customers.columns)
+    assert len(customers) == 2
 
 
 def test_silver_layer_keeps_referential_integrity(tmp_path: Path) -> None:
@@ -48,14 +72,14 @@ def test_silver_layer_keeps_referential_integrity(tmp_path: Path) -> None:
         bronze_dir / "bronze_marketing_spend.csv", index=False
     )
 
-    silver_customers, silver_orders, _ = build_silver_layer(
+    silver_datasets = build_silver_layer(
         bronze_dir / "bronze_customers.csv",
         bronze_dir / "bronze_orders.csv",
         bronze_dir / "bronze_marketing_spend.csv",
         silver_dir,
     )
-    customers_df = pd.read_csv(silver_customers)
-    orders_df = pd.read_csv(silver_orders)
+    customers_df = pd.read_csv(silver_datasets.customers_path)
+    orders_df = pd.read_csv(silver_datasets.orders_path)
 
     assert set(orders_df["customer_id"]).issubset(set(customers_df["customer_id"]))
     assert len(orders_df) == 1

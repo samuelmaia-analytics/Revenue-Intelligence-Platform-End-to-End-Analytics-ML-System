@@ -31,6 +31,7 @@ def _build_valid_processed_artifacts(processed_dir: Path) -> None:
                     "null_fraction_by_column": {},
                     "total_null_fraction": 0.0,
                     "referential_issues": 0,
+                    "rule_violations": [],
                 }
             ],
             "total_datasets": 1,
@@ -264,6 +265,7 @@ def test_validate_processed_artifacts_writes_report(tmp_path: Path) -> None:
     )
 
     assert report["status"] == "ok"
+    assert report["contract_version"] == "1.0.0"
     assert int(report["artifact_count"]) == 19
     assert (processed_dir / "artifact_validation_report.json").exists()
 
@@ -288,4 +290,44 @@ def test_validate_processed_artifacts_fails_on_missing_operational_key(tmp_path:
     _write_json(processed_dir / "quality_report.json", broken_report)
 
     with pytest.raises(DataQualityError, match="total_datasets"):
+        validate_processed_artifacts(processed_dir)
+
+
+def test_validate_processed_artifacts_fails_on_invalid_probability_range(tmp_path: Path) -> None:
+    processed_dir = tmp_path / "processed"
+    processed_dir.mkdir()
+    _build_valid_processed_artifacts(processed_dir)
+
+    broken = pd.read_csv(processed_dir / "recommendations.csv")
+    broken.loc[0, "churn_probability"] = 1.2
+    broken.to_csv(processed_dir / "recommendations.csv", index=False)
+
+    with pytest.raises(DataQualityError, match="churn_probability"):
+        validate_processed_artifacts(processed_dir)
+
+
+def test_validate_processed_artifacts_fails_on_inconsistent_alert_count(tmp_path: Path) -> None:
+    processed_dir = tmp_path / "processed"
+    processed_dir.mkdir()
+    _build_valid_processed_artifacts(processed_dir)
+
+    alerts_report = json.loads((processed_dir / "alerts_report.json").read_text(encoding="utf-8"))
+    alerts_report["alert_count"] = 2
+    _write_json(processed_dir / "alerts_report.json", alerts_report)
+
+    with pytest.raises(DataQualityError, match="alert_count"):
+        validate_processed_artifacts(processed_dir)
+
+
+def test_validate_processed_artifacts_fails_on_invalid_cohort_relationship(tmp_path: Path) -> None:
+    processed_dir = tmp_path / "processed"
+    processed_dir.mkdir()
+    _build_valid_processed_artifacts(processed_dir)
+
+    broken = pd.read_csv(processed_dir / "cohort_retention.csv")
+    broken.loc[0, "active_customers"] = 12
+    broken.loc[0, "cohort_size"] = 10
+    broken.to_csv(processed_dir / "cohort_retention.csv", index=False)
+
+    with pytest.raises(DataQualityError, match="active_customers exceeds cohort_size"):
         validate_processed_artifacts(processed_dir)

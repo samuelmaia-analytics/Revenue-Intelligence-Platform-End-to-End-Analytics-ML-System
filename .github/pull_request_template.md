@@ -1,16 +1,17 @@
 ## Summary
 
 - What changed:
-- Why this change is needed:
-- Which runtime path, contract, or operational concern it touches:
+- Why this change was necessary:
+- Main engineering concern addressed:
 
 ## Scope
 
-- Category: `feature` / `fix` / `refactor` / `test` / `docs` / `chore`
+- Category: `feat` / `fix` / `refactor` / `test` / `docs` / `chore`
 - Official batch path affected: `yes` / `no`
-- Streamlit affected: `yes` / `no`
-- Warehouse behavior affected: `yes` / `no`
+- Warehouse outputs affected: `yes` / `no`
 - Contracts affected: `yes` / `no`
+- Dashboard or API affected: `yes` / `no`
+- Documentation updated: `yes` / `no`
 
 ## Validation
 
@@ -19,38 +20,47 @@
 - [ ] `python -m isort --check-only .`
 - [ ] `python -m mypy src services contracts main.py`
 - [ ] `python -m pytest -q`
-- [ ] `python scripts/smoke_dashboard.py`
 - [ ] `python -m build`
 
-If any item above was intentionally not run, explain why:
+Run when applicable:
+
+- [ ] `python scripts/smoke_dashboard.py`
+- [ ] `python scripts/ui_snapshot.py`
+- [ ] `python scripts/smoke_api.py`
+- [ ] `python scripts/smoke_downstream_sql.py`
+- [ ] `python scripts/smoke_processed_exports.py`
+- [ ] `python scripts/smoke_partner_payload.py`
+- [ ] `python scripts/smoke_dbt_sqlite.py`
+- [ ] `docker build -t revenue-intelligence .`
+- [ ] `docker build -f Dockerfile.api -t revenue-intelligence-api .`
+
+If any relevant check was skipped, explain why:
 
 -
 
 ## Runtime Impact
 
-- Output artifacts affected:
-- Manifest or runbook impact:
-- Backfill or retry behavior impact:
+- Outputs created or changed:
+- Runtime policy affected:
+- Backfill, retry, retention, or quality impact:
 - Warehouse impact:
-- Dashboard impact:
+- Downstream consumer impact:
+
+## Tests
+
+- New or updated tests:
+- Why this coverage is sufficient:
+- Residual risks:
 
 ## Documentation
 
 - [ ] `README.md` reviewed
-- [ ] `README.pt-BR.md` reviewed when needed
-- [ ] `docs/architecture.md` reviewed when needed
-- [ ] `docs/runbook.md` reviewed when needed
-- [ ] `docs/release_process.md` reviewed when needed
-- [ ] No aspirational documentation introduced
-
-## Tests Added or Updated
-
-- New or updated tests:
-- Why these tests are sufficient:
-- Residual risks:
+- [ ] `CONTRIBUTING.md` reviewed when needed
+- [ ] architecture/runbook docs reviewed when needed
+- [ ] no aspirational documentation introduced
 
 ## Review Notes
 
-- Main risk:
+- Highest risk:
 - Rollback path:
-- Why this change is proportionate for the repository:
+- Why this change is proportionate for this repository:

@@ -1,15 +1,28 @@
 name: Bug report
-description: Report a defect in the batch pipeline, operational outputs, API, or repository tooling.
+description: Report a defect in the pipeline, warehouse outputs, runtime behavior, or repository tooling.
 title: "[Bug] "
 labels:
+  - bug
   - runtime
+  - triage
 body:
   - type: textarea
     id: summary
     attributes:
       label: Summary
       description: Describe the defect in one or two precise sentences.
-      placeholder: The pipeline writes a success manifest even when warehouse persistence fails.
+      placeholder: The pipeline writes a success manifest even when artifact validation fails.
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
     validations:
       required: true
   - type: dropdown
@@ -17,12 +30,13 @@ body:
     attributes:
       label: Affected area
       options:
-        - Batch pipeline
-        - Config and runtime
-        - Warehouse persistence
-        - Governance/contracts
+        - Batch runtime
+        - Ingestion or transformation
+        - Modeling or monitoring
+        - Warehouse or dbt
         - API
-        - CI or developer tooling
+        - Streamlit
+        - CI, packaging, or developer tooling
         - Documentation
     validations:
       required: true
@@ -30,7 +44,7 @@ body:
     id: steps
     attributes:
       label: Reproduction steps
-      description: Provide exact commands, inputs, or conditions.
+      description: Provide exact commands, inputs, dates, and environment details when possible.
     validations:
       required: true
   - type: textarea
@@ -49,22 +63,18 @@ body:
     id: evidence
     attributes:
       label: Evidence
-      description: Include relevant log snippets, manifest fields, traceback excerpts, or artifact names.
+      description: Include traceback excerpts, manifest fields, SQL evidence, log snippets, or affected artifact names.
+    validations:
+      required: true
   - type: textarea
     id: impact
     attributes:
       label: Technical impact
-      description: Explain the operational, reliability, or maintenance impact.
+      description: Explain the reliability, maintenance, or user impact.
     validations:
       required: true
   - type: textarea
-    id: first_artifact
+    id: containment
     attributes:
-      label: First artifact inspected
-      description: Which manifest, log, report, or warehouse query was checked first?
-      placeholder: pipeline_manifest.json, quality_report.json, latest failure manifest, dashboard smoke output
-  - type: textarea
-    id: rollback
-    attributes:
-      label: Safe rollback or containment
-      description: If known, describe the safest short-term containment or rollback path.
+      label: Temporary containment or rollback
+      description: If known, describe the safest short-term mitigation.

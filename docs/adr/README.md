@@ -9,3 +9,4 @@ Current ADRs:
 - [0001-batch-first-system-of-record.md](0001-batch-first-system-of-record.md)
 - [0002-sqlite-default-warehouse.md](0002-sqlite-default-warehouse.md)
 - [0003-streamlit-consumes-artifacts.md](0003-streamlit-consumes-artifacts.md)
+- [0004-pipeline-runtime-and-service-boundaries.md](0004-pipeline-runtime-and-service-boundaries.md)

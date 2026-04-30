@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Operational Runbook
+  - name: Runtime Runbook
     url: https://github.com/samuelmaia-analytics/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/blob/main/docs/runbook.md
-    about: Check the official runtime commands, validation steps, and failure investigation path before opening an operational issue.
-  - name: Documentation Map
+    about: Check official runtime commands, recovery paths, and failure investigation guidance before opening an operational issue.
+  - name: Architecture and Docs Map
     url: https://github.com/samuelmaia-analytics/Revenue-Intelligence-Platform-End-to-End-Analytics-ML-System/blob/main/docs/README.md
-    about: Start here if you are unsure which architecture, onboarding, or troubleshooting document applies.
+    about: Start here if you need the right architecture, onboarding, repository structure, or troubleshooting document.

@@ -40,6 +40,31 @@ Do not:
 Example:
 - `dbt` smoke starts failing after a warehouse column rename
 
+## Playbook: Downstream Consumer Fails After a Successful Batch Run
+
+Trigger:
+- the pipeline finishes successfully
+- a downstream smoke, dashboard, partner export, or warehouse consumer fails afterwards
+
+Immediate actions:
+1. inspect `pipeline_manifest.json` and confirm the run completed with the expected outputs
+2. inspect `artifact_validation_report.json` and `quality_report.json`
+3. identify whether the failure comes from a contract break, consumer assumption, or stale environment
+4. contain by reverting the consumer or reverting the breaking artifact change, not by mutating outputs manually
+
+Recovery path:
+1. compare current processed artifacts with the last known good snapshot in `data/snapshots/`
+2. rerun only after the breaking contract or consumer logic is understood
+3. add a regression test at the producer or consumer boundary before merging the fix
+
+Do not:
+- patch generated artifacts by hand
+- let a consumer redefine the source of truth
+- weaken validation to make the smoke pass
+
+Example:
+- `recommendations.csv` stays valid, but the partner payload smoke fails because a consumer assumed an old column name
+
 ## Playbook: API Container Unhealthy
 
 Trigger:
@@ -58,6 +83,32 @@ Do not:
 
 Example:
 - container boots but `/health` never stabilizes because the model registry path moved
+
+## Playbook: Model Registry or Model Artifact Failure
+
+Trigger:
+- API smoke fails with model loading errors
+- monitoring or executive reporting fails after model artifacts were regenerated
+- registry metadata points to a missing or incompatible model version
+
+Immediate actions:
+1. inspect `data/processed/registry/` and confirm `latest.json` points to an existing version
+2. inspect `pipeline_manifest.json` and `metrics_report.json` from the same run
+3. verify that the expected model files exist and were produced by the current contract-compatible run
+4. contain by restoring the last known good registry pointer or rerunning the producer, not by editing model metadata manually
+
+Recovery path:
+1. compare the current registry layout against the last good snapshot under `data/snapshots/`
+2. rerun `scripts/smoke_api.py` after restoring the producer-consumer contract
+3. add or update a regression test covering the missing model or registry mismatch
+
+Do not:
+- patch `latest.json` without understanding why the registry drifted
+- bypass model loading in the API just to get health green
+- commit a new model artifact without matching metrics and manifest evidence
+
+Example:
+- `latest.json` points to `model_v5`, but only `model_v4` exists after a partial local run
 
 ## Playbook: Dashboard Looks Correct but Business Slice Is Wrong
 

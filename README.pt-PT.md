@@ -1,4 +1,4 @@
-﻿# Revenue Intelligence Platform
+# Revenue Intelligence Platform
 
 Repositório de analytics de receita orientado para produção que transforma comportamento de clientes e encomendas em saídas batch governadas, tabelas para warehouse, artefactos executivos de decisão e um workspace Streamlit para acção comercial.
 
@@ -24,7 +24,7 @@ Resposta curta: sim.
 Em menos de 30 segundos, alguém a avaliar o repositório deve conseguir ver que ele tem:
 
 - um caminho oficial de execução batch
-- outputs governados com contratos e validação
+- outputs governados com contratos versionados e validação
 - evidência operacional via manifests, snapshots e relatórios de qualidade
 - consumo downstream por Streamlit, API, SQL e dbt
 - CI que vai além de testes unitários e cobre smoke e build
@@ -36,7 +36,7 @@ Muitos projectos de portefólio ficam presos a notebooks, scripts ad hoc ou um d
 - um entrypoint batch oficial
 - saídas determinísticas e reprocessáveis
 - manifests, logs, snapshots e retenção de execução
-- artefactos processados com validação e contratos
+- artefactos processados com validação e contratos versionados
 - consumidores downstream que leem o core batch em vez de o substituir
 
 O objectivo não é simular uma plataforma enterprise sem substância. O objectivo é demonstrar critério de engenharia num repositório pequeno o suficiente para ser auditado de ponta a ponta.
@@ -83,6 +83,7 @@ Características principais:
 - política explícita de runtime para retry, retenção, freshness e thresholds de qualidade
 - validação de artefactos processados antes da conclusão do pipeline
 - warehouse SQLite por omissão, com caminhos compatíveis para serviços e dbt
+- separação explícita entre orchestration, runtime operacional e services do pipeline
 
 ## Estrutura do Repositório
 
@@ -127,6 +128,8 @@ Referências principais:
 - [docs/merge_policy.md](docs/merge_policy.md)
 - [docs/sql_examples.md](docs/sql_examples.md)
 - [docs/incident_playbooks.md](docs/incident_playbooks.md)
+- [docs/local_benchmark.md](docs/local_benchmark.md)
+- [docs/processed_contracts.md](docs/processed_contracts.md)
 - [docs/hiring_review.md](docs/hiring_review.md)
 
 ## Sinais de Maturidade em Engenharia de Dados
@@ -157,6 +160,7 @@ python -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -e .[dev]
 Copy-Item .env.example .env
+pre-commit install
 ```
 
 Setup opcional do CLI `dbt` num ambiente isolado:
@@ -172,10 +176,13 @@ Variáveis de ambiente mais importantes:
 
 - `RIP_DATA_DIR`
 - `RIP_WAREHOUSE_TARGET`
+- `RIP_WAREHOUSE_SCHEMA`
 - `RIP_RETRY_ATTEMPTS`
 - `RIP_QUALITY_MAX_NULL_FRACTION`
 - `RIP_BACKFILL_START_DATE`
 - `RIP_BACKFILL_END_DATE`
+- `RIP_SYNTHETIC_CUSTOMERS`
+- `RIP_ALLOW_BUNDLED_SEED_FALLBACK`
 
 ## Comandos Principais
 
@@ -200,6 +207,8 @@ streamlit run app/streamlit_app.py
 Fluxo com Make:
 
 ```powershell
+make bootstrap
+make verify-core
 make verify
 make smoke-dashboard
 make pipeline
@@ -239,9 +248,13 @@ Veja [docs/sql_examples.md](docs/sql_examples.md) para queries práticas de cons
 ## Decisões Técnicas e Trade-offs
 
 - SQLite é o warehouse por omissão porque a reprodutibilidade local vale mais do que exigir infraestrutura externa.
+- Postgres é um alvo opcional de compatibilidade, incluindo smoke em schema prefixado quando existirem credenciais.
 - O projecto é batch-first por escolha. Demonstra analytics engineering disciplinado sem fingir ser uma plataforma completa de streaming.
 - O Streamlit consome artefactos em vez de recalcular a lógica crítica, preservando um único caminho oficial de execução.
 - Compat shims existem, mas os caminhos canónicos continuam explícitos e documentados.
+
+Política de versionamento dos processed contracts, rollback e a decisão sobre versionar `data/processed` estão em [docs/processed_contracts.md](docs/processed_contracts.md).
+Somente `data/processed/metrics_report.json` permanece versionado como artefacto leve de referência para reviewers.
 
 ## Ordem Recomendada de Leitura
 
@@ -277,3 +290,13 @@ Próximos passos com maior impacto:
 ## Contribuição
 
 Veja [CONTRIBUTING.md](CONTRIBUTING.md) para expectativas de workflow, convenção de commits, validação e boundaries do repositório.
+
+## License
+
+This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+To view a copy of this license, visit:
+https://creativecommons.org/licenses/by-nc/4.0/
+
+[![License: CC BY-NC 4.0](https://licensebuttons.net/l/by-nc/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc/4.0/)
+
