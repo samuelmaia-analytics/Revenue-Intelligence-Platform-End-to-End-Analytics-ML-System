@@ -1,7 +1,7 @@
 # Usage
 
-This project is part of Samuel Maia's data portfolio.
+This project is part of Samuel Maia's professional data portfolio.
 
-It may be reviewed for learning, recruiting and technical evaluation.
+It is shared for portfolio review, technical evaluation, learning and recruiting purposes.
 
-For any other use, contact the author first.
+For commercial use, redistribution, resale or reuse in client-facing work, please contact the author first.
