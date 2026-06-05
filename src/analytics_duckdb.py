@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
+duckdb: Any | None
 try:
     import duckdb
 except ImportError:  # pragma: no cover - fallback path is exercised instead
@@ -39,8 +41,11 @@ def _connect(
     customers: pd.DataFrame,
     orders: pd.DataFrame,
     marketing: pd.DataFrame,
-) -> duckdb.DuckDBPyConnection:
-    connection = duckdb.connect(database=":memory:")
+) -> Any:
+    if duckdb is None:
+        raise RuntimeError("DuckDB is required to build curated support frames.")
+    duckdb_module = duckdb
+    connection = duckdb_module.connect(database=":memory:")
     connection.register("customers", customers)
     connection.register("orders", orders)
     connection.register("marketing", marketing)

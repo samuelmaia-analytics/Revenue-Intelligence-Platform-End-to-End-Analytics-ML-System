@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python_version }}
           cache: "pip"
@@ -47,7 +47,7 @@ jobs:
         run: python scripts/assert_runtime_metrics.py ci_runtime_baseline_data/processed/runtime_metrics.json metrics/runtime_baseline.json
 
       - name: Upload refreshed runtime evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: runtime-baseline-${{ github.run_id }}
           path: |

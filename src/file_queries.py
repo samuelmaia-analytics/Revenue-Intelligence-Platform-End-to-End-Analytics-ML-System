@@ -5,11 +5,13 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
 from src.config import PipelineConfig
 
+duckdb: Any | None
 try:
     import duckdb
 except ImportError:  # pragma: no cover
@@ -90,7 +92,7 @@ def discover_queryable_relations(cfg: PipelineConfig) -> list[QueryableRelation]
     return relations
 
 
-def build_query_connection(cfg: PipelineConfig) -> duckdb.DuckDBPyConnection:
+def build_query_connection(cfg: PipelineConfig) -> Any:
     if duckdb is None:
         raise RuntimeError("DuckDB is required to query governed CSV layers.")
 

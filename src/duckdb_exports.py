@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
 from src.io_utils import atomic_write_json
 
+duckdb: Any | None
 try:
     import duckdb
 except ImportError:  # pragma: no cover
