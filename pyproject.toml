@@ -85,6 +85,8 @@ module = [
   "plotly.*",
   "pandas",
   "pandas.*",
+  "duckdb",
+  "duckdb.*",
   "sklearn.*",
   "joblib",
   "sqlalchemy",

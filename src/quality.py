@@ -140,7 +140,7 @@ def build_business_rule_report(
         estimated = pd.to_datetime(orders_df["order_estimated_delivery_date"], errors="coerce")
         invalid_estimated_delivery_rows = int(((estimated < purchased) & estimated.notna()).sum())
 
-    payload = {
+    payload: dict[str, object] = {
         "checks": {
             "customer_id_uniqueness_violations": int(
                 customers_df["customer_id"].duplicated().sum()
@@ -199,8 +199,9 @@ def build_business_rule_report(
             ),
         }
     }
-    payload["status"] = (
-        "ok" if all(int(value) == 0 for value in payload["checks"].values()) else "warning"
-    )
+    checks = payload["checks"]
+    if not isinstance(checks, dict):
+        raise DataQualityError("Quality report checks must be a dictionary.")
+    payload["status"] = "ok" if all(int(value) == 0 for value in checks.values()) else "warning"
     atomic_write_json(output_path, payload)
     return payload

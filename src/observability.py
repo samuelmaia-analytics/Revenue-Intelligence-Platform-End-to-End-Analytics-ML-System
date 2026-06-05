@@ -30,6 +30,15 @@ def _read_jsonl(path: Path) -> list[dict[str, object]]:
     return events
 
 
+def _to_int(value: object, default: int = 0) -> int:
+    if not isinstance(value, str | bytes | bytearray | int | float):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def build_observability_summary(processed_dir: Path) -> dict[str, object]:
     manifest = _read_json(processed_dir / "pipeline_manifest.json")
     runtime_metrics = _read_json(processed_dir / "runtime_metrics.json")
@@ -113,11 +122,18 @@ def build_reliability_report(
         stage_timings.items(),
         key=lambda item: item[1],
     )
-    quality_datasets = quality_report.get("datasets", [])
-    duplicate_rows = sum(int(item.get("duplicate_rows", 0)) for item in quality_datasets)
-    referential_issues = sum(int(item.get("referential_issues", 0)) for item in quality_datasets)
+    raw_quality_datasets = quality_report.get("datasets", [])
+    quality_datasets = (
+        [dataset for dataset in raw_quality_datasets if isinstance(dataset, dict)]
+        if isinstance(raw_quality_datasets, list)
+        else []
+    )
+    duplicate_rows = sum(_to_int(item.get("duplicate_rows", 0)) for item in quality_datasets)
+    referential_issues = sum(
+        _to_int(item.get("referential_issues", 0)) for item in quality_datasets
+    )
     null_count_total = sum(
-        int(value)
+        _to_int(value)
         for dataset in quality_datasets
         for value in dataset.get("null_counts", {}).values()
     )
@@ -125,7 +141,7 @@ def build_reliability_report(
     if (
         str(freshness_report.get("status", "n/a")).lower() != "ok"
         or str(artifact_validation_report.get("status", "n/a")).lower() != "ok"
-        or int(alerts_report.get("alert_count", 0)) > 0
+        or _to_int(alerts_report.get("alert_count", 0)) > 0
     ):
         reliability_status = "warning"
 
