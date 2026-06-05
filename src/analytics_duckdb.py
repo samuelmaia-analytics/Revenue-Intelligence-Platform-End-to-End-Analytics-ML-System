@@ -39,7 +39,7 @@ def _connect(
     customers: pd.DataFrame,
     orders: pd.DataFrame,
     marketing: pd.DataFrame,
-) -> "duckdb.DuckDBPyConnection":
+) -> duckdb.DuckDBPyConnection:
     connection = duckdb.connect(database=":memory:")
     connection.register("customers", customers)
     connection.register("orders", orders)

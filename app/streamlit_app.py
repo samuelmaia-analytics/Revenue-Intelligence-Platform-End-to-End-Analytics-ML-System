@@ -12,9 +12,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from app.dashboard_data import filter_customers, load_processed_assets, refresh_pipeline_outputs
-from app.dashboard_metrics import format_currency
-from app.ui.primitives import apply_chart_style, render_global_styles
+from app.dashboard_data import (  # noqa: E402
+    filter_customers,
+    load_processed_assets,
+    refresh_pipeline_outputs,
+)
+from app.dashboard_metrics import format_currency  # noqa: E402
+from app.ui.primitives import apply_chart_style, render_global_styles  # noqa: E402
 
 COLOR_PRIMARY = "#0F766E"
 COLOR_SECONDARY = "#0F5BD7"
@@ -258,7 +262,12 @@ def _render_sql_snippets(section_key: str) -> None:
     if not snippets:
         return
     with st.expander("Snippets SQL curados"):
-        st.caption(SQL_SNIPPET_HELP.get(section_key, "Consultas prontas sobre os artefatos governados para demo e export técnico."))
+        st.caption(
+            SQL_SNIPPET_HELP.get(
+                section_key,
+                "Consultas prontas sobre os artefatos governados para demo e export técnico.",
+            )
+        )
         available = [(label, path) for label, path in snippets if path.exists()]
         if not available:
             st.info("Nenhum snippet SQL disponível nesta seção.")
@@ -380,29 +389,53 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             for key, value in checks.items()
         ]
     )
-    checks_alert_df = checks_df[checks_df["ocorrencias"] > 0].sort_values("ocorrencias", ascending=False)
+    checks_alert_df = checks_df[checks_df["ocorrencias"] > 0].sort_values(
+        "ocorrencias", ascending=False
+    )
     categories_plot = categories.copy()
     if "category" in categories_plot.columns:
         categories_plot = categories_plot[
-            ~categories_plot["category"].astype(str).str.strip().str.lower().isin(["", "unknown", "none", "null", "nan"])
+            ~categories_plot["category"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .isin(["", "unknown", "none", "null", "nan"])
         ]
     states_plot = states.copy()
     if "state" in states_plot.columns:
         states_plot = states_plot[
-            ~states_plot["state"].astype(str).str.strip().str.lower().isin(["", "unknown", "none", "null", "nan"])
+            ~states_plot["state"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .isin(["", "unknown", "none", "null", "nan"])
         ]
-    category_ready = {"total_revenue", "category"}.issubset(categories_plot.columns) and not categories_plot.empty
+    category_ready = {"total_revenue", "category"}.issubset(
+        categories_plot.columns
+    ) and not categories_plot.empty
     state_ready = {"state", "total_revenue"}.issubset(states_plot.columns) and not states_plot.empty
 
     cols = st.columns(4)
     with cols[0]:
-        _metric_card("Receita Total", format_currency(kpis["total_revenue"], "pt-br"), "Receita entregue do marketplace")
+        _metric_card(
+            "Receita Total",
+            format_currency(kpis["total_revenue"], "pt-br"),
+            "Receita entregue do marketplace",
+        )
     with cols[1]:
         _metric_card("Pedidos Totais", f"{kpis['total_orders']:,}", "Pedidos governados no recorte")
     with cols[2]:
-        _metric_card("Ticket Médio", format_currency(kpis["average_ticket"], "pt-br"), "Valor médio por pedido entregue")
+        _metric_card(
+            "Ticket Médio",
+            format_currency(kpis["average_ticket"], "pt-br"),
+            "Valor médio por pedido entregue",
+        )
     with cols[3]:
-        _metric_card("Clientes Recorrentes", _format_pct(kpis["recurring_customer_rate"]), "Clientes com comportamento recorrente")
+        _metric_card(
+            "Clientes Recorrentes",
+            _format_pct(kpis["recurring_customer_rate"]),
+            "Clientes com comportamento recorrente",
+        )
 
     st.markdown(
         f"""
@@ -452,7 +485,9 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
                 st.warning(f"{len(checks_alert_df)} regra(s) com ocorrência no ciclo publicado.")
             else:
                 st.dataframe(
-                    checks_alert_df.rename(columns={"regra": "Regra", "ocorrencias": "Ocorrências"}),
+                    checks_alert_df.rename(
+                        columns={"regra": "Regra", "ocorrencias": "Ocorrências"}
+                    ),
                     use_container_width=True,
                     hide_index=True,
                 )
@@ -491,7 +526,11 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             }
             if "late_delivery_rate" in states_plot.columns:
                 chart_kwargs["color"] = "late_delivery_rate"
-                chart_kwargs["color_continuous_scale"] = [COLOR_SURFACE_BLUE, COLOR_ACCENT, COLOR_DANGER]
+                chart_kwargs["color_continuous_scale"] = [
+                    COLOR_SURFACE_BLUE,
+                    COLOR_ACCENT,
+                    COLOR_DANGER,
+                ]
             fig = px.bar(**chart_kwargs)
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
@@ -515,14 +554,20 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
 
     bottom = st.columns([1.15, 0.85])
     with bottom[0]:
-        if {"recommended_action", "revenue_proxy", "churn_risk_band"}.issubset(customer_segment_health.columns):
+        if {"recommended_action", "revenue_proxy", "churn_risk_band"}.issubset(
+            customer_segment_health.columns
+        ):
             st.markdown("### Exposição de receita por ação e faixa de churn")
             fig = px.bar(
                 customer_segment_health,
                 x="recommended_action",
                 y="revenue_proxy",
                 color="churn_risk_band",
-                color_discrete_map={"Baixo": COLOR_PRIMARY, "Médio": COLOR_ACCENT, "Alto": COLOR_DANGER},
+                color_discrete_map={
+                    "Baixo": COLOR_PRIMARY,
+                    "Médio": COLOR_ACCENT,
+                    "Alto": COLOR_DANGER,
+                },
                 labels={
                     "recommended_action": "Ação recomendada",
                     "revenue_proxy": "Receita potencial",
@@ -542,11 +587,19 @@ def _render_overview(assets: dict, filtered_customers: pd.DataFrame) -> None:
             st.markdown("### Concentração executiva")
             concentration_cols = st.columns(2)
             with concentration_cols[0]:
-                st.metric("Receita recorrente", f"{scorecard_row.get('repeat_revenue_share', 0.0):.1%}")
-                st.metric("Concentração top-10 sellers", f"{scorecard_row.get('seller_top10_revenue_share', 0.0):.1%}")
+                st.metric(
+                    "Receita recorrente", f"{scorecard_row.get('repeat_revenue_share', 0.0):.1%}"
+                )
+                st.metric(
+                    "Concentração top-10 sellers",
+                    f"{scorecard_row.get('seller_top10_revenue_share', 0.0):.1%}",
+                )
             with concentration_cols[1]:
                 st.metric("Retenção M+1", f"{scorecard_row.get('m1_retention_rate', 0.0):.1%}")
-                st.metric("Concentração top-10 categorias", f"{scorecard_row.get('category_top10_revenue_share', 0.0):.1%}")
+                st.metric(
+                    "Concentração top-10 categorias",
+                    f"{scorecard_row.get('category_top10_revenue_share', 0.0):.1%}",
+                )
     _render_sql_reference()
 
 
@@ -667,7 +720,13 @@ def _render_commercial(assets: dict) -> None:
             names="channel",
             title="Revenue mix by payment channel",
             hole=0.62,
-            color_discrete_sequence=[COLOR_SECONDARY, COLOR_PRIMARY, COLOR_NEUTRAL, COLOR_ACCENT, "#D3DDE6"],
+            color_discrete_sequence=[
+                COLOR_SECONDARY,
+                COLOR_PRIMARY,
+                COLOR_NEUTRAL,
+                COLOR_ACCENT,
+                "#D3DDE6",
+            ],
         )
         st.plotly_chart(apply_chart_style(fig), use_container_width=True)
     with cols[1]:
@@ -748,8 +807,17 @@ def _render_products(assets: dict) -> None:
         st.markdown("### Candidatos premium de sortimento")
         st.dataframe(
             _ptbr_frame(
-                products.rename(columns={"product_id": "Produto", "category_name_english": "Categoria"}),
-                ["Produto", "Categoria", "total_revenue", "total_orders", "avg_ticket", "avg_review_score"],
+                products.rename(
+                    columns={"product_id": "Produto", "category_name_english": "Categoria"}
+                ),
+                [
+                    "Produto",
+                    "Categoria",
+                    "total_revenue",
+                    "total_orders",
+                    "avg_ticket",
+                    "avg_review_score",
+                ],
             ),
             use_container_width=True,
             hide_index=True,
@@ -816,7 +884,13 @@ def _render_payments_geography(assets: dict) -> None:
         payments["channel"] = payments["channel"].map(_display_label)
     if "state" in states.columns:
         states = states.copy()
-        states = states[~states["state"].astype(str).str.strip().str.lower().isin(["", "unknown", "none", "null", "nan"])]
+        states = states[
+            ~states["state"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .isin(["", "unknown", "none", "null", "nan"])
+        ]
 
     _section_band(
         "Pagamentos e geografia",
@@ -869,7 +943,19 @@ def _render_payments_geography(assets: dict) -> None:
             st.dataframe(
                 _ptbr_frame(
                     states,
-                    [col for col in ["state", "state_tier", "total_revenue", "unique_customers", "revenue_per_customer", "avg_review_score", "late_delivery_rate"] if col in states.columns],
+                    [
+                        col
+                        for col in [
+                            "state",
+                            "state_tier",
+                            "total_revenue",
+                            "unique_customers",
+                            "revenue_per_customer",
+                            "avg_review_score",
+                            "late_delivery_rate",
+                        ]
+                        if col in states.columns
+                    ],
                 ),
                 use_container_width=True,
                 hide_index=True,
@@ -898,7 +984,11 @@ def _render_operations(assets: dict) -> None:
     cols = st.columns(2)
     with cols[0]:
         st.markdown("### Prazo real versus prazo prometido")
-        delivery_cols = [col for col in ["avg_delivery_days", "estimated_delivery_days"] if col in logistics.columns]
+        delivery_cols = [
+            col
+            for col in ["avg_delivery_days", "estimated_delivery_days"]
+            if col in logistics.columns
+        ]
         has_delivery_signal = False
         for col in delivery_cols:
             series = pd.to_numeric(logistics[col], errors="coerce").dropna()
@@ -927,11 +1017,26 @@ def _render_operations(assets: dict) -> None:
                     }.get(trace.name, trace.name)
                 )
             )
-            fig.update_layout(title="", legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0))
+            fig.update_layout(
+                title="", legend=dict(title=None, orientation="h", yanchor="bottom", y=1.02, x=0)
+            )
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
-            avg_real = float(pd.to_numeric(logistics.get("avg_delivery_days", pd.Series(dtype=float)), errors="coerce").fillna(0).mean())
-            avg_est = float(pd.to_numeric(logistics.get("estimated_delivery_days", pd.Series(dtype=float)), errors="coerce").fillna(0).mean())
+            avg_real = float(
+                pd.to_numeric(
+                    logistics.get("avg_delivery_days", pd.Series(dtype=float)), errors="coerce"
+                )
+                .fillna(0)
+                .mean()
+            )
+            avg_est = float(
+                pd.to_numeric(
+                    logistics.get("estimated_delivery_days", pd.Series(dtype=float)),
+                    errors="coerce",
+                )
+                .fillna(0)
+                .mean()
+            )
             metric_cols = st.columns(3)
             with metric_cols[0]:
                 st.metric("Prazo real médio", f"{avg_real:.1f} dias")
@@ -942,7 +1047,9 @@ def _render_operations(assets: dict) -> None:
             st.caption("Série sem variação relevante no período publicado.")
     with cols[1]:
         st.markdown("### Taxa de atraso ao longo do tempo")
-        late_series = pd.to_numeric(logistics.get("late_delivery_rate", pd.Series(dtype=float)), errors="coerce").dropna()
+        late_series = pd.to_numeric(
+            logistics.get("late_delivery_rate", pd.Series(dtype=float)), errors="coerce"
+        ).dropna()
         has_late_signal = not late_series.empty and not (late_series == 0).all()
         if has_late_signal:
             fig = px.line(
@@ -970,7 +1077,9 @@ def _render_operations(assets: dict) -> None:
     bottom = st.columns(2)
     with bottom[0]:
         st.markdown("### Curvas de retenção por coorte")
-        if {"cohort_index", "retention_rate", "cohort_month"}.issubset(cohort.columns) and not cohort.empty:
+        if {"cohort_index", "retention_rate", "cohort_month"}.issubset(
+            cohort.columns
+        ) and not cohort.empty:
             cohort_plot = cohort.copy()
             unique_cohorts = sorted(cohort_plot["cohort_month"].dropna().unique().tolist())
             if len(unique_cohorts) > 8:
@@ -988,7 +1097,9 @@ def _render_operations(assets: dict) -> None:
                     "cohort_month": "Coorte",
                 },
             )
-            fig.update_layout(title="", showlegend=False, margin={"l": 24, "r": 24, "t": 24, "b": 24})
+            fig.update_layout(
+                title="", showlegend=False, margin={"l": 24, "r": 24, "t": 24, "b": 24}
+            )
             st.plotly_chart(apply_chart_style(fig), use_container_width=True)
         else:
             st.info("Sem curvas de retenção por coorte disponíveis nesta publicação.")
@@ -1004,13 +1115,27 @@ def _render_operations(assets: dict) -> None:
                 "on_time_delivery_rate",
                 "avg_review_score",
             ]
-            scorecard_df = logistics[[col for col in scorecard_cols if col in logistics.columns]].copy()
+            scorecard_df = logistics[
+                [col for col in scorecard_cols if col in logistics.columns]
+            ].copy()
             for pct_col in ["late_delivery_rate", "on_time_delivery_rate"]:
                 if pct_col in scorecard_df.columns:
-                    scorecard_df[pct_col] = pd.to_numeric(scorecard_df[pct_col], errors="coerce").fillna(0.0).map(lambda v: f"{v:.1%}")
-            for num_col, digits in [("avg_delivery_days", 1), ("median_delivery_days", 1), ("avg_review_score", 2)]:
+                    scorecard_df[pct_col] = (
+                        pd.to_numeric(scorecard_df[pct_col], errors="coerce")
+                        .fillna(0.0)
+                        .map(lambda v: f"{v:.1%}")
+                    )
+            for num_col, digits in [
+                ("avg_delivery_days", 1),
+                ("median_delivery_days", 1),
+                ("avg_review_score", 2),
+            ]:
                 if num_col in scorecard_df.columns:
-                    scorecard_df[num_col] = pd.to_numeric(scorecard_df[num_col], errors="coerce").fillna(0.0).map(lambda v, d=digits: f"{v:.{d}f}")
+                    scorecard_df[num_col] = (
+                        pd.to_numeric(scorecard_df[num_col], errors="coerce")
+                        .fillna(0.0)
+                        .map(lambda v, d=digits: f"{v:.{d}f}")
+                    )
             st.dataframe(
                 _ptbr_frame(
                     scorecard_df,
@@ -1041,7 +1166,9 @@ def _render_reliability(assets: dict) -> None:
     outputs = len(manifest.get("outputs", []))
     stage_timings = manifest.get("stage_timings_seconds", {})
     slowest_stage = (
-        max(stage_timings.items(), key=lambda item: float(item[1])) if stage_timings else ("n/a", 0.0)
+        max(stage_timings.items(), key=lambda item: float(item[1]))
+        if stage_timings
+        else ("n/a", 0.0)
     )
     freshness_checks = pd.DataFrame(freshness.get("checks", []))
     alert_rows = pd.DataFrame(alerts.get("alerts", []))
@@ -1087,7 +1214,15 @@ def _render_reliability(assets: dict) -> None:
         if not freshness_checks.empty:
             st.dataframe(
                 _ptbr_frame(
-                    freshness_checks.rename(columns={"dataset_name": "Dataset", "status": "Status", "age_hours": "Idade (h)", "row_count": "Linhas", "source_updated_at_utc": "Atualizado em"}),
+                    freshness_checks.rename(
+                        columns={
+                            "dataset_name": "Dataset",
+                            "status": "Status",
+                            "age_hours": "Idade (h)",
+                            "row_count": "Linhas",
+                            "source_updated_at_utc": "Atualizado em",
+                        }
+                    ),
                     ["Dataset", "Status", "Idade (h)", "Linhas", "Atualizado em"],
                 ),
                 use_container_width=True,
@@ -1136,7 +1271,13 @@ def _render_reliability(assets: dict) -> None:
     if not alert_rows.empty:
         st.dataframe(
             _ptbr_frame(
-                alert_rows.rename(columns={"category": "Categoria", "severity": "Severidade", "message": "Mensagem"})
+                alert_rows.rename(
+                    columns={
+                        "category": "Categoria",
+                        "severity": "Severidade",
+                        "message": "Mensagem",
+                    }
+                )
             ),
             use_container_width=True,
             hide_index=True,
@@ -1189,8 +1330,14 @@ def main() -> None:
         experience_mode = st.radio(
             "Experiência",
             options=[EXECUTIVE_MODE, TECHNICAL_MODE],
-            format_func=lambda mode: "Executiva (Produto)" if mode == EXECUTIVE_MODE else "Técnica (Operação)",
-            index=0 if st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE else 1,
+            format_func=lambda mode: (
+                "Executiva (Produto)" if mode == EXECUTIVE_MODE else "Técnica (Operação)"
+            ),
+            index=(
+                0
+                if st.session_state.get(EXPERIENCE_MODE_KEY, EXECUTIVE_MODE) == EXECUTIVE_MODE
+                else 1
+            ),
             key=EXPERIENCE_MODE_KEY,
         )
         if st.button("Refresh pipeline", use_container_width=True):

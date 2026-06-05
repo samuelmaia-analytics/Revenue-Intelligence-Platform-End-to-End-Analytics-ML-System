@@ -28,7 +28,11 @@ DEFAULT_THEME = {
 def apply_chart_style(fig: go.Figure) -> go.Figure:
     fig.update_layout(
         template="plotly_white",
-        font={"color": DEFAULT_THEME["text"], "family": "Georgia, Cambria, Times New Roman, serif", "size": 13},
+        font={
+            "color": DEFAULT_THEME["text"],
+            "family": "Georgia, Cambria, Times New Roman, serif",
+            "size": 13,
+        },
         title_font={"color": DEFAULT_THEME["text"], "size": 18},
         plot_bgcolor=DEFAULT_THEME["surface"],
         paper_bgcolor=DEFAULT_THEME["surface"],

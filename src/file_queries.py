@@ -90,7 +90,7 @@ def discover_queryable_relations(cfg: PipelineConfig) -> list[QueryableRelation]
     return relations
 
 
-def build_query_connection(cfg: PipelineConfig) -> "duckdb.DuckDBPyConnection":
+def build_query_connection(cfg: PipelineConfig) -> duckdb.DuckDBPyConnection:
     if duckdb is None:
         raise RuntimeError("DuckDB is required to query governed CSV layers.")
 
@@ -160,7 +160,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Query governed CSV layers with DuckDB without changing the batch architecture."
     )
-    parser.add_argument("--sql", help="SQL query to execute against raw/bronze/silver/gold/processed.")
+    parser.add_argument(
+        "--sql", help="SQL query to execute against raw/bronze/silver/gold/processed."
+    )
     parser.add_argument(
         "--file",
         dest="sql_file",

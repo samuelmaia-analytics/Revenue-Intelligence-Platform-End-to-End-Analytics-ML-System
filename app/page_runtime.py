@@ -9,15 +9,16 @@ import pandas as pd
 import streamlit as st
 
 from app.branding import resolve_branding
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from app.dashboard_data import filter_recommendations, load_processed_assets
-from app.dashboard_i18n import translate as t
-from app.dashboard_metrics import potential_impact
-from app.ui.primitives import render_global_styles
-from app.views.dashboard_views import build_sidebar
+from app.dashboard_data import filter_recommendations, load_processed_assets  # noqa: E402
+from app.dashboard_i18n import translate as t  # noqa: E402
+from app.dashboard_metrics import potential_impact  # noqa: E402
+from app.ui.primitives import render_global_styles  # noqa: E402
+from app.views.dashboard_views import build_sidebar  # noqa: E402
 
 LANG_MODE = os.getenv("RIP_APP_LANG_MODE", "bilingual").strip().lower()
 if LANG_MODE not in {"bilingual", "international"}:

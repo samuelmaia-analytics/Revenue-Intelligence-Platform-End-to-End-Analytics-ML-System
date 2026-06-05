@@ -41,7 +41,14 @@ def _normalize_payment_channel(series: pd.Series) -> pd.Series:
         "not defined": "Other",
         "other": "Other",
     }
-    return series.fillna("not_defined").astype(str).str.strip().str.lower().map(mapping).fillna("Other")
+    return (
+        series.fillna("not_defined")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .map(mapping)
+        .fillna("Other")
+    )
 
 
 def _segment_from_value(values: pd.Series) -> pd.Series:
@@ -61,8 +68,12 @@ def _coalesce_columns(frame: pd.DataFrame, base_name: str) -> pd.DataFrame:
     left = f"{base_name}_x"
     right = f"{base_name}_y"
     if left in frame.columns or right in frame.columns:
-        primary = frame[right] if right in frame.columns else pd.Series(index=frame.index, dtype=object)
-        fallback = frame[left] if left in frame.columns else pd.Series(index=frame.index, dtype=object)
+        primary = (
+            frame[right] if right in frame.columns else pd.Series(index=frame.index, dtype=object)
+        )
+        fallback = (
+            frame[left] if left in frame.columns else pd.Series(index=frame.index, dtype=object)
+        )
         frame[base_name] = primary.fillna(fallback)
         frame = frame.drop(columns=[left, right], errors="ignore")
     return frame
@@ -158,12 +169,16 @@ def _load_olist_support_frames(raw_dir: Path) -> dict[str, pd.DataFrame]:
     )
 
     products = pd.read_csv(raw_dir / OLIST_SUPPORT_FILES["products"], low_memory=False)
-    translation = pd.read_csv(raw_dir / OLIST_SUPPORT_FILES["category_translation"], low_memory=False)
+    translation = pd.read_csv(
+        raw_dir / OLIST_SUPPORT_FILES["category_translation"], low_memory=False
+    )
     sellers = pd.read_csv(raw_dir / OLIST_SUPPORT_FILES["sellers"], low_memory=False)
     customers = pd.read_csv(raw_dir / OLIST_SUPPORT_FILES["customers"], low_memory=False)
     geolocation = pd.read_csv(raw_dir / OLIST_SUPPORT_FILES["geolocation"], low_memory=False)
     geolocation = (
-        geolocation.groupby(["geolocation_zip_code_prefix", "geolocation_city", "geolocation_state"])
+        geolocation.groupby(
+            ["geolocation_zip_code_prefix", "geolocation_city", "geolocation_state"]
+        )
         .agg(
             geolocation_lat=("geolocation_lat", "mean"),
             geolocation_lng=("geolocation_lng", "mean"),
@@ -241,7 +256,9 @@ def _build_olist_silver(
     )
     customer_lookup = customer_lookup.assign(
         customer_city=lambda frame: frame["customer_city"].fillna(frame.get("customer_city_raw")),
-        customer_state=lambda frame: frame["customer_state"].fillna(frame.get("customer_state_raw")),
+        customer_state=lambda frame: frame["customer_state"].fillna(
+            frame.get("customer_state_raw")
+        ),
     )
     customer_lookup = customer_lookup.drop(
         columns=[column for column in customer_lookup.columns if column.endswith("_raw")],
@@ -250,7 +267,8 @@ def _build_olist_silver(
     customer_lookup = customer_lookup.drop_duplicates(subset=["customer_id"])
 
     payment_summary = (
-        support["order_payments"].assign(
+        support["order_payments"]
+        .assign(
             payment_type_normalized=lambda frame: _normalize_payment_channel(frame["payment_type"])
         )
         .groupby("order_id")
@@ -266,7 +284,8 @@ def _build_olist_silver(
         .reset_index()
     )
     review_summary = (
-        support["order_reviews"].groupby("order_id")
+        support["order_reviews"]
+        .groupby("order_id")
         .agg(
             review_score=("review_score", "mean"),
             review_count=("review_id", "nunique"),
@@ -321,12 +340,16 @@ def _build_olist_silver(
         silver_orders["order_value"]
     )
     silver_orders["freight_value"] = silver_orders["freight_value"].fillna(0.0)
-    silver_orders["payment_value"] = silver_orders["payment_value"].fillna(silver_orders["order_value"])
+    silver_orders["payment_value"] = silver_orders["payment_value"].fillna(
+        silver_orders["order_value"]
+    )
     silver_orders["items_count"] = silver_orders["items_count"].fillna(0).astype(int)
     silver_orders["distinct_products"] = silver_orders["distinct_products"].fillna(0).astype(int)
     silver_orders["distinct_sellers"] = silver_orders["distinct_sellers"].fillna(0).astype(int)
     silver_orders["review_count"] = silver_orders["review_count"].fillna(0).astype(int)
-    silver_orders["payment_installments"] = silver_orders["payment_installments"].fillna(0).astype(int)
+    silver_orders["payment_installments"] = (
+        silver_orders["payment_installments"].fillna(0).astype(int)
+    )
     silver_orders["payment_records"] = silver_orders["payment_records"].fillna(0).astype(int)
     silver_orders["order_purchase_timestamp"] = silver_orders["order_purchase_timestamp"].fillna(
         silver_orders["order_date"]
@@ -338,9 +361,12 @@ def _build_olist_silver(
         silver_orders["order_estimated_delivery_date"] - silver_orders["order_purchase_timestamp"]
     ).dt.days
     silver_orders["delivery_delay_days"] = (
-        silver_orders["order_delivered_customer_date"] - silver_orders["order_estimated_delivery_date"]
+        silver_orders["order_delivered_customer_date"]
+        - silver_orders["order_estimated_delivery_date"]
     ).dt.days
-    silver_orders["delivery_delay_days"] = silver_orders["delivery_delay_days"].fillna(0).clip(lower=-60, upper=180)
+    silver_orders["delivery_delay_days"] = (
+        silver_orders["delivery_delay_days"].fillna(0).clip(lower=-60, upper=180)
+    )
     silver_orders["delivery_days"] = silver_orders["delivery_days"].clip(lower=0, upper=180)
     silver_orders["estimated_delivery_days"] = silver_orders["estimated_delivery_days"].clip(
         lower=0, upper=180
@@ -370,7 +396,10 @@ def _build_olist_silver(
             avg_ticket=("order_value", "mean"),
             avg_review_score=("review_score", "mean"),
             late_order_rate=("is_late", "mean"),
-            channel=("channel", lambda values: values.mode().iat[0] if not values.mode().empty else "Other"),
+            channel=(
+                "channel",
+                lambda values: values.mode().iat[0] if not values.mode().empty else "Other",
+            ),
         )
         .reset_index()
     )
@@ -384,12 +413,16 @@ def _build_olist_silver(
     silver_customers["segment"] = _segment_from_value(
         silver_customers["total_revenue"].fillna(silver_customers.get("total_spend", 0))
     )
-    silver_customers["channel"] = silver_customers["channel_y"].fillna(silver_customers["channel_x"])
+    silver_customers["channel"] = silver_customers["channel_y"].fillna(
+        silver_customers["channel_x"]
+    )
     silver_customers = silver_customers.drop(columns=["channel_x", "channel_y"], errors="ignore")
     silver_customers["total_orders"] = silver_customers["total_orders"].fillna(
         silver_customers.get("order_count", 0)
     )
-    silver_customers["delivered_orders"] = silver_customers["delivered_orders"].fillna(0).astype(int)
+    silver_customers["delivered_orders"] = (
+        silver_customers["delivered_orders"].fillna(0).astype(int)
+    )
     silver_customers["canceled_orders"] = silver_customers["canceled_orders"].fillna(0).astype(int)
     silver_customers["late_order_rate"] = silver_customers["late_order_rate"].fillna(0.0)
     silver_customers["avg_review_score"] = silver_customers["avg_review_score"].fillna(0.0)
@@ -398,15 +431,15 @@ def _build_olist_silver(
         silver_customers.get("total_spend", 0.0)
     )
     silver_customers["total_freight"] = silver_customers["total_freight"].fillna(0.0)
-    silver_customers["is_repeat_customer"] = (silver_customers["total_orders"].fillna(0) >= 2).astype(int)
+    silver_customers["is_repeat_customer"] = (
+        silver_customers["total_orders"].fillna(0) >= 2
+    ).astype(int)
     silver_customers = silver_customers.sort_values("customer_id").reset_index(drop=True)
 
     translation = support["translation"].rename(
         columns={"product_category_name_english": "category_name_english"}
     )
-    silver_products = support["products"].merge(
-        translation, on="product_category_name", how="left"
-    )
+    silver_products = support["products"].merge(translation, on="product_category_name", how="left")
     silver_products["category_name_english"] = silver_products["category_name_english"].fillna(
         silver_products["product_category_name"].fillna("unknown")
     )
@@ -445,7 +478,9 @@ def _build_olist_silver(
             * frame["product_width_cm"].fillna(0),
         )
     )
-    silver_order_items["is_delivered"] = silver_order_items["order_status"].eq("delivered").astype(int)
+    silver_order_items["is_delivered"] = (
+        silver_order_items["order_status"].eq("delivered").astype(int)
+    )
 
     silver_payments = support["order_payments"].assign(
         payment_type_normalized=lambda frame: _normalize_payment_channel(frame["payment_type"])
@@ -467,7 +502,9 @@ def _build_olist_silver(
 
     marketing = marketing.copy()
     channel_revenue = (
-        silver_orders.groupby("channel")["customer_id"].nunique().reset_index(name="customers_acquired")
+        silver_orders.groupby("channel")["customer_id"]
+        .nunique()
+        .reset_index(name="customers_acquired")
     )
     marketing = marketing.merge(channel_revenue, on="channel", how="outer").fillna(
         {"marketing_spend": 0.0, "customers_acquired": 0}
@@ -526,7 +563,9 @@ def build_customer_features(
     orders = pd.read_csv(
         orders_path,
         parse_dates=[
-            column for column in ["order_date", "order_purchase_timestamp"] if column in order_columns
+            column
+            for column in ["order_date", "order_purchase_timestamp"]
+            if column in order_columns
         ],
     )
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -621,7 +660,9 @@ def build_customer_features(
     features["arpu"] = np.where(
         features["tenure_days"] > 0, features["monetary"] / (features["tenure_days"] / 30), 0
     )
-    features["freight_ratio"] = _safe_divide(features["total_freight"], features["monetary"]).fillna(0.0)
+    features["freight_ratio"] = _safe_divide(
+        features["total_freight"], features["monetary"]
+    ).fillna(0.0)
     features["review_score_filled"] = features["avg_review_score"].replace(0, np.nan).fillna(3.5)
     features["late_order_rate"] = features["late_order_rate"].fillna(0.0)
     features["repeat_customer_flag"] = (features["frequency"] >= 2).astype(int)
@@ -639,7 +680,11 @@ def build_customer_features(
     features["next_purchase_propensity_proxy"] = (
         0.35 * np.clip(features["frequency"] / max(features["frequency"].max(), 1), 0, 1)
         + 0.30 * np.clip(features["review_score_filled"] / 5, 0, 1)
-        + 0.20 * (1 - np.clip(features["recency_days"] / features["recency_days"].clip(lower=1).max(), 0, 1))
+        + 0.20
+        * (
+            1
+            - np.clip(features["recency_days"] / features["recency_days"].clip(lower=1).max(), 0, 1)
+        )
         + 0.15 * (1 - features["late_order_rate"].clip(0, 1))
     ).clip(0, 1)
     features["as_of_date"] = as_of_date

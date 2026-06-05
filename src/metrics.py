@@ -126,7 +126,9 @@ def build_business_kpi_snapshot(
         else 0.0
     )
     late_order_rate = (
-        float(scored_df["late_order_rate"].mean()) if "late_order_rate" in scored_df.columns else 0.0
+        float(scored_df["late_order_rate"].mean())
+        if "late_order_rate" in scored_df.columns
+        else 0.0
     )
 
     best_channel = (

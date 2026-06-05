@@ -380,15 +380,19 @@ def _build_from_olist_dataset(raw_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame
     acquired = (
         customers.groupby("channel")["customer_id"].count().reset_index(name="customers_acquired")
     )
-    acquired["base_cac"] = acquired["channel"].map(
-        {
-            "Credit Card": 150,
-            "Boleto": 110,
-            "Voucher": 75,
-            "Debit Card": 95,
-            "Other": 120,
-        }
-    ).fillna(120)
+    acquired["base_cac"] = (
+        acquired["channel"]
+        .map(
+            {
+                "Credit Card": 150,
+                "Boleto": 110,
+                "Voucher": 75,
+                "Debit Card": 95,
+                "Other": 120,
+            }
+        )
+        .fillna(120)
+    )
     acquired["marketing_spend"] = (acquired["customers_acquired"] * acquired["base_cac"]).round(0)
     marketing = acquired[["channel", "marketing_spend"]].copy()
     return customers, orders, marketing

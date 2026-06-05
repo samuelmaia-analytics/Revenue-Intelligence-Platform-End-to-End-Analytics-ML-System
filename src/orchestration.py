@@ -536,7 +536,11 @@ class RevenueIntelligencePipeline:
             raw_metadata_paths = [
                 path
                 for path in sorted(self.cfg.raw_dir.iterdir())
-                if path.is_file() and (path.name.startswith("olist_") or path.name in {Path(item).name for item in raw_paths})
+                if path.is_file()
+                and (
+                    path.name.startswith("olist_")
+                    or path.name in {Path(item).name for item in raw_paths}
+                )
             ]
             raw_input_metadata = self._stage(
                 "ingestion.metadata",

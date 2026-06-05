@@ -137,14 +137,16 @@ def test_build_reliability_report_writes_governed_operational_summary(tmp_path: 
         stage_timings={"modeling.ml": 2.4, "reporting.executive": 0.2},
         runtime_metrics={"total_runtime_seconds": 3.0, "stage_count": 2},
         quality_report={
-            "datasets": [
-                {"duplicate_rows": 0, "referential_issues": 0, "null_counts": {"a": 2}}
-            ]
+            "datasets": [{"duplicate_rows": 0, "referential_issues": 0, "null_counts": {"a": 2}}]
         },
         freshness_report={"status": "ok"},
         artifact_validation_report={"status": "ok"},
         alerts_report={"alert_count": 1},
-        insight_draft={"headline": "All clear", "summary": "demo", "recommended_actions": ["review"]},
+        insight_draft={
+            "headline": "All clear",
+            "summary": "demo",
+            "recommended_actions": ["review"],
+        },
         output_path=output_path,
     )
 

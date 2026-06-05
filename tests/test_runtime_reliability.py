@@ -208,7 +208,9 @@ def test_pipeline_reuses_registered_models_when_training_data_is_unchanged(tmp_p
     cfg = _build_config(tmp_path)
 
     run_pipeline(cfg)
-    first_metrics = json.loads((cfg.processed_dir / "metrics_report.json").read_text(encoding="utf-8"))
+    first_metrics = json.loads(
+        (cfg.processed_dir / "metrics_report.json").read_text(encoding="utf-8")
+    )
 
     run_pipeline(cfg)
     second_metrics = json.loads(
@@ -217,8 +219,14 @@ def test_pipeline_reuses_registered_models_when_training_data_is_unchanged(tmp_p
 
     assert second_metrics["churn"]["split_strategy"].endswith("_cached")
     assert second_metrics["next_purchase_30d"]["split_strategy"].endswith("_cached")
-    assert first_metrics["churn"]["temporal_test_roc_auc"] == second_metrics["churn"]["temporal_test_roc_auc"]
-    assert first_metrics["next_purchase_30d"]["temporal_test_roc_auc"] == second_metrics["next_purchase_30d"]["temporal_test_roc_auc"]
+    assert (
+        first_metrics["churn"]["temporal_test_roc_auc"]
+        == second_metrics["churn"]["temporal_test_roc_auc"]
+    )
+    assert (
+        first_metrics["next_purchase_30d"]["temporal_test_roc_auc"]
+        == second_metrics["next_purchase_30d"]["temporal_test_roc_auc"]
+    )
 
 
 def test_pipeline_manifest_captures_runtime_evidence(tmp_path: Path) -> None:
@@ -343,7 +351,9 @@ def test_olist_dataset_parsing_creates_curated_raw_tables(tmp_path: Path) -> Non
         customers.columns
     )
     assert {"order_id", "customer_id", "order_value", "payment_type"}.issubset(orders.columns)
-    assert set(marketing["channel"]).issubset({"Credit Card", "Boleto", "Voucher", "Debit Card", "Other"})
+    assert set(marketing["channel"]).issubset(
+        {"Credit Card", "Boleto", "Voucher", "Debit Card", "Other"}
+    )
 
 
 def test_olist_normalization_is_reused_when_sources_do_not_change(tmp_path: Path) -> None:

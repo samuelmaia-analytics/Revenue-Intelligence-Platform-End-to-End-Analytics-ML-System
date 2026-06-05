@@ -401,12 +401,24 @@ def render_leadership_notes(
             customer=int(top_customer["customer_id"]),
             impact=format_currency_fn(float(top_customer["potential_impact"]), lang),
         ),
-        t(lang, "prio_line", action=_display_value(lang, top_action["action"]), pct=top_action["pct"]),
+        t(
+            lang,
+            "prio_line",
+            action=_display_value(lang, top_action["action"]),
+            pct=top_action["pct"],
+        ),
     ]
     if insight_draft:
-        lines = [str(insight_draft.get("headline", "")), *insight_draft.get("recommended_actions", []), *insight_draft.get("anomalies", [])[:1]]
+        lines = [
+            str(insight_draft.get("headline", "")),
+            *insight_draft.get("recommended_actions", []),
+            *insight_draft.get("anomalies", [])[:1],
+        ]
     bullets = "".join(f"<li>{line}</li>" for line in lines if line)
-    st.markdown(f"""<div class="panel"><ul class="insight-list">{bullets}</ul></div>""", unsafe_allow_html=True)
+    st.markdown(
+        f"""<div class="panel"><ul class="insight-list">{bullets}</ul></div>""",
+        unsafe_allow_html=True,
+    )
 
 
 def render_runtime_health(
@@ -593,7 +605,9 @@ def render_overview_tab(
         index="cohort_month", columns="cohort_index", values="retention_pct"
     ).sort_index()
     heatmap_text = heatmap_frame.apply(
-        lambda column: column.map(lambda value: "" if pd.isna(value) or value < 0.1 else f"{value:.1f}%")
+        lambda column: column.map(
+            lambda value: "" if pd.isna(value) or value < 0.1 else f"{value:.1f}%"
+        )
     )
     fig_heatmap = go.Figure(
         data=[
@@ -604,7 +618,12 @@ def render_overview_tab(
                 text=heatmap_text.values,
                 texttemplate="%{text}",
                 textfont={"size": 10},
-                colorscale=[[0.0, "#eef3f7"], [0.08, "#d9e7f5"], [0.2, "#7dd3fc"], [1.0, "#0a3f97"]],
+                colorscale=[
+                    [0.0, "#eef3f7"],
+                    [0.08, "#d9e7f5"],
+                    [0.2, "#7dd3fc"],
+                    [1.0, "#0a3f97"],
+                ],
                 colorbar={"title": t(lang, "retention")},
                 hovertemplate=(
                     f"{t(lang, 'cohort_label')}: %{{y}}<br>"
@@ -767,6 +786,7 @@ def render_risk_tab(
         max_rows=int(max_rows),
     )
 
+
 def render_segment_performance_tab(
     lang: str,
     filtered_df: pd.DataFrame,
@@ -792,7 +812,9 @@ def render_segment_performance_tab(
             {
                 "label": t(lang, "top_segment"),
                 "value": str(segment_perf.iloc[0]["segment"]),
-                "subtitle": format_currency_fn(float(segment_perf.iloc[0]["potential_impact"]), lang),
+                "subtitle": format_currency_fn(
+                    float(segment_perf.iloc[0]["potential_impact"]), lang
+                ),
             },
             {
                 "label": t(lang, "avg_ltv"),
@@ -807,7 +829,12 @@ def render_segment_performance_tab(
             {
                 "label": t(lang, "best_channel"),
                 "value": str(
-                    _display_value(lang, channel_eff.sort_values("ltv_cac_ratio", ascending=False).iloc[0]["channel"])
+                    _display_value(
+                        lang,
+                        channel_eff.sort_values("ltv_cac_ratio", ascending=False).iloc[0][
+                            "channel"
+                        ],
+                    )
                 ),
                 "subtitle": f"{float(channel_eff['ltv_cac_ratio'].max()):.2f}",
             },
@@ -895,7 +922,9 @@ def render_forecast_tab(
     controls = st.columns(2, gap="large")
     for idx, (action_name, policy) in enumerate(policy_defaults.items()):
         with controls[idx % 2]:
-            display_action_name = str(_translate_value(action_name)) if lang == "pt-br" else action_name
+            display_action_name = (
+                str(_translate_value(action_name)) if lang == "pt-br" else action_name
+            )
             st.markdown(f"**{display_action_name}**")
             overrides[action_name] = {
                 "uplift_rate": st.slider(
@@ -948,12 +977,16 @@ def render_forecast_tab(
     render_chart_panel(
         eyebrow=t(lang, "chart_context"),
         title=t(lang, "comparison_view"),
-        caption=t(lang, "forecast_scope_caption") if lang == "pt-br" else t(lang, "forecast_caption"),
+        caption=(
+            t(lang, "forecast_scope_caption") if lang == "pt-br" else t(lang, "forecast_caption")
+        ),
         fig=fig_forecast,
     )
     scenario_actions_view = scenario_actions.copy()
     if lang == "pt-br" and "recommended_action" in scenario_actions_view.columns:
-        scenario_actions_view["recommended_action"] = scenario_actions_view["recommended_action"].map(_translate_value)
+        scenario_actions_view["recommended_action"] = scenario_actions_view[
+            "recommended_action"
+        ].map(_translate_value)
     render_badge_table_panel(
         eyebrow=t(lang, "table_context"),
         title=t(lang, "commercial_policy"),
@@ -1091,7 +1124,9 @@ def render_governance_tab(
             },
             {
                 "Model": t(lang, "next_model"),
-                t(lang, "split"): model_report.get("next_purchase_30d", {}).get("split_strategy", "n/a"),
+                t(lang, "split"): model_report.get("next_purchase_30d", {}).get(
+                    "split_strategy", "n/a"
+                ),
                 t(lang, "cv_auc"): auc_text(
                     model_report.get("next_purchase_30d", {}).get("cv_roc_auc_mean")
                 ),
@@ -1129,7 +1164,11 @@ def render_governance_tab(
             title=t(lang, "semantic_metrics"),
             caption=t(lang, "governance_caption"),
             frame=semantic_rows.rename(
-                columns={"label": "Metric", "owner": t(lang, "owner"), "expression": t(lang, "expression")}
+                columns={
+                    "label": "Metric",
+                    "owner": t(lang, "owner"),
+                    "expression": t(lang, "expression"),
+                }
             ),
             height=320,
         )

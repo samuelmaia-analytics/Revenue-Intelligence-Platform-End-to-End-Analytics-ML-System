@@ -27,8 +27,12 @@ def _coalesce_columns(frame: pd.DataFrame, base_name: str) -> pd.DataFrame:
     left = f"{base_name}_x"
     right = f"{base_name}_y"
     if left in frame.columns or right in frame.columns:
-        primary = frame[right] if right in frame.columns else pd.Series(index=frame.index, dtype=object)
-        fallback = frame[left] if left in frame.columns else pd.Series(index=frame.index, dtype=object)
+        primary = (
+            frame[right] if right in frame.columns else pd.Series(index=frame.index, dtype=object)
+        )
+        fallback = (
+            frame[left] if left in frame.columns else pd.Series(index=frame.index, dtype=object)
+        )
         frame[base_name] = primary.fillna(fallback)
         frame = frame.drop(columns=[left, right], errors="ignore")
     return frame
@@ -170,7 +174,9 @@ def _build_geographic_analytics(orders: pd.DataFrame) -> pd.DataFrame:
 
 def _build_logistics_analytics(orders: pd.DataFrame) -> pd.DataFrame:
     logistics = orders.copy()
-    logistics["order_month"] = pd.to_datetime(logistics["order_purchase_timestamp"]).dt.to_period("M").astype(str)
+    logistics["order_month"] = (
+        pd.to_datetime(logistics["order_purchase_timestamp"]).dt.to_period("M").astype(str)
+    )
     monthly = (
         logistics.groupby("order_month")
         .agg(
@@ -195,7 +201,9 @@ def _build_logistics_analytics(orders: pd.DataFrame) -> pd.DataFrame:
 
 def _build_executive_summary_layer(orders: pd.DataFrame) -> pd.DataFrame:
     monthly = orders.copy()
-    monthly["order_month"] = pd.to_datetime(monthly["order_purchase_timestamp"]).dt.to_period("M").astype(str)
+    monthly["order_month"] = (
+        pd.to_datetime(monthly["order_purchase_timestamp"]).dt.to_period("M").astype(str)
+    )
     repeat_customer_lookup = (
         monthly.groupby("customer_id")["order_id"].nunique().ge(2).rename("repeat_customer_flag")
     )
@@ -217,13 +225,24 @@ def _build_executive_summary_layer(orders: pd.DataFrame) -> pd.DataFrame:
             late_delivery_rate=("is_late", "mean"),
             cancellation_rate=("is_canceled", "mean"),
             repeat_customer_rate=("repeat_customer_flag", "mean"),
-            repeat_revenue=("order_value", lambda values: values[monthly.loc[values.index, "repeat_customer_flag"].fillna(False)].sum()),
+            repeat_revenue=(
+                "order_value",
+                lambda values: values[
+                    monthly.loc[values.index, "repeat_customer_flag"].fillna(False)
+                ].sum(),
+            ),
         )
         .reset_index()
     )
-    summary["revenue_growth_pct"] = summary["total_revenue"].pct_change().replace([np.inf, -np.inf], np.nan)
-    summary["orders_growth_pct"] = summary["total_orders"].pct_change().replace([np.inf, -np.inf], np.nan)
-    summary["freight_share_pct"] = _safe_ratio(summary["total_freight"], summary["total_revenue"]).fillna(0)
+    summary["revenue_growth_pct"] = (
+        summary["total_revenue"].pct_change().replace([np.inf, -np.inf], np.nan)
+    )
+    summary["orders_growth_pct"] = (
+        summary["total_orders"].pct_change().replace([np.inf, -np.inf], np.nan)
+    )
+    summary["freight_share_pct"] = _safe_ratio(
+        summary["total_freight"], summary["total_revenue"]
+    ).fillna(0)
     summary["repeat_revenue_share"] = _safe_ratio(
         summary["repeat_revenue"], summary["total_revenue"]
     ).fillna(0)
@@ -250,8 +269,12 @@ def _build_seller_and_product_analytics(
         )
         .reset_index()
     )
-    seller["revenue_share_pct"] = (seller["total_revenue"] / seller["total_revenue"].sum()).fillna(0)
-    seller["freight_share_pct"] = _safe_ratio(seller["freight_value"], seller["total_revenue"]).fillna(0)
+    seller["revenue_share_pct"] = (seller["total_revenue"] / seller["total_revenue"].sum()).fillna(
+        0
+    )
+    seller["freight_share_pct"] = _safe_ratio(
+        seller["freight_value"], seller["total_revenue"]
+    ).fillna(0)
     seller["on_time_delivery_rate"] = (1 - seller["late_delivery_rate"]).clip(0, 1)
     seller = seller.sort_values("total_revenue", ascending=False).reset_index(drop=True)
 
@@ -268,7 +291,9 @@ def _build_seller_and_product_analytics(
         )
         .reset_index()
     )
-    product["revenue_share_pct"] = (product["total_revenue"] / product["total_revenue"].sum()).fillna(0)
+    product["revenue_share_pct"] = (
+        product["total_revenue"] / product["total_revenue"].sum()
+    ).fillna(0)
     product["avg_ticket"] = _safe_ratio(product["total_revenue"], product["total_orders"]).fillna(0)
     product = product.sort_values("total_revenue", ascending=False).reset_index(drop=True)
 
@@ -292,7 +317,9 @@ def _build_seller_and_product_analytics(
     category["freight_share_pct"] = _safe_ratio(
         category["freight_value"], category["total_revenue"]
     ).fillna(0)
-    category["avg_ticket"] = _safe_ratio(category["total_revenue"], category["total_orders"]).fillna(0)
+    category["avg_ticket"] = _safe_ratio(
+        category["total_revenue"], category["total_orders"]
+    ).fillna(0)
     category["on_time_delivery_rate"] = (1 - category["late_delivery_rate"]).clip(0, 1)
     category = category.sort_values("total_revenue", ascending=False).reset_index(drop=True)
     return seller, product, category
@@ -319,7 +346,9 @@ def _risk_band(series: pd.Series) -> pd.Series:
     ).astype(str)
 
 
-def _tier_from_percentile(series: pd.Series, high_label: str, mid_label: str, base_label: str) -> pd.Series:
+def _tier_from_percentile(
+    series: pd.Series, high_label: str, mid_label: str, base_label: str
+) -> pd.Series:
     if series.nunique() < 3:
         return pd.Series([base_label] * len(series), index=series.index)
     thresholds = series.quantile([0.5, 0.8]).to_dict()
@@ -355,7 +384,9 @@ def _build_customer_segment_health(customer_analytics: pd.DataFrame) -> pd.DataF
     grouped["customer_share_pct"] = _safe_ratio(
         grouped["customers"], pd.Series([grouped["customers"].sum()] * len(grouped))
     ).fillna(0)
-    return grouped.sort_values(["revenue_proxy", "customers"], ascending=[False, False]).reset_index(drop=True)
+    return grouped.sort_values(
+        ["revenue_proxy", "customers"], ascending=[False, False]
+    ).reset_index(drop=True)
 
 
 def _build_retention_scorecard(cohort: pd.DataFrame) -> pd.DataFrame:
@@ -407,25 +438,41 @@ def _build_executive_scorecard(
                     / max(customer_analytics["monetary"].sum(), 1.0)
                 ),
                 "m1_retention_rate": float(m1_retention.mean()) if not m1_retention.empty else 0.0,
-                "seller_top10_revenue_share": float(seller_analytics.head(10)["revenue_share_pct"].sum())
-                if not seller_analytics.empty
-                else 0.0,
-                "category_top10_revenue_share": float(category_analytics.head(10)["revenue_share_pct"].sum())
-                if not category_analytics.empty
-                else 0.0,
-                "top_state": top_state.get("state", "n/a") if isinstance(top_state, dict) else "n/a",
-                "top_state_revenue_share": top_state.get("revenue_share_pct", 0.0)
-                if isinstance(top_state, dict)
-                else 0.0,
-                "top_category": top_category.get("category", "n/a") if isinstance(top_category, dict) else "n/a",
-                "top_category_revenue_share": top_category.get("revenue_share_pct", 0.0)
-                if isinstance(top_category, dict)
-                else 0.0,
-                "top_seller": top_seller.get("seller_id", "n/a") if isinstance(top_seller, dict) else "n/a",
-                "top_payment_channel": payment_analytics.head(1)["channel"].iat[0]
-                if not payment_analytics.empty
-                else "n/a",
-                "latest_month_orders": float(latest_ops["total_orders"].iat[0]) if not latest_ops.empty else 0.0,
+                "seller_top10_revenue_share": (
+                    float(seller_analytics.head(10)["revenue_share_pct"].sum())
+                    if not seller_analytics.empty
+                    else 0.0
+                ),
+                "category_top10_revenue_share": (
+                    float(category_analytics.head(10)["revenue_share_pct"].sum())
+                    if not category_analytics.empty
+                    else 0.0
+                ),
+                "top_state": (
+                    top_state.get("state", "n/a") if isinstance(top_state, dict) else "n/a"
+                ),
+                "top_state_revenue_share": (
+                    top_state.get("revenue_share_pct", 0.0) if isinstance(top_state, dict) else 0.0
+                ),
+                "top_category": (
+                    top_category.get("category", "n/a") if isinstance(top_category, dict) else "n/a"
+                ),
+                "top_category_revenue_share": (
+                    top_category.get("revenue_share_pct", 0.0)
+                    if isinstance(top_category, dict)
+                    else 0.0
+                ),
+                "top_seller": (
+                    top_seller.get("seller_id", "n/a") if isinstance(top_seller, dict) else "n/a"
+                ),
+                "top_payment_channel": (
+                    payment_analytics.head(1)["channel"].iat[0]
+                    if not payment_analytics.empty
+                    else "n/a"
+                ),
+                "latest_month_orders": (
+                    float(latest_ops["total_orders"].iat[0]) if not latest_ops.empty else 0.0
+                ),
             }
         ]
     )
@@ -478,7 +525,9 @@ def build_marketplace_outputs(
     customer_columns = pd.read_csv(silver_customers_path, nrows=0).columns.tolist()
     customers = pd.read_csv(
         silver_customers_path,
-        parse_dates=[column for column in ["signup_date", "latest_order_at"] if column in customer_columns],
+        parse_dates=[
+            column for column in ["signup_date", "latest_order_at"] if column in customer_columns
+        ],
     )
     order_columns = pd.read_csv(silver_orders_path, nrows=0).columns.tolist()
     orders = pd.read_csv(
@@ -498,7 +547,9 @@ def build_marketplace_outputs(
     )
     order_items = _read_optional_csv(silver_dir / "silver_order_items.csv")
     order_defaults = {
-        "order_purchase_timestamp": orders["order_date"] if "order_date" in orders.columns else pd.NaT,
+        "order_purchase_timestamp": (
+            orders["order_date"] if "order_date" in orders.columns else pd.NaT
+        ),
         "freight_value": 0.0,
         "payment_installments": 0,
         "review_score": 0.0,
@@ -516,7 +567,9 @@ def build_marketplace_outputs(
     if "customer_state" not in orders.columns:
         if "customer_state" in customers.columns:
             orders = orders.merge(
-                customers[["customer_id", "customer_state"]].drop_duplicates(subset=["customer_id"]),
+                customers[["customer_id", "customer_state"]].drop_duplicates(
+                    subset=["customer_id"]
+                ),
                 on="customer_id",
                 how="left",
             )
@@ -580,29 +633,45 @@ def build_marketplace_outputs(
             customer_analytics.loc[customer_analytics["frequency"] >= 2, "monetary"].sum()
             / max(customer_analytics["monetary"].sum(), 1.0)
         ),
-        "m1_retention_rate": float(
-            retention_scorecard.loc[retention_scorecard["cohort_index"].eq(1), "retention_rate"].mean()
+        "m1_retention_rate": (
+            float(
+                retention_scorecard.loc[
+                    retention_scorecard["cohort_index"].eq(1), "retention_rate"
+                ].mean()
+            )
+            if not retention_scorecard.empty
+            else 0.0
+        ),
+        "seller_top10_revenue_share": (
+            float(seller_analytics.head(10)["revenue_share_pct"].sum())
+            if not seller_analytics.empty
+            else 0.0
+        ),
+        "category_top10_revenue_share": (
+            float(category_analytics.head(10)["revenue_share_pct"].sum())
+            if not category_analytics.empty
+            else 0.0
+        ),
+        "best_channel_efficiency": payment_analytics.sort_values(
+            "revenue_share_pct", ascending=False
         )
-        if not retention_scorecard.empty
-        else 0.0,
-        "seller_top10_revenue_share": float(seller_analytics.head(10)["revenue_share_pct"].sum())
-        if not seller_analytics.empty
-        else 0.0,
-        "category_top10_revenue_share": float(category_analytics.head(10)["revenue_share_pct"].sum())
-        if not category_analytics.empty
-        else 0.0,
-        "best_channel_efficiency": payment_analytics.sort_values("revenue_share_pct", ascending=False)
         .head(1)[["channel", "revenue_share_pct"]]
         .to_dict(orient="records")[0],
-        "top_category": category_analytics.head(1).to_dict(orient="records")[0]
-        if not category_analytics.empty
-        else {},
-        "top_seller": seller_analytics.head(1).to_dict(orient="records")[0]
-        if not seller_analytics.empty
-        else {},
-        "top_state": geographic_analytics.head(1).to_dict(orient="records")[0]
-        if not geographic_analytics.empty
-        else {},
+        "top_category": (
+            category_analytics.head(1).to_dict(orient="records")[0]
+            if not category_analytics.empty
+            else {}
+        ),
+        "top_seller": (
+            seller_analytics.head(1).to_dict(orient="records")[0]
+            if not seller_analytics.empty
+            else {}
+        ),
+        "top_state": (
+            geographic_analytics.head(1).to_dict(orient="records")[0]
+            if not geographic_analytics.empty
+            else {}
+        ),
     }
     executive_scorecard = _build_executive_scorecard(
         executive_kpis=executive_kpis,

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from app.dashboard_metrics import format_currency
 from app.page_runtime import prepare_page
-from app.views.dashboard_views import render_dashboard_footer, render_empty_dashboard, render_risk_tab
+from app.views.dashboard_views import (
+    render_dashboard_footer,
+    render_empty_dashboard,
+    render_risk_tab,
+)
 
 
 def main() -> None:

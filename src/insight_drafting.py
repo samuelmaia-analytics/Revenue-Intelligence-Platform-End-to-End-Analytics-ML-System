@@ -46,15 +46,17 @@ def build_insight_draft(
     delta_revenue = float(simulation.get("delta_revenue_90d", 0.0))
     high_risk_share = float(business_outcomes.get("kpis", {}).get("high_churn_risk_pct", 0.0))
     null_count_total = int(
-        sum(int(value) for dataset in quality_datasets for value in dataset.get("null_counts", {}).values())
+        sum(
+            int(value)
+            for dataset in quality_datasets
+            for value in dataset.get("null_counts", {}).values()
+        )
     )
 
     mode_applied = "deterministic"
     fallback_reason = None
     if mode_requested == "assistive":
-        fallback_reason = (
-            "Assistive mode requested but no LLM execution path is configured in the governed runtime."
-        )
+        fallback_reason = "Assistive mode requested but no LLM execution path is configured in the governed runtime."
 
     headline = (
         "Revenue remains commercially actionable with controlled operational risk."
@@ -76,9 +78,13 @@ def build_insight_draft(
     if active_alerts:
         anomalies.extend(str(item.get("message", "Alert raised.")) for item in active_alerts[:3])
     if null_count_total > 0:
-        anomalies.append(f"Quality report recorded {null_count_total} null values across silver datasets.")
+        anomalies.append(
+            f"Quality report recorded {null_count_total} null values across silver datasets."
+        )
     if not anomalies:
-        anomalies.append("No critical anomalies were detected in freshness, drift, or quality gates.")
+        anomalies.append(
+            "No critical anomalies were detected in freshness, drift, or quality gates."
+        )
     recommended_actions = [
         (
             f"Prioritize {top_action.get('action', 'top-ranked action')} for customer "

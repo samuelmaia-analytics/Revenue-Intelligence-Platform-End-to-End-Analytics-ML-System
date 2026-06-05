@@ -18,7 +18,9 @@ def build_star_schema(customers_path: Path, orders_path: Path, output_dir: Path)
     order_columns = pd.read_csv(orders_path, nrows=0).columns.tolist()
     customers = pd.read_csv(
         customers_path,
-        parse_dates=[column for column in ["signup_date", "latest_order_at"] if column in customer_columns],
+        parse_dates=[
+            column for column in ["signup_date", "latest_order_at"] if column in customer_columns
+        ],
     )
     orders = pd.read_csv(
         orders_path,
@@ -42,7 +44,11 @@ def build_star_schema(customers_path: Path, orders_path: Path, output_dir: Path)
     dim_customers["customer_key"] = dim_customers["customer_id"]
     dim_customers["signup_month"] = dim_customers["signup_date"].dt.to_period("M").astype(str)
 
-    date_seed = orders["order_purchase_timestamp"] if "order_purchase_timestamp" in orders.columns else orders["order_date"]
+    date_seed = (
+        orders["order_purchase_timestamp"]
+        if "order_purchase_timestamp" in orders.columns
+        else orders["order_date"]
+    )
     dim_date = pd.DataFrame({"date": pd.date_range(date_seed.min(), date_seed.max())})
     dim_date["date_key"] = dim_date["date"].dt.strftime("%Y%m%d").astype(int)
     dim_date["year"] = dim_date["date"].dt.year
@@ -65,7 +71,9 @@ def build_star_schema(customers_path: Path, orders_path: Path, output_dir: Path)
     if "channel" not in channel_seed.columns and "channel_customer" in channel_seed.columns:
         channel_seed = channel_seed.rename(columns={"channel_customer": "channel"})
     dim_channel = (
-        channel_seed.groupby("channel")["customer_id"].nunique().reset_index(name="acquired_customers")
+        channel_seed.groupby("channel")["customer_id"]
+        .nunique()
+        .reset_index(name="acquired_customers")
     )
     dim_channel["channel_key"] = dim_channel["channel"].factorize()[0] + 1
 

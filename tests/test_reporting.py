@@ -162,10 +162,16 @@ def test_insight_draft_builds_deterministic_governed_output(tmp_path: Path) -> N
         business_outcomes={
             "kpis": {"high_churn_risk_pct": 0.12},
             "simulation_summary_top10": {"delta_revenue_90d": 1800.0},
-            "top_10_actions": [{"action": "Retention Campaign", "customer_id": 7, "net_impact": 550.0}],
+            "top_10_actions": [
+                {"action": "Retention Campaign", "customer_id": 7, "net_impact": 550.0}
+            ],
         },
         monitoring_report={"drift_status": "stable"},
-        alerts_report={"alert_count": 1, "status": "warning", "alerts": [{"message": "Test alert"}]},
+        alerts_report={
+            "alert_count": 1,
+            "status": "warning",
+            "alerts": [{"message": "Test alert"}],
+        },
         freshness_report={"status": "ok"},
         quality_report={"datasets": [{"null_counts": {"col_a": 2}}]},
         run_id="run-123",

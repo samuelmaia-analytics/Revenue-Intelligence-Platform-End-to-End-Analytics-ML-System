@@ -13,7 +13,9 @@ class Branding:
     footer_body: str | None
 
 
-def resolve_branding(*, default_app_name: str, default_badge: str, default_footer_body: str) -> Branding:
+def resolve_branding(
+    *, default_app_name: str, default_badge: str, default_footer_body: str
+) -> Branding:
     app_name = os.getenv("RIP_BRAND_NAME", "").strip() or default_app_name
     hero_title = os.getenv("RIP_BRAND_HERO_TITLE", "").strip() or app_name
     hero_badge = os.getenv("RIP_BRAND_BADGE", "").strip() or default_badge

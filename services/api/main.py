@@ -290,9 +290,7 @@ class APIService:
             "reliability_report.json",
             "top_10_actions.csv",
         ]
-        artifacts = {
-            name: (self.settings.model_dir / name).exists() for name in required_artifacts
-        }
+        artifacts = {name: (self.settings.model_dir / name).exists() for name in required_artifacts}
         ready = health["status"] == "ok" and all(artifacts.values())
         return {
             "status": "ready" if ready else "degraded",
@@ -304,19 +302,25 @@ class APIService:
     def read_processed_json(self, file_name: str) -> dict[str, Any]:
         path = self.settings.model_dir / file_name
         if not path.exists():
-            raise HTTPException(status_code=404, detail=f"Processed artifact not found: {file_name}")
+            raise HTTPException(
+                status_code=404, detail=f"Processed artifact not found: {file_name}"
+            )
         import json
 
         with path.open("r", encoding="utf-8") as file:
             payload = json.load(file)
         if not isinstance(payload, dict):
-            raise HTTPException(status_code=500, detail=f"Artifact {file_name} must be a JSON object.")
+            raise HTTPException(
+                status_code=500, detail=f"Artifact {file_name} must be a JSON object."
+            )
         return payload
 
     def read_processed_csv_text(self, file_name: str) -> str:
         path = self.settings.model_dir / file_name
         if not path.exists():
-            raise HTTPException(status_code=404, detail=f"Processed artifact not found: {file_name}")
+            raise HTTPException(
+                status_code=404, detail=f"Processed artifact not found: {file_name}"
+            )
         return path.read_text(encoding="utf-8")
 
     def executive_scorecard_payload(self) -> dict[str, Any]:
@@ -440,7 +444,9 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         authorization: str | None = Header(default=None, alias="Authorization"),
     ) -> JSONResponse:
         service = _service(request)
-        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        api_key = _extract_auth_token(
+            x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization
+        )
         service.check_auth(api_key=api_key)
         response = JSONResponse(service.read_processed_json("executive_summary.json"))
         response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
@@ -455,7 +461,9 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         authorization: str | None = Header(default=None, alias="Authorization"),
     ) -> JSONResponse:
         service = _service(request)
-        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        api_key = _extract_auth_token(
+            x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization
+        )
         service.check_auth(api_key=api_key)
         response = JSONResponse(service.executive_scorecard_payload())
         response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
@@ -470,7 +478,9 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         authorization: str | None = Header(default=None, alias="Authorization"),
     ) -> JSONResponse:
         service = _service(request)
-        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        api_key = _extract_auth_token(
+            x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization
+        )
         service.check_auth(api_key=api_key)
         response = JSONResponse(service.read_processed_json("insight_draft.json"))
         response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
@@ -485,7 +495,9 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         authorization: str | None = Header(default=None, alias="Authorization"),
     ) -> JSONResponse:
         service = _service(request)
-        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        api_key = _extract_auth_token(
+            x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization
+        )
         service.check_auth(api_key=api_key)
         response = JSONResponse(service.read_processed_json("reliability_report.json"))
         response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
@@ -500,7 +512,9 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         authorization: str | None = Header(default=None, alias="Authorization"),
     ) -> PlainTextResponse:
         service = _service(request)
-        api_key = _extract_auth_token(x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization)
+        api_key = _extract_auth_token(
+            x_api_key=x_api_key, x_api_token=x_api_token, authorization=authorization
+        )
         service.check_auth(api_key=api_key)
         response = PlainTextResponse(service.read_processed_csv_text("top_10_actions.csv"))
         response.headers[REQUEST_ID_HEADER] = getattr(request.state, "request_id", "n/a")
