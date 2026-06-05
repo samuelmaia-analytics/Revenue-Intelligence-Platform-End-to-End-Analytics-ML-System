@@ -26,6 +26,7 @@ def _select_markdown_snippets(at: AppTest, limit: int = 6) -> list[str]:
 
 def build_ui_snapshot() -> dict[str, Any]:
     at = AppTest.from_file(str(APP_PATH))
+    at.session_state["rip_experience_mode"] = "technical"
     at.run(timeout=60)
     tab_summaries = []
     for tab in at.tabs:

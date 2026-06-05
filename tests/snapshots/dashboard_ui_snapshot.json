@@ -15,57 +15,59 @@
     "SQL curado desta visão disponível na aba Confiabilidade.",
     "SQL curado desta visão disponível na aba Confiabilidade.",
     "SQL curado desta visão disponível na aba Confiabilidade.",
-    "SQL curado desta visão disponível na aba Confiabilidade."
+    "Série sem variação relevante no período publicado."
   ],
   "tabs": [
     "Resumo Executivo",
     "Inteligência de Clientes",
     "Produto & Categoria",
+    "Pagamentos & Geografia",
     "Performance de Sellers",
     "Logística & Retenção",
-    "Pagamentos & Geografia",
     "Confiabilidade"
   ],
   "tab_summaries": [
     {
       "label": "Resumo Executivo",
-      "dataframe_count": 0,
-      "expander_labels": [],
+      "dataframe_count": 1,
+      "expander_labels": [
+        "Ver detalhamento completo das regras"
+      ],
       "markdown_count": 11
     },
     {
       "label": "Inteligência de Clientes",
       "dataframe_count": 2,
       "expander_labels": [],
-      "markdown_count": 3
+      "markdown_count": 4
     },
     {
       "label": "Produto & Categoria",
-      "dataframe_count": 2,
+      "dataframe_count": 0,
       "expander_labels": [],
-      "markdown_count": 3
+      "markdown_count": 1
+    },
+    {
+      "label": "Pagamentos & Geografia",
+      "dataframe_count": 0,
+      "expander_labels": [],
+      "markdown_count": 2
     },
     {
       "label": "Performance de Sellers",
-      "dataframe_count": 1,
+      "dataframe_count": 0,
       "expander_labels": [],
-      "markdown_count": 2
+      "markdown_count": 1
     },
     {
       "label": "Logística & Retenção",
       "dataframe_count": 1,
       "expander_labels": [],
-      "markdown_count": 2
-    },
-    {
-      "label": "Pagamentos & Geografia",
-      "dataframe_count": 1,
-      "expander_labels": [],
-      "markdown_count": 2
+      "markdown_count": 5
     },
     {
       "label": "Confiabilidade",
-      "dataframe_count": 4,
+      "dataframe_count": 3,
       "expander_labels": [
         "Abrir manifesto do pipeline",
         "Abrir artefato do report executivo",
@@ -74,18 +76,19 @@
       "markdown_count": 22
     }
   ],
-  "dataframe_count": 11,
+  "dataframe_count": 7,
   "expander_labels": [
+    "Ver detalhamento completo das regras",
     "Abrir manifesto do pipeline",
     "Abrir artefato do report executivo",
     "SQL curado por tema"
   ],
   "markdown_snippets": [
-    "<div class=\"hero\">\n    <div class=\"hero-grid\">\n        <div class=\"hero-copy\">\n            <div>\n                <div class=\"hero-badge\">Analytics Executiva Bat",
-    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Receita Total</div>\n    <div class=\"kpi-value\">R$ 15.422.605</div>\n    <div class=\"kpi-caption\">Receita entreg",
-    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Pedidos Totais</div>\n    <div class=\"kpi-value\">98,200</div>\n    <div class=\"kpi-caption\">Pedidos governados n",
-    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Ticket Médio</div>\n    <div class=\"kpi-value\">R$ 160</div>\n    <div class=\"kpi-caption\">Valor médio por pedido",
-    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Clientes Recorrentes</div>\n    <div class=\"kpi-value\">2.2%</div>\n    <div class=\"kpi-caption\">Clientes com com",
-    "<div class=\"story-grid\">\n\n<div class=\"story-card kicker\">\n    <div class=\"story-label\">Postura de Crescimento</div>\n    <div class=\"story-value\">R$ 166</div>\n  "
+    "<div class=\"hero\">\n    <div class=\"hero-grid\">\n        <div class=\"hero-copy\">\n            <div>\n                <div class=\"hero-badge\">Revenue Intelligence</d",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Receita Total</div>\n    <div class=\"kpi-value\">R$ 3.004.551</div>\n    <div class=\"kpi-caption\">Receita entregu",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Pedidos Totais</div>\n    <div class=\"kpi-value\">11,279</div>\n    <div class=\"kpi-caption\">Pedidos governados n",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Ticket Médio</div>\n    <div class=\"kpi-value\">R$ 266</div>\n    <div class=\"kpi-caption\">Valor médio por pedido",
+    "<div class=\"kpi-card\">\n    <div class=\"kpi-label\">Clientes Recorrentes</div>\n    <div class=\"kpi-value\">59.6%</div>\n    <div class=\"kpi-caption\">Clientes com co",
+    "<div class=\"story-grid\">\n\n<div class=\"story-card kicker\">\n    <div class=\"story-label\">Postura de Crescimento</div>\n    <div class=\"story-value\">R$ 48.616</div>"
   ]
 }

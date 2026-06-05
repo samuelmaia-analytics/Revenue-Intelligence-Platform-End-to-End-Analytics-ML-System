@@ -814,7 +814,27 @@ class RevenueIntelligencePipeline:
                 ),
             )
 
-            self._stage("operations.snapshot", lambda: _persist_run_snapshot(self.cfg, run_context))
+            snapshot_status = "created"
+            try:
+                self._stage(
+                    "operations.snapshot", lambda: _persist_run_snapshot(self.cfg, run_context)
+                )
+            except PipelineStageError as exc:
+                snapshot_status = "warning"
+                self._record_event(
+                    "operations.snapshot",
+                    status="warning",
+                    error=str(exc),
+                )
+                LOGGER.warning(
+                    "Operational snapshot was not persisted | error=%s",
+                    exc,
+                    extra={
+                        "event_type": "operations.snapshot",
+                        "status": "warning",
+                        "error": str(exc),
+                    },
+                )
             self._stage("operations.retention", lambda: _apply_retention(self.cfg))
 
             outputs = sorted(
@@ -834,6 +854,7 @@ class RevenueIntelligencePipeline:
                     "log_path": str(run_context.log_path),
                     "run_events_path": str(self.cfg.processed_dir / "run_events.jsonl"),
                     "event_count": len(self.run_events),
+                    "snapshot_status": snapshot_status,
                 },
                 outputs=outputs,
             )
