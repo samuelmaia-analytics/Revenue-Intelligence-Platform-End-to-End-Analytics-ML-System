@@ -1,5 +1,7 @@
 # Revenue Intelligence Platform
 
+> **Projeto legado de portfólio.** Este repositório foi preservado como histórico técnico. O portfólio principal atual está concentrado em [Governed Analytics Platform](https://github.com/samuelmaia-analytics/Governed-Analytics-Platform), Central de Automação e Operações e [AWS Serverless Access Counter](https://github.com/samuelmaia-analytics/aws-serverless-access-counter).
+
 Projeto de portfólio em **Data Analytics, Analytics Engineering e Machine Learning** que transforma comportamento de clientes e pedidos em outputs governados para análise de receita, retenção e priorização de ações.
 
 ## O problema
